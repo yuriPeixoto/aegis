@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-dark text-slate-100 antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-brand-dark;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-border rounded;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-md border border-white/10 rounded-xl transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    border-color: rgba(124, 58, 237, 0.4);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.08);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.25);
+  }
+
+  .text-glow-neon {
+    text-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
+  }
+
+  .text-glow-purple {
+    text-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 text-sm font-medium
+           transition-all duration-200 hover:text-slate-100 hover:bg-white/5;
+  }
+
+  .sidebar-link.active {
+    @apply text-slate-100 bg-brand-purple/20 border border-brand-purple/30;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider;
+  }
+
+  .btn-primary {
+    @apply bg-brand-purple hover:bg-brand-purple-dim text-white font-semibold px-4 py-2 rounded-lg
+           transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-purple/50;
+  }
+
+  .input {
+    @apply w-full bg-brand-surface border border-brand-border rounded-lg px-4 py-2.5
+           text-slate-100 text-sm placeholder-slate-500
+           focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/30
+           transition-colors duration-200;
+  }
+}
