@@ -32,7 +32,7 @@ export function useSources() {
     queryKey: ['sources'],
     queryFn: async () => {
       const { data } = await api.get('/sources')
-      return data
+      return Array.isArray(data) ? data : []
     },
     staleTime: 60_000,
   })

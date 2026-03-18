@@ -9,7 +9,8 @@ interface TicketDetailProps {
   onClose: () => void
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string | null) {
+  if (!iso) return '—'
   return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -19,10 +20,17 @@ function formatDate(iso: string) {
   })
 }
 
-function EventItem({ type, payload, date }: { type: string; payload: Record<string, unknown>; date: string }) {
+function EventItem({
+  type,
+  payload,
+  date,
+}: {
+  type: string
+  payload: Record<string, unknown> | null
+  date: string
+}) {
   return (
     <div className="relative pl-4 pb-4">
-      {/* Timeline line */}
       <div className="absolute left-0 top-1.5 bottom-0 w-px bg-brand-border" />
       <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-brand-purple border border-brand-dark" />
 
@@ -33,7 +41,7 @@ function EventItem({ type, payload, date }: { type: string; payload: Record<stri
           </span>
           <span className="text-[10px] font-mono text-slate-600">{formatDate(date)}</span>
         </div>
-        {Object.keys(payload).length > 0 && (
+        {payload && Object.keys(payload).length > 0 && (
           <pre className="text-[10px] font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all">
             {JSON.stringify(payload, null, 2)}
           </pre>
@@ -67,10 +75,9 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
         <div className="flex-1 overflow-y-auto">
           {/* Main info */}
           <div className="p-5 border-b border-brand-border/50">
-            {/* Source + external ID */}
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
-                {ticket.source.name}
+                {ticket.source_name}
               </span>
               <span className="text-[10px] font-mono text-slate-600 flex items-center gap-1">
                 <ExternalLink className="w-3 h-3" />
@@ -78,19 +85,16 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               </span>
             </div>
 
-            {/* Subject */}
             <h2 className="text-sm font-semibold text-slate-100 leading-snug mb-3">
               {ticket.subject}
             </h2>
 
-            {/* Badges */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              <TypeBadge type={ticket.type} />
-              <PriorityBadge priority={ticket.priority} />
+              {ticket.type && <TypeBadge type={ticket.type} />}
+              {ticket.priority && <PriorityBadge priority={ticket.priority} />}
               <StatusBadge status={ticket.status} />
             </div>
 
-            {/* Description */}
             {ticket.description && (
               <p className="text-xs text-slate-400 leading-relaxed bg-white/5 border border-white/5 rounded-lg p-3">
                 {ticket.description}
@@ -102,11 +106,21 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
           <div className="px-5 py-4 border-b border-brand-border/50 space-y-1.5">
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <Clock className="w-3 h-3 shrink-0" />
-              <span>Criado em: <span className="text-slate-400 font-mono">{formatDate(ticket.source_created_at)}</span></span>
+              <span>
+                Criado em:{' '}
+                <span className="text-slate-400 font-mono">
+                  {formatDate(ticket.source_created_at)}
+                </span>
+              </span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <RefreshCw className="w-3 h-3 shrink-0" />
-              <span>Atualizado: <span className="text-slate-400 font-mono">{formatDate(ticket.source_updated_at)}</span></span>
+              <span>
+                Atualizado:{' '}
+                <span className="text-slate-400 font-mono">
+                  {formatDate(ticket.source_updated_at)}
+                </span>
+              </span>
             </div>
           </div>
 

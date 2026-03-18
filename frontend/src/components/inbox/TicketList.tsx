@@ -3,11 +3,13 @@ import type { TicketFilters } from '../../types/ticket'
 import { useTickets } from '../../hooks/useTickets'
 import { TicketRow } from './TicketRow'
 
+const PAGE_SIZE = 20
+
 interface TicketListProps {
   filters: TicketFilters
   selectedId: number | null
   onSelect: (id: number) => void
-  onPageChange: (page: number) => void
+  onOffsetChange: (offset: number) => void
 }
 
 function Skeleton() {
@@ -26,11 +28,12 @@ function Skeleton() {
   )
 }
 
-export function TicketList({ filters, selectedId, onSelect, onPageChange }: TicketListProps) {
-  const { data, isLoading } = useTickets(filters)
-  const page = filters.page ?? 1
-  const pageSize = 20
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1
+export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: TicketListProps) {
+  const { data, isLoading } = useTickets({ ...filters, limit: PAGE_SIZE })
+  const offset = filters.offset ?? 0
+  const total = data?.total ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1
+  const currentPage = Math.floor(offset / PAGE_SIZE) + 1
 
   if (isLoading) {
     return (
@@ -42,7 +45,7 @@ export function TicketList({ filters, selectedId, onSelect, onPageChange }: Tick
     )
   }
 
-  if (!data || data.tickets.length === 0) {
+  if (!data || data.items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-40">
         <Inbox className="w-8 h-8 text-brand-purple" />
@@ -56,13 +59,13 @@ export function TicketList({ filters, selectedId, onSelect, onPageChange }: Tick
       {/* Count */}
       <div className="px-4 py-2 border-b border-brand-border/50">
         <span className="text-[10px] text-slate-500 font-mono">
-          {data.total} ticket{data.total !== 1 ? 's' : ''}
+          {total} ticket{total !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {data.tickets.map((ticket) => (
+        {data.items.map((ticket) => (
           <TicketRow
             key={ticket.id}
             ticket={ticket}
@@ -76,18 +79,18 @@ export function TicketList({ filters, selectedId, onSelect, onPageChange }: Tick
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-2 border-t border-brand-border/50 shrink-0">
           <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page === 1}
+            onClick={() => onOffsetChange(offset - PAGE_SIZE)}
+            disabled={offset === 0}
             className="p-1 text-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <span className="text-[10px] font-mono text-slate-500">
-            {page} / {totalPages}
+            {currentPage} / {totalPages}
           </span>
           <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page === totalPages}
+            onClick={() => onOffsetChange(offset + PAGE_SIZE)}
+            disabled={offset + PAGE_SIZE >= total}
             className="p-1 text-slate-500 hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronRight className="w-4 h-4" />

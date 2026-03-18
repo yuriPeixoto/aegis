@@ -64,21 +64,23 @@ function Select({
 export function FilterBar({ filters, onChange }: FilterBarProps) {
   const { data: sources } = useSources()
 
-  const hasFilters =
-    filters.source_id || filters.status || filters.priority || filters.type
+  const hasFilters = filters.source_id || filters.status || filters.priority || filters.type
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Select
         value={filters.source_id?.toString()}
-        onChange={(v) => onChange({ ...filters, source_id: v ? Number(v) : undefined, page: 1 })}
+        onChange={(v) => onChange({ ...filters, source_id: v ? Number(v) : undefined, offset: 0 })}
         placeholder="Todas as fontes"
-        options={(sources ?? []).map((s) => ({ value: s.id.toString(), label: s.name }))}
+        options={(Array.isArray(sources) ? sources : []).map((s) => ({
+          value: s.id.toString(),
+          label: s.name,
+        }))}
       />
       <Select
         value={filters.status}
         onChange={(v) =>
-          onChange({ ...filters, status: (v as TicketStatus) || undefined, page: 1 })
+          onChange({ ...filters, status: (v as TicketStatus) || undefined, offset: 0 })
         }
         placeholder="Todos os status"
         options={STATUSES}
@@ -86,7 +88,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
       <Select
         value={filters.priority}
         onChange={(v) =>
-          onChange({ ...filters, priority: (v as TicketPriority) || undefined, page: 1 })
+          onChange({ ...filters, priority: (v as TicketPriority) || undefined, offset: 0 })
         }
         placeholder="Todas as prioridades"
         options={PRIORITIES}
@@ -94,14 +96,14 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
       <Select
         value={filters.type}
         onChange={(v) =>
-          onChange({ ...filters, type: (v as TicketType) || undefined, page: 1 })
+          onChange({ ...filters, type: (v as TicketType) || undefined, offset: 0 })
         }
         placeholder="Todos os tipos"
         options={TYPES}
       />
       {hasFilters && (
         <button
-          onClick={() => onChange({ page: 1 })}
+          onClick={() => onChange({ offset: 0 })}
           className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-mono underline underline-offset-2"
         >
           Limpar

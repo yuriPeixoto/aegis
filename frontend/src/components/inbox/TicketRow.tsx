@@ -9,7 +9,8 @@ interface TicketRowProps {
   onClick: () => void
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string | null) {
+  if (!iso) return '—'
   return new Date(iso).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -31,9 +32,9 @@ export function TicketRow({ ticket, isSelected, onClick }: TicketRowProps) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
-            {ticket.source.name}
+            {ticket.source_name}
           </span>
-          <TypeBadge type={ticket.type} />
+          {ticket.type && <TypeBadge type={ticket.type} />}
         </div>
         <span className="text-[10px] text-slate-600 font-mono shrink-0">
           {formatDate(ticket.source_updated_at)}
@@ -51,7 +52,7 @@ export function TicketRow({ ticket, isSelected, onClick }: TicketRowProps) {
       {/* Bottom row: priority + status + external_id */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <PriorityBadge priority={ticket.priority} />
+          {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
         </div>
         <span className="text-[10px] font-mono text-slate-600">#{ticket.external_id}</span>
