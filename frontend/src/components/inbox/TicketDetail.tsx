@@ -1,0 +1,137 @@
+import { X, Clock, RefreshCw, ExternalLink } from 'lucide-react'
+import { useTicket } from '../../hooks/useTickets'
+import { StatusBadge } from './StatusBadge'
+import { PriorityBadge } from './PriorityBadge'
+import { TypeBadge } from './TypeBadge'
+
+interface TicketDetailProps {
+  ticketId: number
+  onClose: () => void
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function EventItem({ type, payload, date }: { type: string; payload: Record<string, unknown>; date: string }) {
+  return (
+    <div className="relative pl-4 pb-4">
+      {/* Timeline line */}
+      <div className="absolute left-0 top-1.5 bottom-0 w-px bg-brand-border" />
+      <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-brand-purple border border-brand-dark" />
+
+      <div className="bg-white/5 border border-white/5 rounded-lg p-3 ml-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-mono text-brand-purple font-semibold uppercase tracking-wider">
+            {type}
+          </span>
+          <span className="text-[10px] font-mono text-slate-600">{formatDate(date)}</span>
+        </div>
+        {Object.keys(payload).length > 0 && (
+          <pre className="text-[10px] font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all">
+            {JSON.stringify(payload, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
+  const { data: ticket, isLoading } = useTicket(ticketId)
+
+  return (
+    <div className="flex flex-col h-full border-l border-brand-border bg-brand-dark">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border shrink-0">
+        <span className="text-xs font-mono text-slate-500">Detalhe do Ticket</span>
+        <button
+          onClick={onClose}
+          className="p-1 text-slate-500 hover:text-slate-200 transition-colors rounded"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {isLoading || !ticket ? (
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-xs text-slate-600 font-mono animate-pulse">Carregando...</span>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          {/* Main info */}
+          <div className="p-5 border-b border-brand-border/50">
+            {/* Source + external ID */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
+                {ticket.source.name}
+              </span>
+              <span className="text-[10px] font-mono text-slate-600 flex items-center gap-1">
+                <ExternalLink className="w-3 h-3" />
+                #{ticket.external_id}
+              </span>
+            </div>
+
+            {/* Subject */}
+            <h2 className="text-sm font-semibold text-slate-100 leading-snug mb-3">
+              {ticket.subject}
+            </h2>
+
+            {/* Badges */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              <TypeBadge type={ticket.type} />
+              <PriorityBadge priority={ticket.priority} />
+              <StatusBadge status={ticket.status} />
+            </div>
+
+            {/* Description */}
+            {ticket.description && (
+              <p className="text-xs text-slate-400 leading-relaxed bg-white/5 border border-white/5 rounded-lg p-3">
+                {ticket.description}
+              </p>
+            )}
+          </div>
+
+          {/* Timestamps */}
+          <div className="px-5 py-4 border-b border-brand-border/50 space-y-1.5">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <Clock className="w-3 h-3 shrink-0" />
+              <span>Criado em: <span className="text-slate-400 font-mono">{formatDate(ticket.source_created_at)}</span></span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <RefreshCw className="w-3 h-3 shrink-0" />
+              <span>Atualizado: <span className="text-slate-400 font-mono">{formatDate(ticket.source_updated_at)}</span></span>
+            </div>
+          </div>
+
+          {/* Event timeline */}
+          <div className="px-5 py-4">
+            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-4">
+              Histórico de Eventos
+            </h3>
+            {ticket.events.length === 0 ? (
+              <p className="text-xs text-slate-600 font-mono">Nenhum evento registrado.</p>
+            ) : (
+              <div>
+                {ticket.events.map((ev) => (
+                  <EventItem
+                    key={ev.id}
+                    type={ev.event_type}
+                    payload={ev.payload}
+                    date={ev.occurred_at}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
