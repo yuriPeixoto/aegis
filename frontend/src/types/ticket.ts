@@ -12,30 +12,26 @@ export type TicketStatus =
   | 'FECHADO'
   | 'CANCELADO'
 
-export interface TicketSource {
-  id: number
-  name: string
-  slug: string
-}
-
 export interface TicketEvent {
   id: number
   event_type: string
-  payload: Record<string, unknown>
+  payload: Record<string, unknown> | null
   occurred_at: string
 }
 
 export interface Ticket {
   id: number
+  source_id: number
+  source_name: string
   external_id: string
-  type: TicketType
-  priority: TicketPriority
+  type: TicketType | null
+  priority: TicketPriority | null
   status: TicketStatus
   subject: string
   description: string | null
-  source: TicketSource
-  source_created_at: string
-  source_updated_at: string
+  source_metadata: Record<string, unknown> | null
+  source_created_at: string | null
+  source_updated_at: string | null
   first_ingested_at: string
   last_synced_at: string
 }
@@ -45,10 +41,10 @@ export interface TicketDetail extends Ticket {
 }
 
 export interface TicketListResponse {
-  tickets: Ticket[]
+  items: Ticket[]
   total: number
-  page: number
-  page_size: number
+  limit: number
+  offset: number
 }
 
 export interface TicketFilters {
@@ -56,5 +52,6 @@ export interface TicketFilters {
   status?: TicketStatus
   priority?: TicketPriority
   type?: TicketType
-  page?: number
+  limit?: number
+  offset?: number
 }
