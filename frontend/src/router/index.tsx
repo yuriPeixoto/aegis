@@ -9,7 +9,7 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    element: <AppShell title="Inbox" />,
+    element: <AppShell />,
     children: [
       {
         path: '/',

@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "inbox": "Caixa de Entrada",
+    "settings": "Configurações"
+  },
+  "topbar": {
+    "signOut": "Sair"
+  },
+  "login": {
+    "subtitle": "Caixa Unificada",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "voce@exemplo.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "error": "E-mail ou senha inválidos.",
+    "restricted": "Acesso restrito a usuários autorizados"
+  },
+  "inbox": {
+    "allSources": "Todas as fontes",
+    "allStatuses": "Todos os status",
+    "allPriorities": "Todas as prioridades",
+    "allTypes": "Todos os tipos",
+    "clearFilters": "Limpar",
+    "ticketCount_one": "{{count}} ticket",
+    "ticketCount_other": "{{count}} tickets",
+    "empty": "Nenhum ticket encontrado",
+    "loading": "Carregando...",
+    "detail": {
+      "title": "Detalhe do Ticket",
+      "loading": "Carregando...",
+      "createdAt": "Criado em",
+      "updatedAt": "Atualizado",
+      "eventHistory": "Histórico de Eventos",
+      "noEvents": "Nenhum evento registrado."
+    }
+  },
+  "status": {
+    "ABERTO": "Aberto",
+    "EM_ATENDIMENTO": "Em Atendimento",
+    "AGUARDANDO_CLIENTE": "Ag. Cliente",
+    "AGUARDANDO_DESENVOLVIMENTO": "Ag. Dev",
+    "EM_DESENVOLVIMENTO": "Em Dev",
+    "AGUARDANDO_TESTE": "Ag. Teste",
+    "EM_TESTE": "Em Teste",
+    "RESOLVIDO": "Resolvido",
+    "FECHADO": "Fechado",
+    "CANCELADO": "Cancelado"
+  },
+  "priority": {
+    "URGENTE": "Urgente",
+    "ALTO": "Alto",
+    "MEDIO": "Médio",
+    "BAIXO": "Baixo"
+  },
+  "type": {
+    "BUG": "Bug",
+    "MELHORIA": "Melhoria",
+    "DUVIDA": "Dúvida",
+    "SUPORTE": "Suporte"
+  }
+}
