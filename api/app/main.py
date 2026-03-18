@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
+from app.routers import sources
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -28,6 +29,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+app.include_router(sources.router)
 
 
 @app.get("/health")
