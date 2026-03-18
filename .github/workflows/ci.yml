@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: API — lint, type-check, tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aegis_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: api/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r api/requirements-dev.txt
+
+      - name: Ruff lint
+        run: ruff check api/app api/tests
+
+      - name: Ruff format check
+        run: ruff format --check api/app api/tests
+
+      - name: mypy
+        run: mypy api/app
+        env:
+          MYPYPATH: api
+
+      - name: pytest
+        working-directory: api
+        env:
+          AEGIS_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/aegis_test
+          AEGIS_SECRET_KEY: test-secret-key
+        run: pytest tests/ -v
