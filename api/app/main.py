@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.routers import sources
+from app.routers import ingest, sources
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -32,6 +32,7 @@ app = FastAPI(
 
 
 app.include_router(sources.router)
+app.include_router(ingest.router)
 
 
 @app.get("/health")
