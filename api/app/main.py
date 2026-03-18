@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.routers import ingest, sources, tickets
+from app.routers import auth, ingest, sources, tickets
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -31,6 +31,7 @@ app = FastAPI(
 )
 
 
+app.include_router(auth.router)
 app.include_router(sources.router)
 app.include_router(ingest.router)
 app.include_router(tickets.router)
