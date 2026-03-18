@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { TicketFilters } from '../types/ticket'
 import { FilterBar } from '../components/inbox/FilterBar'
 import { TicketList } from '../components/inbox/TicketList'
 import { TicketDetail } from '../components/inbox/TicketDetail'
 
 export function InboxPage() {
+  const { i18n } = useTranslation()
   const [filters, setFilters] = useState<TicketFilters>({ offset: 0 })
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
@@ -22,6 +24,7 @@ export function InboxPage() {
       >
         <div className="bg-brand-surface/50 overflow-hidden flex flex-col">
           <TicketList
+            key={i18n.language}
             filters={filters}
             selectedId={selectedId}
             onSelect={handleSelect}
@@ -30,7 +33,11 @@ export function InboxPage() {
         </div>
 
         {selectedId && (
-          <TicketDetail ticketId={selectedId} onClose={() => setSelectedId(null)} />
+          <TicketDetail
+            key={`${selectedId}-${i18n.language}`}
+            ticketId={selectedId}
+            onClose={() => setSelectedId(null)}
+          />
         )}
       </div>
     </div>

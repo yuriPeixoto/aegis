@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "inbox": "Inbox",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "signOut": "Sign out"
+  },
+  "login": {
+    "subtitle": "Unified Inbox",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "error": "Invalid email or password.",
+    "restricted": "Access restricted to authorized users"
+  },
+  "inbox": {
+    "allSources": "All sources",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "allTypes": "All types",
+    "clearFilters": "Clear",
+    "ticketCount_one": "{{count}} ticket",
+    "ticketCount_other": "{{count}} tickets",
+    "empty": "No tickets found",
+    "loading": "Loading...",
+    "detail": {
+      "title": "Ticket Detail",
+      "loading": "Loading...",
+      "createdAt": "Created at",
+      "updatedAt": "Updated",
+      "eventHistory": "Event History",
+      "noEvents": "No events recorded."
+    }
+  },
+  "status": {
+    "ABERTO": "Open",
+    "EM_ATENDIMENTO": "In Progress",
+    "AGUARDANDO_CLIENTE": "Awaiting Client",
+    "AGUARDANDO_DESENVOLVIMENTO": "Awaiting Dev",
+    "EM_DESENVOLVIMENTO": "In Development",
+    "AGUARDANDO_TESTE": "Awaiting Test",
+    "EM_TESTE": "In Testing",
+    "RESOLVIDO": "Resolved",
+    "FECHADO": "Closed",
+    "CANCELADO": "Cancelled"
+  },
+  "priority": {
+    "URGENTE": "Urgent",
+    "ALTO": "High",
+    "MEDIO": "Medium",
+    "BAIXO": "Low"
+  },
+  "type": {
+    "BUG": "Bug",
+    "MELHORIA": "Improvement",
+    "DUVIDA": "Question",
+    "SUPORTE": "Support"
+  }
+}

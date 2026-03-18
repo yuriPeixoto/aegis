@@ -1,15 +1,17 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Inbox, Settings, Zap } from 'lucide-react'
 
-const NAV = [
-  { to: '/', label: 'Inbox', icon: Inbox, end: true },
-  { to: '/settings', label: 'Settings', icon: Settings, end: false },
-]
-
 export function Sidebar() {
+  const { t } = useTranslation()
+
+  const NAV = [
+    { to: '/', label: t('nav.inbox'), icon: Inbox, end: true },
+    { to: '/settings', label: t('nav.settings'), icon: Settings, end: false },
+  ]
+
   return (
     <aside className="w-56 shrink-0 flex flex-col bg-brand-dark border-r border-brand-border h-screen sticky top-0">
-      {/* Logo */}
       <div className="px-4 py-5 border-b border-brand-border">
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-brand-neon" strokeWidth={2.5} />
@@ -19,11 +21,10 @@ export function Sidebar() {
           </span>
         </div>
         <p className="text-[10px] text-slate-500 mt-0.5 font-mono uppercase tracking-widest">
-          Unified Inbox
+          {t('login.subtitle')}
         </p>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
@@ -38,7 +39,6 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="px-4 py-3 border-t border-brand-border">
         <p className="text-[10px] text-slate-600 font-mono">v0.1.0</p>
       </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { X, Clock, RefreshCw, ExternalLink } from 'lucide-react'
 import { useTicket } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
@@ -9,9 +10,9 @@ interface TicketDetailProps {
   onClose: () => void
 }
 
-function formatDate(iso: string | null) {
+function formatDate(iso: string | null, locale: string) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleString('pt-BR', {
+  return new Date(iso).toLocaleString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -24,22 +25,23 @@ function EventItem({
   type,
   payload,
   date,
+  locale,
 }: {
   type: string
   payload: Record<string, unknown> | null
   date: string
+  locale: string
 }) {
   return (
     <div className="relative pl-4 pb-4">
       <div className="absolute left-0 top-1.5 bottom-0 w-px bg-brand-border" />
       <div className="absolute left-[-3px] top-1.5 w-1.5 h-1.5 rounded-full bg-brand-purple border border-brand-dark" />
-
       <div className="bg-white/5 border border-white/5 rounded-lg p-3 ml-2">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-mono text-brand-purple font-semibold uppercase tracking-wider">
             {type}
           </span>
-          <span className="text-[10px] font-mono text-slate-600">{formatDate(date)}</span>
+          <span className="text-[10px] font-mono text-slate-600">{formatDate(date, locale)}</span>
         </div>
         {payload && Object.keys(payload).length > 0 && (
           <pre className="text-[10px] font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all">
@@ -52,13 +54,14 @@ function EventItem({
 }
 
 export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language
   const { data: ticket, isLoading } = useTicket(ticketId)
 
   return (
     <div className="flex flex-col h-full border-l border-brand-border bg-brand-dark">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border shrink-0">
-        <span className="text-xs font-mono text-slate-500">Detalhe do Ticket</span>
+        <span className="text-xs font-mono text-slate-500">{t('inbox.detail.title')}</span>
         <button
           onClick={onClose}
           className="p-1 text-slate-500 hover:text-slate-200 transition-colors rounded"
@@ -69,11 +72,12 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
 
       {isLoading || !ticket ? (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-xs text-slate-600 font-mono animate-pulse">Carregando...</span>
+          <span className="text-xs text-slate-600 font-mono animate-pulse">
+            {t('inbox.detail.loading')}
+          </span>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          {/* Main info */}
           <div className="p-5 border-b border-brand-border/50">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
@@ -102,35 +106,33 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
             )}
           </div>
 
-          {/* Timestamps */}
           <div className="px-5 py-4 border-b border-brand-border/50 space-y-1.5">
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <Clock className="w-3 h-3 shrink-0" />
               <span>
-                Criado em:{' '}
+                {t('inbox.detail.createdAt')}:{' '}
                 <span className="text-slate-400 font-mono">
-                  {formatDate(ticket.source_created_at)}
+                  {formatDate(ticket.source_created_at, locale)}
                 </span>
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <RefreshCw className="w-3 h-3 shrink-0" />
               <span>
-                Atualizado:{' '}
+                {t('inbox.detail.updatedAt')}:{' '}
                 <span className="text-slate-400 font-mono">
-                  {formatDate(ticket.source_updated_at)}
+                  {formatDate(ticket.source_updated_at, locale)}
                 </span>
               </span>
             </div>
           </div>
 
-          {/* Event timeline */}
           <div className="px-5 py-4">
             <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-4">
-              Histórico de Eventos
+              {t('inbox.detail.eventHistory')}
             </h3>
             {ticket.events.length === 0 ? (
-              <p className="text-xs text-slate-600 font-mono">Nenhum evento registrado.</p>
+              <p className="text-xs text-slate-600 font-mono">{t('inbox.detail.noEvents')}</p>
             ) : (
               <div>
                 {ticket.events.map((ev) => (
@@ -139,6 +141,7 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
                     type={ev.event_type}
                     payload={ev.payload}
                     date={ev.occurred_at}
+                    locale={locale}
                   />
                 ))}
               </div>
