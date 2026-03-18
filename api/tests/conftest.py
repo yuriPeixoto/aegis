@@ -25,6 +25,12 @@ app.dependency_overrides[get_db] = _override_get_db
 
 
 @pytest.fixture
+async def db_session() -> AsyncSession:
+    async with _TestSession() as session:
+        yield session
+
+
+@pytest.fixture
 async def client() -> AsyncClient:
     async with AsyncClient(
         transport=ASGITransport(app=app),
