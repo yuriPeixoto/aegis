@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 import type { TicketFilters } from '../../types/ticket'
 import { useTickets } from '../../hooks/useTickets'
@@ -29,6 +30,7 @@ function Skeleton() {
 }
 
 export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: TicketListProps) {
+  const { t } = useTranslation()
   const { data, isLoading } = useTickets({ ...filters, limit: PAGE_SIZE })
   const offset = filters.offset ?? 0
   const total = data?.total ?? 0
@@ -49,21 +51,19 @@ export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: Ti
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-40">
         <Inbox className="w-8 h-8 text-brand-purple" />
-        <p className="text-sm text-slate-400">Nenhum ticket encontrado</p>
+        <p className="text-sm text-slate-400">{t('inbox.empty')}</p>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Count */}
       <div className="px-4 py-2 border-b border-brand-border/50">
         <span className="text-[10px] text-slate-500 font-mono">
-          {total} ticket{total !== 1 ? 's' : ''}
+          {t('inbox.ticketCount', { count: total })}
         </span>
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto">
         {data.items.map((ticket) => (
           <TicketRow
@@ -75,7 +75,6 @@ export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: Ti
         ))}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-2 border-t border-brand-border/50 shrink-0">
           <button
