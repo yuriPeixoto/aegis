@@ -32,3 +32,12 @@ class UserService:
             select(User).where(User.id == user_id, User.is_active.is_(True))
         )
         return result.scalar_one_or_none()
+
+    async def list_agents(self) -> list[User]:
+        """Return all active users with role admin or agent (assignable)."""
+        result = await self._db.execute(
+            select(User)
+            .where(User.is_active.is_(True), User.role.in_(["admin", "agent"]))
+            .order_by(User.name)
+        )
+        return list(result.scalars().all())

@@ -27,6 +27,31 @@ export function useTicket(id: number | null) {
   })
 }
 
+export function useUsers() {
+  return useQuery<{ id: number; name: string; role: string }[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data } = await api.get('/users')
+      return data
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function useAssignTicket(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, { user_id: number | null }>({
+    mutationFn: async (body) => {
+      const { data } = await api.patch<TicketDetail>(`/tickets/${ticketId}/assign`, body)
+      return data
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated)
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
 export function useUpdateTicketStatus(ticketId: number) {
   const queryClient = useQueryClient()
   return useMutation<TicketDetail, Error, { status: string; comment?: string }>({
