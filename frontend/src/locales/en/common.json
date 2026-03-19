@@ -44,6 +44,13 @@
     }
   },
   "status": {
+    "action": {
+      "startProgress": "Start Progress",
+      "waitClient": "Await Client",
+      "resolve": "Resolve",
+      "cancel": "Cancel",
+      "reopen": "Reopen"
+    },
     "OPEN": "Open",
     "IN_PROGRESS": "In Progress",
     "WAITING_CLIENT": "Awaiting Client",

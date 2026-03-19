@@ -1,9 +1,26 @@
 import { useTranslation } from 'react-i18next'
 import { X, Clock, RefreshCw, ExternalLink, UserCircle } from 'lucide-react'
-import { useTicket } from '../../hooks/useTickets'
+import { useTicket, useUpdateTicketStatus } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  open: ['in_progress', 'cancelled'],
+  in_progress: ['waiting_client', 'resolved', 'cancelled'],
+  waiting_client: ['in_progress', 'resolved', 'cancelled'],
+  resolved: ['open'],
+  closed: [],
+  cancelled: [],
+}
+
+const STATUS_ACTION_LABEL: Record<string, string> = {
+  in_progress: 'status.action.startProgress',
+  waiting_client: 'status.action.waitClient',
+  resolved: 'status.action.resolve',
+  cancelled: 'status.action.cancel',
+  open: 'status.action.reopen',
+}
 
 interface TicketDetailProps {
   ticketId: number
@@ -57,6 +74,7 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const { data: ticket, isLoading } = useTicket(ticketId)
+  const updateStatus = useUpdateTicketStatus(ticketId)
 
   return (
     <div className="flex flex-col h-full border-l border-brand-border bg-brand-dark">
@@ -98,6 +116,21 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               {ticket.priority && <PriorityBadge priority={ticket.priority} />}
               <StatusBadge status={ticket.status} />
             </div>
+
+            {(ALLOWED_TRANSITIONS[ticket.status] ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {(ALLOWED_TRANSITIONS[ticket.status] ?? []).map((next) => (
+                  <button
+                    key={next}
+                    disabled={updateStatus.isPending}
+                    onClick={() => updateStatus.mutate({ status: next })}
+                    className="text-[10px] font-semibold px-2.5 py-1 rounded border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-slate-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t(STATUS_ACTION_LABEL[next] ?? next)}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {ticket.description && (
               <p className="text-xs text-slate-400 leading-relaxed bg-white/5 border border-white/5 rounded-lg p-3">

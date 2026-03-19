@@ -45,6 +45,11 @@ class AssignTicketRequest(BaseModel):
     user_id: int | None
 
 
+class UpdateStatusRequest(BaseModel):
+    status: str
+    comment: str | None = None
+
+
 class TicketDetailResponse(TicketResponse):
     events: list[TicketEventResponse]
 
