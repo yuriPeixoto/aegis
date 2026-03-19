@@ -31,6 +31,7 @@ async def main() -> None:
                 email="yuripeixoto@gmail.com",
                 password_hash=hash_password("08051987"),
                 name="Yuri Peixoto",
+                role="admin",
                 is_active=True,
             )
             db.add(user)
@@ -45,6 +46,7 @@ async def main() -> None:
                     email="yuripeixoto@gmail.com",
                     password_hash=hash_password("08051987"),
                     name="Yuri Peixoto",
+                    role="admin",
                     is_active=True,
                 )
             )

@@ -1,0 +1,87 @@
+{
+  "nav": {
+    "inbox": "Inbox",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "signOut": "Sign out"
+  },
+  "login": {
+    "subtitle": "Centralized Support Hub",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "error": "Invalid email or password.",
+    "restricted": "Access restricted to authorized users"
+  },
+  "inbox": {
+    "allSources": "All sources",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "allTypes": "All types",
+    "clearFilters": "Clear",
+    "ticketCount_one": "{{count}} ticket",
+    "ticketCount_other": "{{count}} tickets",
+    "empty": "No tickets found",
+    "loading": "Loading...",
+    "queue": {
+      "mine": "My queue",
+      "unassigned": "Unassigned",
+      "all": "All"
+    },
+    "detail": {
+      "title": "Ticket Detail",
+      "loading": "Loading...",
+      "createdAt": "Created at",
+      "updatedAt": "Updated",
+      "assignedTo": "Assigned to",
+      "unassigned": "Unassigned",
+      "notes": "Internal Notes",
+      "noNotes": "No notes yet.",
+      "notePlaceholder": "Add an internal note...",
+      "unknownAuthor": "Unknown",
+      "eventHistory": "Event History",
+      "noEvents": "No events recorded."
+    }
+  },
+  "sla": {
+    "on_time": "On Time",
+    "at_risk": "At Risk",
+    "overdue": "Overdue",
+    "met": "Met"
+  },
+  "status": {
+    "action": {
+      "startProgress": "Start Progress",
+      "waitClient": "Await Client",
+      "resolve": "Resolve",
+      "cancel": "Cancel",
+      "reopen": "Reopen"
+    },
+    "OPEN": "Open",
+    "IN_PROGRESS": "In Progress",
+    "WAITING_CLIENT": "Awaiting Client",
+    "WAITING_DEV": "Awaiting Dev",
+    "IN_DEV": "In Development",
+    "WAITING_TEST": "Awaiting Test",
+    "IN_TEST": "In Testing",
+    "RESOLVED": "Resolved",
+    "CLOSED": "Closed",
+    "CANCELLED": "Cancelled"
+  },
+  "priority": {
+    "URGENT": "Urgent",
+    "HIGH": "High",
+    "MEDIUM": "Medium",
+    "LOW": "Low"
+  },
+  "type": {
+    "BUG": "Bug",
+    "IMPROVEMENT": "Improvement",
+    "QUESTION": "Question",
+    "SUPPORT": "Support"
+  }
+}
