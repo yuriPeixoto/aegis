@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/axios'
-import type { TicketListResponse, TicketDetail, TicketFilters } from '../types/ticket'
+import type { TicketListResponse, TicketDetail, TicketFilters, TicketNote } from '../types/ticket'
 
 export function useTickets(filters: TicketFilters = {}) {
   const params = Object.fromEntries(
@@ -62,6 +62,29 @@ export function useUpdateTicketStatus(ticketId: number) {
     onSuccess: (updated) => {
       queryClient.setQueryData(['ticket', ticketId], updated)
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
+export function useNotes(ticketId: number) {
+  return useQuery<TicketNote[]>({
+    queryKey: ['notes', ticketId],
+    queryFn: async () => {
+      const { data } = await api.get<TicketNote[]>(`/tickets/${ticketId}/notes`)
+      return data
+    },
+  })
+}
+
+export function useCreateNote(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketNote, Error, { body: string }>({
+    mutationFn: async (payload) => {
+      const { data } = await api.post<TicketNote>(`/tickets/${ticketId}/notes`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', ticketId] })
     },
   })
 }
