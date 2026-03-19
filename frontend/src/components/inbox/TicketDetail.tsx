@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { X, Clock, RefreshCw, ExternalLink, UserCircle } from 'lucide-react'
-import { useTicket, useUpdateTicketStatus } from '../../hooks/useTickets'
+import { useTicket, useUpdateTicketStatus, useAssignTicket, useUsers } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
@@ -75,6 +75,8 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
   const locale = i18n.language
   const { data: ticket, isLoading } = useTicket(ticketId)
   const updateStatus = useUpdateTicketStatus(ticketId)
+  const assignTicket = useAssignTicket(ticketId)
+  const { data: users = [] } = useUsers()
 
   return (
     <div className="flex flex-col h-full border-l border-brand-border bg-brand-dark">
@@ -142,18 +144,24 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
           <div className="px-5 py-4 border-b border-brand-border/50 space-y-1.5">
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <UserCircle className="w-3 h-3 shrink-0" />
-              <span>
-                {t('inbox.detail.assignedTo')}:{' '}
-                {ticket.assigned_to ? (
-                  <span className="text-brand-purple font-medium">
-                    {ticket.assigned_to.name}
-                  </span>
-                ) : (
-                  <span className="text-slate-600 italic">
-                    {t('inbox.detail.unassigned')}
-                  </span>
-                )}
-              </span>
+              <span className="shrink-0">{t('inbox.detail.assignedTo')}:</span>
+              <select
+                disabled={assignTicket.isPending}
+                value={ticket.assigned_to?.id ?? ''}
+                onChange={(e) =>
+                  assignTicket.mutate({
+                    user_id: e.target.value === '' ? null : Number(e.target.value),
+                  })
+                }
+                className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-0.5 text-[11px] text-slate-300 cursor-pointer focus:outline-none focus:border-brand-purple disabled:opacity-50"
+              >
+                <option value="">{t('inbox.detail.unassigned')}</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <Clock className="w-3 h-3 shrink-0" />
