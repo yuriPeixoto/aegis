@@ -4,6 +4,7 @@ import { useTicket, useUpdateTicketStatus, useAssignTicket, useUsers } from '../
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
+import { NotesPanel } from './NotesPanel'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open: ['in_progress', 'cancelled'],
@@ -183,7 +184,11 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
             </div>
           </div>
 
-          <div className="px-5 py-4">
+          <div className="border-t border-brand-border/50">
+            <NotesPanel ticketId={ticket.id} locale={locale} />
+          </div>
+
+          <div className="px-5 py-4 border-t border-brand-border/50">
             <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-4">
               {t('inbox.detail.eventHistory')}
             </h3>

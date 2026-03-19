@@ -53,6 +53,19 @@ export interface TicketListResponse {
   offset: number
 }
 
+export interface NoteAuthor {
+  id: number
+  name: string
+}
+
+export interface TicketNote {
+  id: number
+  ticket_id: number
+  body: string
+  author: NoteAuthor | null
+  created_at: string
+}
+
 export interface TicketFilters {
   source_id?: number
   status?: string
