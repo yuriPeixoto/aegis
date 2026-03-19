@@ -1,0 +1,87 @@
+{
+  "nav": {
+    "inbox": "Caixa de Entrada",
+    "settings": "Configurações"
+  },
+  "topbar": {
+    "signOut": "Sair"
+  },
+  "login": {
+    "subtitle": "Central de Suporte",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "voce@exemplo.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "error": "E-mail ou senha inválidos.",
+    "restricted": "Acesso restrito a usuários autorizados"
+  },
+  "inbox": {
+    "allSources": "Todas as fontes",
+    "allStatuses": "Todos os status",
+    "allPriorities": "Todas as prioridades",
+    "allTypes": "Todos os tipos",
+    "clearFilters": "Limpar",
+    "ticketCount_one": "{{count}} ticket",
+    "ticketCount_other": "{{count}} tickets",
+    "empty": "Nenhum ticket encontrado",
+    "loading": "Carregando...",
+    "queue": {
+      "mine": "Minha fila",
+      "unassigned": "Sem atribuição",
+      "all": "Todos"
+    },
+    "detail": {
+      "title": "Detalhe do Ticket",
+      "loading": "Carregando...",
+      "createdAt": "Criado em",
+      "updatedAt": "Atualizado",
+      "assignedTo": "Atribuído a",
+      "unassigned": "Sem atribuição",
+      "notes": "Notas Internas",
+      "noNotes": "Nenhuma nota ainda.",
+      "notePlaceholder": "Adicionar uma nota interna...",
+      "unknownAuthor": "Desconhecido",
+      "eventHistory": "Histórico de Eventos",
+      "noEvents": "Nenhum evento registrado."
+    }
+  },
+  "sla": {
+    "on_time": "No Prazo",
+    "at_risk": "Em Risco",
+    "overdue": "Atrasado",
+    "met": "Cumprido"
+  },
+  "status": {
+    "action": {
+      "startProgress": "Iniciar Atendimento",
+      "waitClient": "Ag. Cliente",
+      "resolve": "Resolver",
+      "cancel": "Cancelar",
+      "reopen": "Reabrir"
+    },
+    "OPEN": "Aberto",
+    "IN_PROGRESS": "Em Atendimento",
+    "WAITING_CLIENT": "Ag. Cliente",
+    "WAITING_DEV": "Ag. Desenvolvimento",
+    "IN_DEV": "Em Desenvolvimento",
+    "WAITING_TEST": "Ag. Teste",
+    "IN_TEST": "Em Teste",
+    "RESOLVED": "Resolvido",
+    "CLOSED": "Fechado",
+    "CANCELLED": "Cancelado"
+  },
+  "priority": {
+    "URGENT": "Urgente",
+    "HIGH": "Alto",
+    "MEDIUM": "Médio",
+    "LOW": "Baixo"
+  },
+  "type": {
+    "BUG": "Bug",
+    "IMPROVEMENT": "Melhoria",
+    "QUESTION": "Dúvida",
+    "SUPPORT": "Suporte"
+  }
+}

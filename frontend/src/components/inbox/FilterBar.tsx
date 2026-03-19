@@ -1,112 +1,88 @@
+import { useTranslation } from 'react-i18next'
 import type { TicketFilters, TicketStatus, TicketPriority, TicketType } from '../../types/ticket'
 import { useSources } from '../../hooks/useTickets'
+import { FilterSelect } from './FilterSelect'
 
 interface FilterBarProps {
   filters: TicketFilters
   onChange: (filters: TicketFilters) => void
 }
 
-const STATUSES: { value: TicketStatus; label: string }[] = [
-  { value: 'ABERTO', label: 'Aberto' },
-  { value: 'EM_ATENDIMENTO', label: 'Em Atendimento' },
-  { value: 'AGUARDANDO_CLIENTE', label: 'Ag. Cliente' },
-  { value: 'AGUARDANDO_DESENVOLVIMENTO', label: 'Ag. Dev' },
-  { value: 'EM_DESENVOLVIMENTO', label: 'Em Dev' },
-  { value: 'AGUARDANDO_TESTE', label: 'Ag. Teste' },
-  { value: 'EM_TESTE', label: 'Em Teste' },
-  { value: 'RESOLVIDO', label: 'Resolvido' },
-  { value: 'FECHADO', label: 'Fechado' },
-  { value: 'CANCELADO', label: 'Cancelado' },
-]
-
-const PRIORITIES: { value: TicketPriority; label: string }[] = [
-  { value: 'URGENTE', label: 'Urgente' },
-  { value: 'ALTO', label: 'Alto' },
-  { value: 'MEDIO', label: 'Médio' },
-  { value: 'BAIXO', label: 'Baixo' },
-]
-
-const TYPES: { value: TicketType; label: string }[] = [
-  { value: 'BUG', label: 'Bug' },
-  { value: 'MELHORIA', label: 'Melhoria' },
-  { value: 'DUVIDA', label: 'Dúvida' },
-  { value: 'SUPORTE', label: 'Suporte' },
-]
-
-function Select({
-  value,
-  onChange,
-  placeholder,
-  options,
-}: {
-  value: string | undefined
-  onChange: (v: string) => void
-  placeholder: string
-  options: { value: string; label: string }[]
-}) {
-  return (
-    <select
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-      className="bg-brand-surface border border-brand-border text-slate-300 text-xs rounded-lg px-3 py-2
-                 focus:outline-none focus:border-brand-purple transition-colors cursor-pointer"
-    >
-      <option value="">{placeholder}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  )
-}
-
 export function FilterBar({ filters, onChange }: FilterBarProps) {
+  const { t } = useTranslation()
   const { data: sources } = useSources()
+
+  const STATUSES = [
+    { value: 'OPEN',           label: t('status.OPEN') },
+    { value: 'IN_PROGRESS',    label: t('status.IN_PROGRESS') },
+    { value: 'WAITING_CLIENT', label: t('status.WAITING_CLIENT') },
+    { value: 'WAITING_DEV',    label: t('status.WAITING_DEV') },
+    { value: 'IN_DEV',         label: t('status.IN_DEV') },
+    { value: 'WAITING_TEST',   label: t('status.WAITING_TEST') },
+    { value: 'IN_TEST',        label: t('status.IN_TEST') },
+    { value: 'RESOLVED',       label: t('status.RESOLVED') },
+    { value: 'CLOSED',         label: t('status.CLOSED') },
+    { value: 'CANCELLED',      label: t('status.CANCELLED') },
+  ]
+
+  const PRIORITIES = [
+    { value: 'URGENT', label: t('priority.URGENT') },
+    { value: 'HIGH',   label: t('priority.HIGH') },
+    { value: 'MEDIUM', label: t('priority.MEDIUM') },
+    { value: 'LOW',    label: t('priority.LOW') },
+  ]
+
+  const TYPES = [
+    { value: 'BUG',         label: t('type.BUG') },
+    { value: 'IMPROVEMENT', label: t('type.IMPROVEMENT') },
+    { value: 'QUESTION',    label: t('type.QUESTION') },
+    { value: 'SUPPORT',     label: t('type.SUPPORT') },
+  ]
 
   const hasFilters = filters.source_id || filters.status || filters.priority || filters.type
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Select
+      <FilterSelect
         value={filters.source_id?.toString()}
         onChange={(v) => onChange({ ...filters, source_id: v ? Number(v) : undefined, offset: 0 })}
-        placeholder="Todas as fontes"
+        placeholder={t('inbox.allSources')}
         options={(Array.isArray(sources) ? sources : []).map((s) => ({
           value: s.id.toString(),
           label: s.name,
         }))}
       />
-      <Select
+      <FilterSelect
         value={filters.status}
         onChange={(v) =>
           onChange({ ...filters, status: (v as TicketStatus) || undefined, offset: 0 })
         }
-        placeholder="Todos os status"
+        placeholder={t('inbox.allStatuses')}
         options={STATUSES}
       />
-      <Select
+      <FilterSelect
         value={filters.priority}
         onChange={(v) =>
           onChange({ ...filters, priority: (v as TicketPriority) || undefined, offset: 0 })
         }
-        placeholder="Todas as prioridades"
+        placeholder={t('inbox.allPriorities')}
         options={PRIORITIES}
       />
-      <Select
+      <FilterSelect
         value={filters.type}
         onChange={(v) =>
           onChange({ ...filters, type: (v as TicketType) || undefined, offset: 0 })
         }
-        placeholder="Todos os tipos"
+        placeholder={t('inbox.allTypes')}
         options={TYPES}
       />
       {hasFilters && (
         <button
           onClick={() => onChange({ offset: 0 })}
-          className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-mono underline underline-offset-2"
+          className="px-3 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors cursor-pointer
+            border border-transparent hover:border-brand-border rounded-lg"
         >
-          Limpar
+          {t('inbox.clearFilters')}
         </button>
       )}
     </div>

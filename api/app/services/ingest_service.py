@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +29,12 @@ class IngestService:
         ticket = result.scalar_one_or_none()
 
         if ticket is None:
+            ingested_at = datetime.now(UTC)
+            sla_due_at = (
+                ingested_at + timedelta(hours=source.sla_hours)
+                if source.sla_hours
+                else None
+            )
             ticket = Ticket(
                 source_id=source.id,
                 external_id=data.external_id,
@@ -40,6 +46,7 @@ class IngestService:
                 source_metadata=data.source_metadata,
                 source_created_at=data.source_created_at,
                 source_updated_at=data.source_updated_at,
+                sla_due_at=sla_due_at,
             )
             self._db.add(ticket)
             await self._db.flush()  # get the id without committing
