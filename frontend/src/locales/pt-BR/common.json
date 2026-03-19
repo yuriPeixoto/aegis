@@ -44,6 +44,13 @@
     }
   },
   "status": {
+    "action": {
+      "startProgress": "Iniciar Atendimento",
+      "waitClient": "Ag. Cliente",
+      "resolve": "Resolver",
+      "cancel": "Cancelar",
+      "reopen": "Reabrir"
+    },
     "OPEN": "Aberto",
     "IN_PROGRESS": "Em Atendimento",
     "WAITING_CLIENT": "Ag. Cliente",

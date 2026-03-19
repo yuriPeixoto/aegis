@@ -8,8 +8,17 @@ from sqlalchemy.orm import selectinload
 
 from app.models.source import Source  # noqa: F401 — loaded via selectinload
 from app.models.ticket import Ticket
-from app.models.ticket_event import TicketEvent  # noqa: F401 — loaded via selectinload
+from app.models.ticket_event import TicketEvent  # active — needed to create status_changed events
 from app.models.user import User  # noqa: F401 — loaded via selectinload
+
+_ALLOWED_TRANSITIONS: dict[str, set[str]] = {
+    "open": {"in_progress", "cancelled"},
+    "in_progress": {"waiting_client", "resolved", "cancelled"},
+    "waiting_client": {"in_progress", "resolved", "cancelled"},
+    "resolved": {"open"},
+    "closed": set(),
+    "cancelled": set(),
+}
 
 
 class TicketService:
@@ -91,3 +100,46 @@ class TicketService:
             )
         )
         return result.scalar_one_or_none()
+
+    async def update_ticket_status(
+        self,
+        ticket_id: int,
+        new_status: str,
+        changed_by_user_id: int,
+        comment: str | None = None,
+    ) -> tuple[Ticket, None] | tuple[None, str]:
+        """Return (ticket, None) on success, or (None, error_message) on failure."""
+        ticket = await self.get_ticket(ticket_id)
+        if ticket is None:
+            return None, "not_found"
+
+        allowed = _ALLOWED_TRANSITIONS.get(ticket.status, set())
+        if new_status not in allowed:
+            return None, f"transition_invalid:{ticket.status}>{new_status}"
+
+        old_status = ticket.status
+        ticket.status = new_status
+
+        event = TicketEvent(
+            ticket_id=ticket_id,
+            event_type="status_changed",
+            payload={
+                "from": old_status,
+                "to": new_status,
+                "changed_by_user_id": changed_by_user_id,
+                **({"comment": comment} if comment else {}),
+            },
+        )
+        self._db.add(event)
+        await self._db.commit()
+
+        result = await self._db.execute(
+            select(Ticket)
+            .where(Ticket.id == ticket_id)
+            .options(
+                selectinload(Ticket.source),
+                selectinload(Ticket.events),
+                selectinload(Ticket.assignee),
+            )
+        )
+        return result.scalar_one_or_none(), None
