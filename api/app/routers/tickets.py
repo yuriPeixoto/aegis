@@ -12,6 +12,7 @@ from app.schemas.ticket import (
     TicketDetailResponse,
     TicketListResponse,
     TicketResponse,
+    UpdateStatusRequest,
 )
 from app.services.ticket_service import TicketService
 
@@ -81,6 +82,52 @@ async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
     ticket = await TicketService(db).get_ticket(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    return TicketDetailResponse(
+        id=ticket.id,
+        source_id=ticket.source_id,
+        source_name=ticket.source.name if ticket.source else "",
+        external_id=ticket.external_id,
+        type=ticket.type,
+        priority=ticket.priority,
+        status=ticket.status,
+        subject=ticket.subject,
+        description=ticket.description,
+        source_metadata=ticket.source_metadata,
+        source_created_at=ticket.source_created_at,
+        source_updated_at=ticket.source_updated_at,
+        first_ingested_at=ticket.first_ingested_at,
+        last_synced_at=ticket.last_synced_at,
+        assigned_to=_assignee(ticket),
+        events=[
+            {
+                "id": e.id,
+                "event_type": e.event_type,
+                "payload": e.payload,
+                "occurred_at": e.occurred_at,
+            }
+            for e in ticket.events
+        ],
+    )
+
+
+@router.patch("/{ticket_id}/status", response_model=TicketDetailResponse)
+async def update_ticket_status(
+    ticket_id: int,
+    body: UpdateStatusRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> TicketDetailResponse:
+    ticket, error = await TicketService(db).update_ticket_status(
+        ticket_id,
+        body.status,
+        changed_by_user_id=current_user.id,
+        comment=body.comment,
+    )
+    if error == "not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+    if error:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
 
     return TicketDetailResponse(
         id=ticket.id,
