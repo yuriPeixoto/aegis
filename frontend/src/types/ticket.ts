@@ -39,6 +39,8 @@ export interface Ticket {
   source_updated_at: string | null
   first_ingested_at: string
   last_synced_at: string
+  sla_due_at: string | null
+  sla_status: 'on_time' | 'at_risk' | 'overdue' | 'met' | null
   assigned_to: Assignee | null
 }
 
