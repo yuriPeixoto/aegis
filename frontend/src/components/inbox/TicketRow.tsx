@@ -31,31 +31,38 @@ export function TicketRow({ ticket, isSelected, onClick }: TicketRowProps) {
       {/* Top row: source + type + date */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono text-slate-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
+          <span className="text-xs font-mono text-slate-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
             {ticket.source_name}
           </span>
           {ticket.type && <TypeBadge type={ticket.type} />}
         </div>
-        <span className="text-[10px] text-slate-600 font-mono shrink-0">
+        <span className="text-xs text-slate-500 font-mono shrink-0">
           {formatDate(ticket.source_updated_at)}
         </span>
       </div>
 
       {/* Subject */}
       <p
-        className={`text-sm font-medium leading-snug mb-2 line-clamp-1
+        className={`text-base font-medium leading-snug mb-2 line-clamp-1
           ${isSelected ? 'text-slate-100' : 'text-slate-300 group-hover:text-slate-100'}`}
       >
         {ticket.subject}
       </p>
 
-      {/* Bottom row: priority + status + external_id */}
+      {/* Bottom row: priority + status + assignee + external_id */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
         </div>
-        <span className="text-[10px] font-mono text-slate-600">#{ticket.external_id}</span>
+        <div className="flex items-center gap-2">
+          {ticket.assigned_to && (
+            <span className="text-[10px] text-brand-purple/70 font-medium truncate max-w-[80px]">
+              {ticket.assigned_to.name.split(' ')[0]}
+            </span>
+          )}
+          <span className="text-xs font-mono text-slate-500">#{ticket.external_id}</span>
+        </div>
       </div>
     </button>
   )

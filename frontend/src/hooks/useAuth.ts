@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/axios'
 
-interface User {
+export interface User {
   id: number
   email: string
   name: string
+  role: string
   is_active: boolean
   created_at: string
 }
