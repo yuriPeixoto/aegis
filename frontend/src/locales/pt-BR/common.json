@@ -39,6 +39,10 @@
       "updatedAt": "Atualizado",
       "assignedTo": "Atribuído a",
       "unassigned": "Sem atribuição",
+      "notes": "Notas Internas",
+      "noNotes": "Nenhuma nota ainda.",
+      "notePlaceholder": "Adicionar uma nota interna...",
+      "unknownAuthor": "Desconhecido",
       "eventHistory": "Histórico de Eventos",
       "noEvents": "Nenhum evento registrado."
     }
