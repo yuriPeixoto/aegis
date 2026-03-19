@@ -47,6 +47,12 @@
       "noEvents": "Nenhum evento registrado."
     }
   },
+  "sla": {
+    "on_time": "No Prazo",
+    "at_risk": "Em Risco",
+    "overdue": "Atrasado",
+    "met": "Cumprido"
+  },
   "status": {
     "action": {
       "startProgress": "Iniciar Atendimento",

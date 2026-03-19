@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
 import { NotesPanel } from './NotesPanel'
+import { SlaBadge } from './SlaBadge'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open: ['in_progress', 'cancelled'],
@@ -118,6 +119,7 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               {ticket.type && <TypeBadge type={ticket.type} />}
               {ticket.priority && <PriorityBadge priority={ticket.priority} />}
               <StatusBadge status={ticket.status} />
+              <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
             </div>
 
             {(ALLOWED_TRANSITIONS[ticket.status] ?? []).length > 0 && (

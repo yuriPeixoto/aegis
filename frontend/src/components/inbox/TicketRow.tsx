@@ -2,6 +2,7 @@ import type { Ticket } from '../../types/ticket'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
+import { SlaBadge } from './SlaBadge'
 
 interface TicketRowProps {
   ticket: Ticket
@@ -54,6 +55,7 @@ export function TicketRow({ ticket, isSelected, onClick }: TicketRowProps) {
         <div className="flex items-center gap-1.5">
           {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
+          <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
         </div>
         <div className="flex items-center gap-2">
           {ticket.assigned_to && (

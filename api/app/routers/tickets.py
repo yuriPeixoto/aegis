@@ -70,6 +70,7 @@ async def list_tickets(
                 source_updated_at=t.source_updated_at,
                 first_ingested_at=t.first_ingested_at,
                 last_synced_at=t.last_synced_at,
+                sla_due_at=t.sla_due_at,
                 assigned_to=_assignee(t),
             )
         )
@@ -98,6 +99,7 @@ async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
         source_updated_at=ticket.source_updated_at,
         first_ingested_at=ticket.first_ingested_at,
         last_synced_at=ticket.last_synced_at,
+        sla_due_at=ticket.sla_due_at,
         assigned_to=_assignee(ticket),
         events=[
             {
@@ -144,6 +146,7 @@ async def update_ticket_status(
         source_updated_at=ticket.source_updated_at,
         first_ingested_at=ticket.first_ingested_at,
         last_synced_at=ticket.last_synced_at,
+        sla_due_at=ticket.sla_due_at,
         assigned_to=_assignee(ticket),
         events=[
             {
@@ -183,6 +186,7 @@ async def assign_ticket(
         source_updated_at=ticket.source_updated_at,
         first_ingested_at=ticket.first_ingested_at,
         last_synced_at=ticket.last_synced_at,
+        sla_due_at=ticket.sla_due_at,
         assigned_to=_assignee(ticket),
         events=[
             {

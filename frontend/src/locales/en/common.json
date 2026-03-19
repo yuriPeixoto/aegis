@@ -47,6 +47,12 @@
       "noEvents": "No events recorded."
     }
   },
+  "sla": {
+    "on_time": "On Time",
+    "at_risk": "At Risk",
+    "overdue": "Overdue",
+    "met": "Met"
+  },
   "status": {
     "action": {
       "startProgress": "Start Progress",
