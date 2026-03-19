@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.source import Source
     from app.models.ticket_event import TicketEvent
+    from app.models.user import User
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -43,6 +44,11 @@ class Ticket(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Assignment — Aegis operator who owns this ticket
+    assigned_to_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     # Aegis-managed timestamps
     first_ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -55,6 +61,7 @@ class Ticket(Base):
     events: Mapped[list[TicketEvent]] = relationship(
         "TicketEvent", back_populates="ticket", order_by="TicketEvent.occurred_at"
     )
+    assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to_user_id])
 
     __table_args__ = (
         # Unique ticket per source — prevents duplicate ingestion

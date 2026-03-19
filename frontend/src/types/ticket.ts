@@ -1,16 +1,16 @@
-export type TicketType = 'BUG' | 'MELHORIA' | 'DUVIDA' | 'SUPORTE'
-export type TicketPriority = 'URGENTE' | 'ALTO' | 'MEDIO' | 'BAIXO'
+export type TicketType = 'BUG' | 'IMPROVEMENT' | 'QUESTION' | 'SUPPORT'
+export type TicketPriority = 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW'
 export type TicketStatus =
-  | 'ABERTO'
-  | 'EM_ATENDIMENTO'
-  | 'AGUARDANDO_CLIENTE'
-  | 'AGUARDANDO_DESENVOLVIMENTO'
-  | 'EM_DESENVOLVIMENTO'
-  | 'AGUARDANDO_TESTE'
-  | 'EM_TESTE'
-  | 'RESOLVIDO'
-  | 'FECHADO'
-  | 'CANCELADO'
+  | 'OPEN'
+  | 'IN_PROGRESS'
+  | 'WAITING_CLIENT'
+  | 'WAITING_DEV'
+  | 'IN_DEV'
+  | 'WAITING_TEST'
+  | 'IN_TEST'
+  | 'RESOLVED'
+  | 'CLOSED'
+  | 'CANCELLED'
 
 export interface TicketEvent {
   id: number
@@ -19,14 +19,19 @@ export interface TicketEvent {
   occurred_at: string
 }
 
+export interface Assignee {
+  id: number
+  name: string
+}
+
 export interface Ticket {
   id: number
   source_id: number
   source_name: string
   external_id: string
-  type: TicketType | null
-  priority: TicketPriority | null
-  status: TicketStatus
+  type: string | null
+  priority: string | null
+  status: string
   subject: string
   description: string | null
   source_metadata: Record<string, unknown> | null
@@ -34,6 +39,7 @@ export interface Ticket {
   source_updated_at: string | null
   first_ingested_at: string
   last_synced_at: string
+  assigned_to: Assignee | null
 }
 
 export interface TicketDetail extends Ticket {
@@ -49,9 +55,11 @@ export interface TicketListResponse {
 
 export interface TicketFilters {
   source_id?: number
-  status?: TicketStatus
-  priority?: TicketPriority
-  type?: TicketType
+  status?: string
+  priority?: string
+  type?: string
+  assigned_to_user_id?: number
+  unassigned?: boolean
   limit?: number
   offset?: number
 }

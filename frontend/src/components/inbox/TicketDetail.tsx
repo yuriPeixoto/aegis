@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { X, Clock, RefreshCw, ExternalLink } from 'lucide-react'
+import { X, Clock, RefreshCw, ExternalLink, UserCircle } from 'lucide-react'
 import { useTicket } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
@@ -107,6 +107,21 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
           </div>
 
           <div className="px-5 py-4 border-b border-brand-border/50 space-y-1.5">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <UserCircle className="w-3 h-3 shrink-0" />
+              <span>
+                {t('inbox.detail.assignedTo')}:{' '}
+                {ticket.assigned_to ? (
+                  <span className="text-brand-purple font-medium">
+                    {ticket.assigned_to.name}
+                  </span>
+                ) : (
+                  <span className="text-slate-600 italic">
+                    {t('inbox.detail.unassigned')}
+                  </span>
+                )}
+              </span>
+            </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-500">
               <Clock className="w-3 h-3 shrink-0" />
               <span>
