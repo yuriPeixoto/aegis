@@ -7,7 +7,7 @@
     "signOut": "Sign out"
   },
   "login": {
-    "subtitle": "Unified Inbox",
+    "subtitle": "Centralized Support Hub",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "Password",
@@ -27,37 +27,44 @@
     "ticketCount_other": "{{count}} tickets",
     "empty": "No tickets found",
     "loading": "Loading...",
+    "queue": {
+      "mine": "My queue",
+      "unassigned": "Unassigned",
+      "all": "All"
+    },
     "detail": {
       "title": "Ticket Detail",
       "loading": "Loading...",
       "createdAt": "Created at",
       "updatedAt": "Updated",
+      "assignedTo": "Assigned to",
+      "unassigned": "Unassigned",
       "eventHistory": "Event History",
       "noEvents": "No events recorded."
     }
   },
   "status": {
-    "ABERTO": "Open",
-    "EM_ATENDIMENTO": "In Progress",
-    "AGUARDANDO_CLIENTE": "Awaiting Client",
-    "AGUARDANDO_DESENVOLVIMENTO": "Awaiting Dev",
-    "EM_DESENVOLVIMENTO": "In Development",
-    "AGUARDANDO_TESTE": "Awaiting Test",
-    "EM_TESTE": "In Testing",
-    "RESOLVIDO": "Resolved",
-    "FECHADO": "Closed",
-    "CANCELADO": "Cancelled"
+    "OPEN": "Open",
+    "IN_PROGRESS": "In Progress",
+    "WAITING_CLIENT": "Awaiting Client",
+    "WAITING_DEV": "Awaiting Dev",
+    "IN_DEV": "In Development",
+    "WAITING_TEST": "Awaiting Test",
+    "IN_TEST": "In Testing",
+    "RESOLVED": "Resolved",
+    "CLOSED": "Closed",
+    "CANCELLED": "Cancelled"
   },
   "priority": {
-    "URGENTE": "Urgent",
-    "ALTO": "High",
-    "MEDIO": "Medium",
-    "BAIXO": "Low"
+    "URGENT": "Urgent",
+    "HIGH": "High",
+    "MEDIUM": "Medium",
+    "LOW": "Low"
   },
   "type": {
     "BUG": "Bug",
-    "MELHORIA": "Improvement",
-    "DUVIDA": "Question",
-    "SUPORTE": "Support"
+    "IMPROVEMENT": "Improvement",
+    "QUESTION": "Question",
+    "SUPPORT": "Support"
   }
 }

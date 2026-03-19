@@ -1,20 +1,23 @@
 # Aegis — Roadmap
 
-## Phase 1 — Foundation & Unified Inbox (MVP)
+## Phase 1 — Foundation & Unified Inbox (MVP) ✅
 > Goal: solve the immediate business problem — one place to see all tickets from all gestão frota instances.
+> **Completed:** 2026-03-19
 
-| # | Issue | Type |
-|---|-------|------|
-| 1 | Project setup: FastAPI + SQLAlchemy + Alembic + PostgreSQL + Ruff + CI | infra |
-| 2 | Source management: register sources, generate and validate API keys | feature |
-| 3 | Database schema: sources, tickets, ticket_events migrations | infra |
-| 4 | Ingest API: `POST /v1/ingest/tickets` and `POST /v1/ingest/tickets/events` | feature |
-| 5 | Ticket read API: list with filters (source, status, priority, type, date) + detail | feature |
-| 6 | Auth: JWT login for dashboard users | feature |
-| 7 | Frontend setup: Vite + React + TS + Tailwind + TanStack Query | infra |
-| 8 | Frontend: unified inbox with filters and ticket detail panel | feature |
-| 9 | gestão frota integration: webhook listener + SendTicketWebhook job | feature |
-| 10 | ADRs: 001 (stack), 002 (ingestion contract), 003 (source isolation) | docs |
+| # | Issue | Status | Type |
+|---|-------|--------|------|
+| 1 | Project setup: FastAPI + SQLAlchemy + Alembic + PostgreSQL + CI | ✅ | infra |
+| 2 | Source management: register sources, generate and validate API keys | ✅ | feature |
+| 3 | Database schema: sources, tickets, ticket_events, users migrations (001–006) | ✅ | infra |
+| 4 | Ingest API: `POST /v1/ingest/tickets` and `POST /v1/ingest/tickets/events` | ✅ | feature |
+| 5 | Ticket read API: list with filters + pagination + detail | ✅ | feature |
+| 6 | Auth: JWT login, `/me` endpoint, roles (admin/agent/viewer) | ✅ | feature |
+| 7 | Frontend setup: Vite + React 18 + TS + Tailwind + TanStack Query + i18next | ✅ | infra |
+| 8 | Frontend: unified inbox — filters, queue tabs, ticket detail panel | ✅ | feature |
+| 9 | gestão frota integration: `SendTicketToAegis` job + enum mapping + block local actions | ✅ | feature |
+| 19 | Roles + assignment: `role` on users, `assigned_to_user_id` on tickets, PATCH assign | ✅ | feature |
+| 20 | i18n: EN/PT-BR via react-i18next + LanguageContext + static badge translations | ✅ | feature |
+| 10 | ADRs: 001–006 (stack, auth, enums, GF split, i18n, assignment model) | ✅ | docs |
 
 ---
 
@@ -23,13 +26,15 @@
 
 | # | Issue | Type |
 |---|-------|------|
-| 11 | Ticket comments: internal notes from Aegis team | feature |
-| 12 | Ticket status management: team updates status in Aegis | feature |
-| 13 | Ticket assignment: assign tickets to team members | feature |
-| 14 | SLA tracking: compute elapsed time, flag overdue tickets | feature |
-| 15 | Notification: email on new ticket, overdue SLA, assignment | feature |
-| 16 | Frontend: comment thread, status actions, assignment UI | feature |
-| 17 | Frontend: SLA indicator per ticket (on-time / at-risk / overdue) | feature |
+| 11 | Ticket status management: team updates status directly in Aegis inbox | feature |
+| 12 | Assignment UI: dropdown in inbox to assign/reassign tickets to agents | feature |
+| 13 | Manager dashboard: KPIs, unassigned queue, overdue tickets, metrics by client and agent | feature |
+| 14 | Ticket comments: internal notes from Aegis team (visible only in Aegis) | feature |
+| 15 | SLA tracking: compute elapsed time in business hours, flag overdue tickets | feature |
+| 16 | Notification: email/WhatsApp on new ticket, overdue SLA, assignment change | feature |
+| 17 | Auto-close: automatically close tickets inactive beyond threshold | feature |
+| 18 | Frontend: SLA indicator per ticket (on-time / at-risk / overdue) | feature |
+| 19 | Webhook-out: push Aegis status changes back to source system (configurable per source) | feature |
 
 ---
 

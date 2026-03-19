@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-brand-dark text-slate-100 antialiased;
+    @apply bg-brand-dark text-slate-100 antialiased text-sm;
+    font-size: 14px;
   }
 
   ::-webkit-scrollbar {
@@ -16,6 +17,11 @@
   ::-webkit-scrollbar-thumb {
     @apply bg-brand-border rounded;
   }
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @layer components {
@@ -50,16 +56,16 @@
   }
 
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider;
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide;
   }
 
   .btn-primary {
-    @apply bg-brand-purple hover:bg-brand-purple-dim text-white font-semibold px-4 py-2 rounded-lg
+    @apply bg-brand-purple hover:bg-brand-purple-dim text-white font-semibold px-4 py-2.5 rounded-lg text-sm
            transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-purple/50;
   }
 
   .input {
-    @apply w-full bg-brand-surface border border-brand-border rounded-lg px-4 py-2.5
+    @apply w-full bg-brand-surface border border-brand-border rounded-lg px-4 py-3
            text-slate-100 text-sm placeholder-slate-500
            focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple/30
            transition-colors duration-200;

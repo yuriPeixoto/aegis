@@ -30,14 +30,15 @@ export function LoginPage() {
         <div className="glass-card p-8">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center mb-3">
-              <Zap className="w-6 h-6 text-brand-neon" strokeWidth={2.5} />
+            <div className="w-20 h-20 rounded-2xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center mb-4"
+              style={{ boxShadow: '0 0 32px rgba(124, 58, 237, 0.15)' }}>
+              <Zap className="w-10 h-10 text-brand-neon" strokeWidth={2} />
             </div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-4xl font-bold tracking-tight">
               <span className="text-slate-100">Ae</span>
               <span className="text-brand-purple">gis</span>
             </h1>
-            <p className="text-xs text-slate-500 mt-1 font-mono uppercase tracking-widest">
+            <p className="text-sm text-slate-400 mt-2 font-mono tracking-wide">
               {t('login.subtitle')}
             </p>
           </div>
@@ -45,7 +46,7 @@ export function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1.5">
+              <label className="block text-sm text-slate-300 font-semibold mb-2">
                 {t('login.emailLabel')}
               </label>
               <input
@@ -60,7 +61,7 @@ export function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1.5">
+              <label className="block text-sm text-slate-300 font-semibold mb-2">
                 {t('login.passwordLabel')}
               </label>
               <input
@@ -86,7 +87,7 @@ export function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between mt-4 px-1">
-          <p className="text-[11px] text-slate-600 font-mono">{t('login.restricted')}</p>
+          <p className="text-xs text-slate-500">{t('login.restricted')}</p>
           <LanguageSwitcher />
         </div>
       </div>

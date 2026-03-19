@@ -14,6 +14,13 @@ class TicketEventResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AssigneeResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
 class TicketResponse(BaseModel):
     id: int
     source_id: int
@@ -29,8 +36,13 @@ class TicketResponse(BaseModel):
     source_updated_at: datetime | None
     first_ingested_at: datetime
     last_synced_at: datetime
+    assigned_to: AssigneeResponse | None = None
 
     model_config = {"from_attributes": True}
+
+
+class AssignTicketRequest(BaseModel):
+    user_id: int | None
 
 
 class TicketDetailResponse(TicketResponse):
