@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.routers import auth, ingest, notes, sources, tickets, users
+from app.routers import attachments, auth, dashboard, ingest, messages, notes, sources, tickets, users
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -37,6 +37,9 @@ app.include_router(ingest.router)
 app.include_router(tickets.router)
 app.include_router(users.router)
 app.include_router(notes.router)
+app.include_router(messages.router)
+app.include_router(attachments.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/health")

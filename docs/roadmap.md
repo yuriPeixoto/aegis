@@ -1,6 +1,6 @@
 # Aegis — Roadmap
 
-## Phase 1 — Foundation & Unified Inbox (MVP) ✅
+## Phase 1 — Foundation & Unified Inbox ✅
 > Goal: solve the immediate business problem — one place to see all tickets from all gestão frota instances.
 > **Completed:** 2026-03-19
 
@@ -8,71 +8,67 @@
 |---|-------|--------|------|
 | 1 | Project setup: FastAPI + SQLAlchemy + Alembic + PostgreSQL + CI | ✅ | infra |
 | 2 | Source management: register sources, generate and validate API keys | ✅ | feature |
-| 3 | Database schema: sources, tickets, ticket_events, users migrations (001–006) | ✅ | infra |
+| 3 | Database schema: sources, tickets, ticket_events, users migrations (001–008) | ✅ | infra |
 | 4 | Ingest API: `POST /v1/ingest/tickets` and `POST /v1/ingest/tickets/events` | ✅ | feature |
 | 5 | Ticket read API: list with filters + pagination + detail | ✅ | feature |
 | 6 | Auth: JWT login, `/me` endpoint, roles (admin/agent/viewer) | ✅ | feature |
 | 7 | Frontend setup: Vite + React 18 + TS + Tailwind + TanStack Query + i18next | ✅ | infra |
 | 8 | Frontend: unified inbox — filters, queue tabs, ticket detail panel | ✅ | feature |
-| 9 | gestão frota integration: `SendTicketToAegis` job + enum mapping + block local actions | ✅ | feature |
-| 19 | Roles + assignment: `role` on users, `assigned_to_user_id` on tickets, PATCH assign | ✅ | feature |
-| 20 | i18n: EN/PT-BR via react-i18next + LanguageContext + static badge translations | ✅ | feature |
-| 10 | ADRs: 001–006 (stack, auth, enums, GF split, i18n, assignment model) | ✅ | docs |
+| 9 | gestão frota integration: `SendTicketToAegis` job + enum mapping | ✅ | feature |
+| 10 | Roles + assignment: `role` on users, `assigned_to_user_id` on tickets, PATCH assign | ✅ | feature |
+| 11 | i18n: EN/PT-BR via react-i18next | ✅ | feature |
+| 12 | Settings: client (source) management UI with API key generation (admin only) | ✅ | feature |
+| 13 | ADRs: 001–006 | ✅ | docs |
 
 ---
 
 ## Phase 2 — Team Workflow
-> Goal: the team can fully manage tickets from inside Aegis without going back to source systems.
+> Goal: the team can fully manage tickets from inside Aegis. Clients interact in gestão frota and see responses there.
 
 | # | Issue | Type |
 |---|-------|------|
-| 11 | Ticket status management: team updates status directly in Aegis inbox | feature |
-| 12 | Assignment UI: dropdown in inbox to assign/reassign tickets to agents | feature |
-| 13 | Manager dashboard: KPIs, unassigned queue, overdue tickets, metrics by client and agent | feature |
-| 14 | Ticket comments: internal notes from Aegis team (visible only in Aegis) | feature |
-| 15 | SLA tracking: compute elapsed time in business hours, flag overdue tickets | feature |
-| 16 | Notification: email/WhatsApp on new ticket, overdue SLA, assignment change | feature |
-| 17 | Auto-close: automatically close tickets inactive beyond threshold | feature |
-| 18 | Frontend: SLA indicator per ticket (on-time / at-risk / overdue) | feature |
-| 19 | Webhook-out: push Aegis status changes back to source system (configurable per source) | feature |
+| [#33](https://github.com/yuriPeixoto/aegis/issues/33) | User management UI: create/edit agents and admins from Settings | feature |
+| [#31](https://github.com/yuriPeixoto/aegis/issues/31) | Manager dashboard: KPIs, unassigned queue, overdue, per-agent and per-client metrics | feature |
+| [#27](https://github.com/yuriPeixoto/aegis/issues/27) | Email notifications: assignment, overdue SLA, new ticket — **postergado: aguardando servidor de e-mail da empresa** | feature |
+| [#26](https://github.com/yuriPeixoto/aegis/issues/26) | Webhook-out: push status changes, team responses and attachments back to source | feature |
+| [#37](https://github.com/yuriPeixoto/aegis/issues/37) | Bidirectional conversation: client replies in GF, team replies in Aegis, both see full thread | feature |
+| [#36](https://github.com/yuriPeixoto/aegis/issues/36) | Attachment support: upload/view docs and images on tickets | feature |
 
 ---
 
-## Phase 3 — Analytics & Reporting
-> Goal: give the team and management visibility into support patterns and team performance.
+## Phase 3 — Support Center Completeness
+> Goal: Aegis becomes a full-featured support center — on par with what teams expect from tools like Zendesk or Freshdesk, but tailored to this ecosystem.
 
-| # | Issue | Type |
-|---|-------|------|
-| 18 | Analytics API: MTTR per source, per type, per priority | feature |
-| 19 | Analytics API: volume trends (daily/weekly/monthly) | feature |
-| 20 | Analytics API: SLA compliance rate per source | feature |
-| 21 | Analytics API: automatic insight detection ("type X up 40% this month") | feature |
-| 22 | PDF report generation: executive summary with charts (ReportLab / WeasyPrint) | feature |
-| 23 | Frontend: analytics dashboard with charts (Recharts) | feature |
-| 24 | Frontend: report download trigger | feature |
-
----
-
-## Phase 4 — Ecosystem Integration
-> Goal: connect Aegis to the rest of the ecosystem — incidents from Maestro, decisions from Orquestra, status sync back to source.
-
-| # | Issue | Type |
-|---|-------|------|
-| 25 | Maestro integration: receive anomaly webhooks as automatic incident tickets | feature |
-| 26 | Webhook-out: push status changes back to source system (configurable per source) | feature |
-| 27 | Orquestra integration: governance decisions generate Aegis tickets via API | feature |
-| 28 | Generic webhook-out: configurable outbound webhooks per event type | feature |
-| 29 | Source configuration UI: manage webhook-out, SLA policy, escalation rules per source | feature |
+| Feature | Description |
+|---------|-------------|
+| SLA policies per client | Configurable SLA per source + ticket type combination |
+| Auto-close | Automatically close tickets inactive beyond configurable threshold |
+| Canned responses | Pre-written reply templates for common issues |
+| Ticket merging | Merge duplicate tickets from the same client |
+| Client portal | Self-service view for clients to track their tickets without going through gestão frota |
+| Source configuration UI | Manage webhook-out URL, secret, SLA policy, escalation rules per client |
+| Escalation rules | Auto-escalate overdue or high-priority tickets to a senior agent or manager |
 
 ---
 
-## Phase 5 — Data Import & Advanced Analytics
-> Goal: migrate historical data and add ML-based pattern detection.
+## Phase 4 — Analytics & Reporting
+> Goal: visibility into support patterns and team performance.
 
-| # | Issue | Type |
-|---|-------|------|
-| 30 | CSV/JSON import: bulk ingest from Jira, Zendesk, ServiceNow exports | feature |
-| 31 | Import pipeline: async processing with progress tracking (Celery + Redis) | infra |
-| 32 | ML: anomaly detection on ticket volume patterns (scikit-learn) | feature |
-| 33 | ML: category auto-suggestion on ticket ingestion | feature |
-| 34 | Multi-source SLA policies: configurable SLA per source + type combination | feature |
+| Feature | Description |
+|---------|-------------|
+| Analytics API | MTTR per source/type/priority, volume trends, SLA compliance rate |
+| Automatic insights | "Type X up 40% this month at Client Y" |
+| PDF report | Executive summary with charts (ReportLab / WeasyPrint) |
+| Frontend dashboard | Charts (Recharts), report download trigger |
+
+---
+
+## Phase 5 — Ecosystem Integration
+> Goal: connect Aegis to the rest of the ecosystem.
+
+| Feature | Description |
+|---------|-------------|
+| Maestro integration | Receive anomaly webhooks as automatic incident tickets |
+| Orquestra integration | Governance decisions generate Aegis tickets |
+| Generic webhook-out | Configurable outbound webhooks per event type for any source |
+| Historical import | Bulk ingest from existing gestão frota ticket history |

@@ -11,9 +11,10 @@ interface FilterSelectProps {
   onChange: (v: string) => void
   placeholder: string
   options: Option[]
+  minWidth?: string
 }
 
-export function FilterSelect({ value, onChange, placeholder, options }: FilterSelectProps) {
+export function FilterSelect({ value, onChange, placeholder, options, minWidth }: FilterSelectProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -40,8 +41,9 @@ export function FilterSelect({ value, onChange, placeholder, options }: FilterSe
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-          border transition-all duration-200 cursor-pointer whitespace-nowrap
+        style={minWidth ? { minWidth } : undefined}
+        className={`flex items-center justify-between gap-2 px-4 py-2 rounded-lg text-sm font-medium text-left
+          border transition-all duration-200 cursor-pointer whitespace-nowrap w-full
           focus:outline-none focus:ring-2 focus:ring-brand-purple/40
           ${open
             ? 'bg-brand-purple/15 border-brand-purple/50 text-slate-200'

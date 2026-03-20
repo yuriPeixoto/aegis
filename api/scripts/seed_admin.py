@@ -16,6 +16,13 @@ from sqlalchemy import select, update
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
+
+# Import all models so SQLAlchemy can resolve relationships
+import app.models.source  # noqa: F401
+import app.models.ticket  # noqa: F401
+import app.models.ticket_attachment  # noqa: F401
+import app.models.ticket_event  # noqa: F401
+import app.models.ticket_message  # noqa: F401
 from app.models.user import User
 
 
@@ -30,7 +37,7 @@ async def main() -> None:
             user = User(
                 email="admin@example.com",
                 password_hash=hash_password("change-me"),
-                name="Yuri Peixoto",
+                name="Aegis Admin",
                 role="admin",
                 is_active=True,
             )
@@ -45,14 +52,14 @@ async def main() -> None:
                 .values(
                     email="admin@example.com",
                     password_hash=hash_password("change-me"),
-                    name="Yuri Peixoto",
+                    name="Aegis Admin",
                     role="admin",
                     is_active=True,
                 )
             )
             await db.commit()
 
-        print(f"Done. User id={user.id} | email=admin@example.com | name=Yuri Peixoto")
+        print(f"Done. User id={user.id} | email=admin@example.com | name=Aegis Admin")
 
 
 if __name__ == "__main__":

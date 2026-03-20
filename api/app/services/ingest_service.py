@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import logging
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
@@ -8,7 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.source import Source
 from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent
+from app.models.ticket_message import TicketMessage
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
+from app.services.attachment_service import AttachmentService
+
+logger = logging.getLogger(__name__)
 
 
 class IngestService:
@@ -118,6 +124,60 @@ class IngestService:
             occurred_at=data.occurred_at or datetime.now(UTC),
         )
         self._db.add(event)
+
+        # When the source system sends a client reply, store it as a conversation message
+        if data.event_type == "client_reply" and data.payload:
+            body = data.payload.get("body")
+            author_name = data.payload.get("author_name", "Client")
+            source_message_id = str(data.payload.get("source_message_id", "")) or None
+
+            if body:
+                # Dedup: skip if this source_message_id already exists for this ticket
+                should_create = True
+                if source_message_id:
+                    from sqlalchemy import select as _select
+
+                    dup = await self._db.execute(
+                        _select(TicketMessage).where(
+                            TicketMessage.ticket_id == ticket.id,
+                            TicketMessage.source_message_id == source_message_id,
+                        )
+                    )
+                    if dup.scalar_one_or_none() is not None:
+                        should_create = False
+
+                if should_create:
+                    self._db.add(
+                        TicketMessage(
+                            ticket_id=ticket.id,
+                            direction="inbound",
+                            author_name=author_name,
+                            body=body,
+                            source_message_id=source_message_id,
+                        )
+                    )
+                    await self._db.flush()
+
+                    # Process attachments sent along with the reply
+                    attachments = data.payload.get("attachments") or []
+                    att_service = AttachmentService(self._db)
+                    for att in attachments:
+                        try:
+                            raw = base64.b64decode(att["data"])
+                            await att_service.store_from_bytes(
+                                ticket_id=ticket.id,
+                                filename=att["filename"],
+                                content_type=att["content_type"],
+                                content=raw,
+                            )
+                        except Exception:
+                            logger.warning(
+                                "ingest: failed to store attachment '%s' for ticket %s",
+                                att.get("filename"),
+                                ticket.id,
+                                exc_info=True,
+                            )
+
         await self._db.commit()
         await self._db.refresh(event)
         return event

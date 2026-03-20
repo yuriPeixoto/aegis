@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/aegis"
 
+    # File uploads
+    upload_dir: str = "uploads"
+    upload_max_size_mb: int = 10
+
     # JWT
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"

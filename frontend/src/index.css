@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-brand-dark text-slate-100 antialiased text-sm;
-    font-size: 14px;
+    @apply bg-brand-dark text-slate-100 antialiased;
+    font-size: 15px;
   }
 
   ::-webkit-scrollbar {
@@ -30,8 +30,8 @@
   }
 
   .glass-card:hover {
-    border-color: rgba(124, 58, 237, 0.4);
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.08);
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.08);
   }
 
   .neon-glow {
@@ -43,7 +43,7 @@
   }
 
   .text-glow-purple {
-    text-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
   }
 
   .sidebar-link {
@@ -52,11 +52,11 @@
   }
 
   .sidebar-link.active {
-    @apply text-slate-100 bg-brand-purple/20 border border-brand-purple/30;
+    @apply text-slate-100 bg-brand-purple/20 border border-brand-purple/40;
   }
 
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide;
   }
 
   .btn-primary {

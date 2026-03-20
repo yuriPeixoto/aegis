@@ -41,6 +41,7 @@ export interface Ticket {
   last_synced_at: string
   sla_due_at: string | null
   sla_status: 'on_time' | 'at_risk' | 'overdue' | 'met' | null
+  last_inbound_at: string | null
   assigned_to: Assignee | null
 }
 
@@ -66,6 +67,24 @@ export interface TicketNote {
   body: string
   author: NoteAuthor | null
   created_at: string
+}
+
+export interface TicketMessage {
+  id: number
+  direction: 'inbound' | 'outbound'
+  author_name: string
+  body: string
+  created_at: string
+}
+
+export interface TicketAttachment {
+  id: number
+  ticket_id: number
+  original_filename: string
+  content_type: string
+  size_bytes: number
+  created_at: string
+  download_url: string
 }
 
 export interface TicketFilters {
