@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.models.source import Source  # noqa: F401 — loaded via selectinload
 from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent  # active — needed to create status_changed events
+from app.models.ticket_message import TicketMessage
 from app.models.user import User  # noqa: F401 — loaded via selectinload
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
@@ -68,7 +69,23 @@ class TicketService:
             .offset(offset)
         )
         tickets = list(result.scalars().all())
-        return tickets, total
+
+        # Compute last inbound message timestamp per ticket in one query
+        inbound_map: dict[int, datetime | None] = {}
+        if tickets:
+            ticket_ids = [t.id for t in tickets]
+            inbound_result = await self._db.execute(
+                select(
+                    TicketMessage.ticket_id,
+                    func.max(TicketMessage.created_at).label("last_inbound_at"),
+                )
+                .where(TicketMessage.ticket_id.in_(ticket_ids))
+                .where(TicketMessage.direction == "inbound")
+                .group_by(TicketMessage.ticket_id)
+            )
+            inbound_map = {row.ticket_id: row.last_inbound_at for row in inbound_result}
+
+        return tickets, total, inbound_map
 
     async def get_ticket(self, ticket_id: int) -> Ticket | None:
         result = await self._db.execute(

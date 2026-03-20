@@ -5,8 +5,9 @@ export default {
     extend: {
       colors: {
         brand: {
-          purple: '#7C3AED',
-          'purple-dim': '#5B21B6',
+          purple: '#8B5CF6',
+          'purple-dim': '#7C3AED',
+          accent: '#818CF8',
           neon: '#39FF14',
           dark: '#0F172A',
           surface: '#1E293B',

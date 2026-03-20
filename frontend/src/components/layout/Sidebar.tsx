@@ -1,12 +1,17 @@
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, Settings, Zap } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap } from 'lucide-react'
+import { useMe } from '../../hooks/useAuth'
 
 export function Sidebar() {
   const { t } = useTranslation()
+  const { data: user } = useMe()
 
   const NAV = [
     { to: '/', label: t('nav.inbox'), icon: Inbox, end: true },
+    ...(user?.role === 'admin'
+      ? [{ to: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard, end: false }]
+      : []),
     { to: '/settings', label: t('nav.settings'), icon: Settings, end: false },
   ]
 

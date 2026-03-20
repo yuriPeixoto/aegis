@@ -1,6 +1,7 @@
 {
   "nav": {
     "inbox": "Inbox",
+    "dashboard": "Dashboard",
     "settings": "Settings"
   },
   "topbar": {
@@ -43,8 +44,20 @@
       "noNotes": "No notes yet.",
       "notePlaceholder": "Add an internal note...",
       "unknownAuthor": "Unknown",
+      "conversation": "Conversation",
+      "noMessages": "No messages yet.",
+      "replyPlaceholder": "Type a reply to the client...",
+      "replyHint": "Ctrl+Enter to send",
+      "send": "Send",
       "eventHistory": "Event History",
-      "noEvents": "No events recorded."
+      "noEvents": "No events recorded.",
+      "back": "Inbox",
+      "description": "Description",
+      "attachments": "Attachments",
+      "attachFile": "Attach",
+      "uploadAttachment": "Upload file",
+      "noAttachments": "No attachments.",
+      "download": "Download"
     }
   },
   "sla": {
@@ -83,5 +96,116 @@
     "IMPROVEMENT": "Improvement",
     "QUESTION": "Question",
     "SUPPORT": "Support"
+  },
+  "dashboard": {
+    "alert": {
+      "overdue": "{{count}} overdue tickets",
+      "overdueHint": "past deadline without resolution",
+      "view": "View now"
+    },
+    "kpi": {
+      "totalOpen": "Total Open",
+      "overdue": "Overdue",
+      "ofTotal": "of total",
+      "unassigned": "Unassigned",
+      "unassignedHint": "Requires immediate assignment",
+      "waitingClient": "Awaiting Client",
+      "openedToday": "Opened Today",
+      "resolvedToday": "Resolved Today",
+      "slaCompliance": "SLA Compliance",
+      "slaTarget": "Target: 80%",
+      "mttr": "Avg. Resolution",
+      "mttrPeriod": "Last 30 days"
+    },
+    "agents": {
+      "title": "Agent Workload",
+      "subtitle": "Active tickets · Overdue · Resolved (30d)",
+      "empty": "No agents found.",
+      "colAgent": "Agent",
+      "colOpen": "Active",
+      "colOverdue": "Overdue",
+      "colResolved": "Resolved (30d)"
+    },
+    "byClient": {
+      "title": "Volume by Client"
+    },
+    "byPriority": {
+      "title": "By Priority"
+    },
+    "overdue": {
+      "title": "Overdue Tickets",
+      "subtitle": "Exceeded the technical deadline without resolution",
+      "late": "overdue"
+    },
+    "unassigned": {
+      "title": "Unassigned Tickets",
+      "subtitle": "Require immediate assignment",
+      "assign": "Assign to..."
+    }
+  },
+  "changePassword": {
+    "title": "Set your password",
+    "subtitle": "This is your first login. Please set a new password to continue.",
+    "newPassword": "New password",
+    "confirm": "Confirm password",
+    "submit": "Save password",
+    "saving": "Saving...",
+    "mismatch": "Passwords do not match.",
+    "error": "Something went wrong. Try again."
+  },
+  "settings": {
+    "forbidden": "Access restricted to administrators.",
+    "users": {
+      "title": "Users",
+      "new": "Add user",
+      "empty": "No users found.",
+      "colName": "Name",
+      "colEmail": "Email",
+      "colRole": "Role",
+      "colStatus": "Status",
+      "you": "you",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "modalTitle": "Add User",
+      "fieldName": "Full name",
+      "fieldEmail": "Email",
+      "fieldRole": "Role",
+      "fieldPassword": "Initial password",
+      "passwordHint": "You define it. Share with the user — they'll be required to change it on first login.",
+      "create": "Add",
+      "creating": "Adding...",
+      "errorGeneric": "Something went wrong. Try again.",
+      "role": {
+        "admin": "Admin",
+        "agent": "Agent",
+        "viewer": "Viewer"
+      }
+    },
+    "sources": {
+      "title": "Clients",
+      "new": "Add client",
+      "empty": "No clients registered yet.",
+      "colName": "Name",
+      "colSlug": "Identifier",
+      "colStatus": "Status",
+      "colCreated": "Added",
+      "active": "Active",
+      "inactive": "Inactive",
+      "modalTitle": "Add Client",
+      "fieldName": "Client name",
+      "fieldSlug": "Identifier",
+      "slugHint": "Lowercase letters, numbers and hyphens only. Used internally.",
+      "cancel": "Cancel",
+      "create": "Add",
+      "creating": "Adding...",
+      "errorGeneric": "Something went wrong. Try again.",
+      "apiKeyTitle": "Save the API key",
+      "apiKeyWarning": "This key will not be shown again. Copy it and store it securely before continuing.",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "apiKeyConfirm": "I've saved it"
+    }
   }
 }

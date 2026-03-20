@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { useMe } from '../../hooks/useAuth'
+import { useInboundNotifications } from '../../hooks/useInboundNotifications'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/': 'nav.inbox',
+  '/dashboard': 'nav.dashboard',
   '/settings': 'nav.settings',
 }
 
@@ -14,6 +16,8 @@ export function AppShell() {
   const { data: user, isLoading, isError } = useMe()
   const { pathname } = useLocation()
 
+  const isTicketDetail = pathname.startsWith('/tickets/')
+  useInboundNotifications()
   const titleKey = ROUTE_TITLE_KEYS[pathname] ?? 'nav.inbox'
 
   if (isLoading) {
@@ -35,7 +39,7 @@ export function AppShell() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar title={t(titleKey)} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className={`flex-1 min-h-0 ${isTicketDetail ? 'overflow-hidden' : 'overflow-y-auto p-6'}`}>
           <Outlet />
         </main>
       </div>

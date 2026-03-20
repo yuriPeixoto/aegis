@@ -8,12 +8,18 @@ export interface User {
   name: string
   role: string
   is_active: boolean
+  must_change_password: boolean
   created_at: string
 }
 
 interface LoginCredentials {
   email: string
   password: string
+}
+
+interface LoginResponse {
+  access_token: string
+  must_change_password: boolean
 }
 
 export function useMe() {
@@ -34,13 +40,17 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const { data } = await api.post<{ access_token: string }>('/auth/login', credentials)
+      const { data } = await api.post<LoginResponse>('/auth/login', credentials)
       return data
     },
     onSuccess: (data) => {
       localStorage.setItem('aegis_token', data.access_token)
       queryClient.invalidateQueries({ queryKey: ['me'] })
-      navigate('/')
+      if (data.must_change_password) {
+        navigate('/change-password')
+      } else {
+        navigate('/')
+      }
     },
   })
 }

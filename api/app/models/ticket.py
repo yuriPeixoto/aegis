@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.source import Source
+    from app.models.ticket_attachment import TicketAttachment
     from app.models.ticket_event import TicketEvent
+    from app.models.ticket_message import TicketMessage
     from app.models.user import User
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
@@ -63,6 +65,12 @@ class Ticket(Base):
     source: Mapped[Source] = relationship("Source", back_populates="tickets")
     events: Mapped[list[TicketEvent]] = relationship(
         "TicketEvent", back_populates="ticket", order_by="TicketEvent.occurred_at"
+    )
+    messages: Mapped[list[TicketMessage]] = relationship(
+        "TicketMessage", back_populates="ticket", order_by="TicketMessage.created_at"
+    )
+    attachments: Mapped[list[TicketAttachment]] = relationship(
+        "TicketAttachment", back_populates="ticket", order_by="TicketAttachment.created_at"
     )
     assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to_user_id])
 

@@ -8,7 +8,6 @@ const PAGE_SIZE = 20
 
 interface TicketListProps {
   filters: TicketFilters
-  selectedId: number | null
   onSelect: (id: number) => void
   onOffsetChange: (offset: number) => void
 }
@@ -29,7 +28,7 @@ function Skeleton() {
   )
 }
 
-export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: TicketListProps) {
+export function TicketList({ filters, onSelect, onOffsetChange }: TicketListProps) {
   const { t } = useTranslation()
   const { data, isLoading } = useTickets({ ...filters, limit: PAGE_SIZE })
   const offset = filters.offset ?? 0
@@ -69,7 +68,6 @@ export function TicketList({ filters, selectedId, onSelect, onOffsetChange }: Ti
           <TicketRow
             key={ticket.id}
             ticket={ticket}
-            isSelected={ticket.id === selectedId}
             onClick={() => onSelect(ticket.id)}
           />
         ))}
