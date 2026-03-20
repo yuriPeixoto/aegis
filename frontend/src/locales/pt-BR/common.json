@@ -1,6 +1,7 @@
 {
   "nav": {
     "inbox": "Caixa de Entrada",
+    "dashboard": "Dashboard",
     "settings": "Configurações"
   },
   "topbar": {
@@ -43,8 +44,20 @@
       "noNotes": "Nenhuma nota ainda.",
       "notePlaceholder": "Adicionar uma nota interna...",
       "unknownAuthor": "Desconhecido",
+      "conversation": "Conversa",
+      "noMessages": "Nenhuma mensagem ainda.",
+      "replyPlaceholder": "Digite uma resposta ao cliente...",
+      "replyHint": "Ctrl+Enter para enviar",
+      "send": "Enviar",
       "eventHistory": "Histórico de Eventos",
-      "noEvents": "Nenhum evento registrado."
+      "noEvents": "Nenhum evento registrado.",
+      "back": "Caixa de Entrada",
+      "description": "Descrição",
+      "attachments": "Anexos",
+      "attachFile": "Anexar",
+      "uploadAttachment": "Enviar arquivo",
+      "noAttachments": "Nenhum anexo.",
+      "download": "Baixar"
     }
   },
   "sla": {
@@ -83,5 +96,116 @@
     "IMPROVEMENT": "Melhoria",
     "QUESTION": "Dúvida",
     "SUPPORT": "Suporte"
+  },
+  "dashboard": {
+    "alert": {
+      "overdue": "{{count}} chamados em atraso",
+      "overdueHint": "ultrapassaram o prazo sem resolução",
+      "view": "Ver agora"
+    },
+    "kpi": {
+      "totalOpen": "Total Abertos",
+      "overdue": "Atrasados",
+      "ofTotal": "do total",
+      "unassigned": "Sem Atribuição",
+      "unassignedHint": "Requer atribuição imediata",
+      "waitingClient": "Aguard. Cliente",
+      "openedToday": "Abertos Hoje",
+      "resolvedToday": "Resolvidos Hoje",
+      "slaCompliance": "SLA Compliance",
+      "slaTarget": "Meta: 80%",
+      "mttr": "Tempo Médio",
+      "mttrPeriod": "Últimos 30 dias"
+    },
+    "agents": {
+      "title": "Carga por Atendente",
+      "subtitle": "Chamados ativos · Atrasados · Resolvidos (30d)",
+      "empty": "Nenhum atendente encontrado.",
+      "colAgent": "Atendente",
+      "colOpen": "Ativos",
+      "colOverdue": "Atrasados",
+      "colResolved": "Resolvidos (30d)"
+    },
+    "byClient": {
+      "title": "Volume por Cliente"
+    },
+    "byPriority": {
+      "title": "Por Prioridade"
+    },
+    "overdue": {
+      "title": "Chamados em Atraso",
+      "subtitle": "Ultrapassaram o prazo técnico sem resolução",
+      "late": "em atraso"
+    },
+    "unassigned": {
+      "title": "Chamados Sem Atribuição",
+      "subtitle": "Requerem atribuição imediata",
+      "assign": "Atribuir a..."
+    }
+  },
+  "changePassword": {
+    "title": "Defina sua senha",
+    "subtitle": "Este é seu primeiro acesso. Defina uma nova senha para continuar.",
+    "newPassword": "Nova senha",
+    "confirm": "Confirmar senha",
+    "submit": "Salvar senha",
+    "saving": "Salvando...",
+    "mismatch": "As senhas não coincidem.",
+    "error": "Algo deu errado. Tente novamente."
+  },
+  "settings": {
+    "forbidden": "Acesso restrito a administradores.",
+    "users": {
+      "title": "Usuários",
+      "new": "Adicionar usuário",
+      "empty": "Nenhum usuário encontrado.",
+      "colName": "Nome",
+      "colEmail": "E-mail",
+      "colRole": "Perfil",
+      "colStatus": "Status",
+      "you": "você",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "activate": "Ativar",
+      "deactivate": "Desativar",
+      "modalTitle": "Adicionar Usuário",
+      "fieldName": "Nome completo",
+      "fieldEmail": "E-mail",
+      "fieldRole": "Perfil",
+      "fieldPassword": "Senha inicial",
+      "passwordHint": "Você define. Repasse ao usuário — ele será obrigado a trocar no primeiro acesso.",
+      "create": "Adicionar",
+      "creating": "Adicionando...",
+      "errorGeneric": "Algo deu errado. Tente novamente.",
+      "role": {
+        "admin": "Admin",
+        "agent": "Agente",
+        "viewer": "Visualizador"
+      }
+    },
+    "sources": {
+      "title": "Clientes",
+      "new": "Adicionar cliente",
+      "empty": "Nenhum cliente cadastrado.",
+      "colName": "Nome",
+      "colSlug": "Identificador",
+      "colStatus": "Status",
+      "colCreated": "Cadastrado em",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "modalTitle": "Adicionar Cliente",
+      "fieldName": "Nome do cliente",
+      "fieldSlug": "Identificador",
+      "slugHint": "Apenas letras minúsculas, números e hífens. Usado internamente.",
+      "cancel": "Cancelar",
+      "create": "Adicionar",
+      "creating": "Adicionando...",
+      "errorGeneric": "Algo deu errado. Tente novamente.",
+      "apiKeyTitle": "Salve a chave de integração",
+      "apiKeyWarning": "Esta chave não será exibida novamente. Copie e guarde em local seguro antes de continuar.",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "apiKeyConfirm": "Já salvei"
+    }
   }
 }

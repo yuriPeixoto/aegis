@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class LoginRequest(BaseModel):
@@ -13,6 +13,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    must_change_password: bool = False
 
 
 class UserResponse(BaseModel):
@@ -21,6 +22,19 @@ class UserResponse(BaseModel):
     name: str
     role: str
     is_active: bool
+    must_change_password: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserCreateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str = "agent"
+
+
+class UserUpdateRequest(BaseModel):
+    role: str | None = None
+    is_active: bool | None = None

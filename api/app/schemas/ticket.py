@@ -39,6 +39,7 @@ class TicketResponse(BaseModel):
     first_ingested_at: datetime
     last_synced_at: datetime
     sla_due_at: datetime | None = None
+    last_inbound_at: datetime | None = None
     assigned_to: AssigneeResponse | None = None
 
     @computed_field  # type: ignore[prop-decorator]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
@@ -15,6 +15,7 @@ from app.schemas.ticket import (
     UpdateStatusRequest,
 )
 from app.services.ticket_service import TicketService
+from app.services.webhook_service import dispatch_webhook
 
 router = APIRouter(prefix="/v1/tickets", tags=["tickets"])
 
@@ -39,7 +40,7 @@ async def list_tickets(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> TicketListResponse:
-    tickets, total = await TicketService(db).list_tickets(
+    tickets, total, inbound_map = await TicketService(db).list_tickets(
         source_id=source_id,
         status=status,
         priority=priority,
@@ -71,6 +72,7 @@ async def list_tickets(
                 first_ingested_at=t.first_ingested_at,
                 last_synced_at=t.last_synced_at,
                 sla_due_at=t.sla_due_at,
+                last_inbound_at=inbound_map.get(t.id),
                 assigned_to=_assignee(t),
             )
         )
@@ -119,6 +121,7 @@ async def update_ticket_status(
     body: UpdateStatusRequest,
     db: DbSession,
     current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
 ) -> TicketDetailResponse:
     ticket, error = await TicketService(db).update_ticket_status(
         ticket_id,
@@ -130,6 +133,19 @@ async def update_ticket_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
     if error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
+
+    if ticket.source and ticket.source.webhook_url:
+        background_tasks.add_task(
+            dispatch_webhook,
+            webhook_url=ticket.source.webhook_url,
+            webhook_secret=ticket.source.webhook_secret,
+            event_type="status_changed",
+            payload={
+                "external_id": ticket.external_id,
+                "status": body.status,
+                "changed_by": current_user.name,
+            },
+        )
 
     return TicketDetailResponse(
         id=ticket.id,

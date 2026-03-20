@@ -19,7 +19,7 @@ export function SlaBadge({ status, dueAt }: SlaBadgeProps) {
 
   return (
     <span
-      className={`badge border text-[9px] font-mono ${STYLE[status] ?? ''}`}
+      className={`badge border text-[10px] font-mono ${STYLE[status] ?? ''}`}
       title={new Date(dueAt).toLocaleString()}
     >
       SLA: {t(`sla.${status}`)}

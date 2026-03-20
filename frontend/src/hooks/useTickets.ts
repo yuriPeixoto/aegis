@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/axios'
-import type { TicketListResponse, TicketDetail, TicketFilters, TicketNote } from '../types/ticket'
+import type { TicketListResponse, TicketDetail, TicketFilters, TicketMessage, TicketNote, TicketAttachment } from '../types/ticket'
 
 export function useTickets(filters: TicketFilters = {}) {
   const params = Object.fromEntries(
@@ -76,6 +76,30 @@ export function useNotes(ticketId: number) {
   })
 }
 
+export function useMessages(ticketId: number) {
+  return useQuery<TicketMessage[]>({
+    queryKey: ['messages', ticketId],
+    queryFn: async () => {
+      const { data } = await api.get<TicketMessage[]>(`/tickets/${ticketId}/messages`)
+      return data
+    },
+    refetchInterval: 15_000,
+  })
+}
+
+export function useSendMessage(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketMessage, Error, { body: string }>({
+    mutationFn: async (payload) => {
+      const { data } = await api.post<TicketMessage>(`/tickets/${ticketId}/messages`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', ticketId] })
+    },
+  })
+}
+
 export function useCreateNote(ticketId: number) {
   const queryClient = useQueryClient()
   return useMutation<TicketNote, Error, { body: string }>({
@@ -85,6 +109,35 @@ export function useCreateNote(ticketId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', ticketId] })
+    },
+  })
+}
+
+export function useAttachments(ticketId: number) {
+  return useQuery<TicketAttachment[]>({
+    queryKey: ['attachments', ticketId],
+    queryFn: async () => {
+      const { data } = await api.get<TicketAttachment[]>(`/tickets/${ticketId}/attachments`)
+      return data
+    },
+  })
+}
+
+export function useUploadAttachment(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketAttachment, Error, File>({
+    mutationFn: async (file) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await api.post<TicketAttachment>(
+        `/tickets/${ticketId}/attachments`,
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attachments', ticketId] })
     },
   })
 }
