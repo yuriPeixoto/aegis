@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.ticket import Ticket
+    from app.models.ticket_attachment import TicketAttachment
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,3 +36,4 @@ class TicketMessage(Base):
     )
 
     ticket: Mapped[Ticket] = relationship("Ticket", back_populates="messages")
+    attachments: Mapped[list[TicketAttachment]] = relationship("TicketAttachment", back_populates="message")
