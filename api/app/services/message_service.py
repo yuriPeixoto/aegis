@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ticket import Ticket
@@ -15,9 +14,18 @@ class MessageService:
         result = await self._db.execute(
             select(TicketMessage)
             .where(TicketMessage.ticket_id == ticket_id)
+            .options(selectinload(TicketMessage.attachments))
             .order_by(TicketMessage.created_at.asc())
         )
         return list(result.scalars().all())
+
+    async def get_with_attachments(self, message_id: int) -> TicketMessage:
+        result = await self._db.execute(
+            select(TicketMessage)
+            .where(TicketMessage.id == message_id)
+            .options(selectinload(TicketMessage.attachments))
+        )
+        return result.scalar_one()
 
     async def create_outbound(
         self, ticket: Ticket, body: str, agent_name: str
@@ -30,8 +38,13 @@ class MessageService:
         )
         self._db.add(message)
         await self._db.commit()
-        await self._db.refresh(message)
-        return message
+
+        result = await self._db.execute(
+            select(TicketMessage)
+            .where(TicketMessage.id == message.id)
+            .options(selectinload(TicketMessage.attachments))
+        )
+        return result.scalar_one()
 
     async def create_inbound(
         self,

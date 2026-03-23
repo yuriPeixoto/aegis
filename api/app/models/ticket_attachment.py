@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.ticket import Ticket
+    from app.models.ticket_message import TicketMessage
     from app.models.user import User
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
@@ -24,6 +25,10 @@ class TicketAttachment(Base):
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
+    message_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("ticket_messages.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
     # Relative path inside upload_dir: "{ticket_id}/{uuid}.{ext}"
     stored_path: Mapped[str] = mapped_column(Text, nullable=False)
@@ -35,4 +40,5 @@ class TicketAttachment(Base):
     )
 
     ticket: Mapped[Ticket] = relationship("Ticket", back_populates="attachments")
+    message: Mapped[TicketMessage | None] = relationship("TicketMessage", back_populates="attachments")
     uploaded_by: Mapped[User | None] = relationship("User", foreign_keys=[uploaded_by_user_id])

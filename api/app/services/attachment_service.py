@@ -87,6 +87,7 @@ class AttachmentService:
         content_type: str,
         content: bytes,
         user_id: int | None = None,
+        message_id: int | None = None,
     ) -> TicketAttachment:
         if content_type not in ALLOWED_CONTENT_TYPES:
             raise ValueError(f"Tipo de arquivo não permitido: {content_type}")
@@ -106,6 +107,7 @@ class AttachmentService:
         attachment = TicketAttachment(
             ticket_id=ticket_id,
             uploaded_by_user_id=user_id,
+            message_id=message_id,
             original_filename=filename,
             stored_path=relative_path,
             content_type=content_type,
