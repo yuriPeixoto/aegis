@@ -9,7 +9,8 @@ const TRANSLATIONS: Record<string, Translations> = {
     status: {
       OPEN: 'Open', IN_PROGRESS: 'In Progress', WAITING_CLIENT: 'Awaiting Client',
       WAITING_DEV: 'Awaiting Dev', IN_DEV: 'In Development', WAITING_TEST: 'Awaiting Test',
-      IN_TEST: 'In Testing', RESOLVED: 'Resolved', CLOSED: 'Closed', CANCELLED: 'Cancelled',
+      IN_TEST: 'In Testing', PENDING_CLOSURE: 'Pending Closure',
+      RESOLVED: 'Resolved', CLOSED: 'Closed', CANCELLED: 'Cancelled',
     },
     priority: { URGENT: 'Urgent', HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' },
     type: { BUG: 'Bug', IMPROVEMENT: 'Improvement', QUESTION: 'Question', SUPPORT: 'Support' },
@@ -18,7 +19,8 @@ const TRANSLATIONS: Record<string, Translations> = {
     status: {
       OPEN: 'Aberto', IN_PROGRESS: 'Em Atendimento', WAITING_CLIENT: 'Ag. Cliente',
       WAITING_DEV: 'Ag. Desenvolvimento', IN_DEV: 'Em Desenvolvimento', WAITING_TEST: 'Ag. Teste',
-      IN_TEST: 'Em Teste', RESOLVED: 'Resolvido', CLOSED: 'Fechado', CANCELLED: 'Cancelado',
+      IN_TEST: 'Em Teste', PENDING_CLOSURE: 'Ag. Validação',
+      RESOLVED: 'Resolvido', CLOSED: 'Fechado', CANCELLED: 'Cancelado',
     },
     priority: { URGENT: 'Urgente', HIGH: 'Alto', MEDIUM: 'Médio', LOW: 'Baixo' },
     type: { BUG: 'Bug', IMPROVEMENT: 'Melhoria', QUESTION: 'Dúvida', SUPPORT: 'Suporte' },

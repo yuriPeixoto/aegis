@@ -70,9 +70,11 @@
     "action": {
       "startProgress": "Iniciar Atendimento",
       "waitClient": "Ag. Cliente",
+      "pendingClosure": "Ag. Validação",
       "resolve": "Resolver",
       "cancel": "Cancelar",
-      "reopen": "Reabrir"
+      "reopen": "Reabrir",
+      "close": "Fechar"
     },
     "OPEN": "Aberto",
     "IN_PROGRESS": "Em Atendimento",
