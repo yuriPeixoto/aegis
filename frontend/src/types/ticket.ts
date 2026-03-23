@@ -75,6 +75,13 @@ export interface TicketMessage {
   author_name: string
   body: string
   created_at: string
+  attachments?: {
+    id: number
+    filename: string
+    content_type: string
+    size_bytes: number
+    download_url: string
+  }[]
 }
 
 export interface TicketAttachment {

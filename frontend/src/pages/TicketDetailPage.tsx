@@ -1,7 +1,12 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send } from 'lucide-react'
+import { 
+  ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
+  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X
+} from 'lucide-react'
+import { api } from '../lib/axios'
+import type { TicketMessage } from '../types/ticket'
 import {
   useTicket,
   useUpdateTicketStatus,
@@ -56,6 +61,101 @@ function formatTime(iso: string, locale: string) {
   })
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function FileIcon({ contentType }: { contentType: string }) {
+  if (contentType.startsWith('image/')) return <ImageIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+  if (contentType === 'application/pdf') return <FileText className="w-3.5 h-3.5 text-red-400 shrink-0" />
+  if (contentType.includes('spreadsheet') || contentType.includes('excel') || contentType === 'text/csv')
+    return <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+  return <File className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+}
+
+function SecureImage({ url, alt, className }: { url: string; alt: string; className?: string }) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let objectUrl: string | null = null
+    api.get(url, { responseType: 'blob' })
+      .then(res => {
+        objectUrl = URL.createObjectURL(res.data)
+        setSrc(objectUrl)
+      })
+      .catch(() => setError(true))
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [url])
+
+  if (error) return <div className="text-[10px] text-red-500 italic uppercase tracking-wider">Failed to load image</div>
+  if (!src) return <div className="w-32 h-32 bg-white/5 animate-pulse rounded-lg border border-white/10" />
+
+  return <img src={src} alt={alt} className={className} />
+}
+
+function MessageAttachments({ attachments }: { attachments: TicketMessage['attachments'] }) {
+  if (!attachments || attachments.length === 0) return null
+
+  const triggerDownload = async (att: { download_url: string; filename: string }) => {
+    const { data } = await api.get(att.download_url, { responseType: 'blob' })
+    const url = URL.createObjectURL(data as Blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = att.filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="mt-3 space-y-2 w-full">
+      {attachments.map((att) => {
+        const isImage = att.content_type.startsWith('image/')
+        return (
+          <div key={att.id} className="group relative flex flex-col gap-1 max-w-sm">
+            {isImage ? (
+              <button 
+                onClick={() => triggerDownload(att)}
+                className="block rounded-lg overflow-hidden border border-white/10 hover:border-brand-accent/50 transition-all active:scale-[0.98] text-left"
+              >
+                <SecureImage 
+                  url={att.download_url} 
+                  alt={att.filename}
+                  className="max-h-64 w-auto object-contain bg-black/20"
+                />
+                 <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Download className="w-3.5 h-3.5" />
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={() => triggerDownload(att)}
+                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-2 transition-colors text-left w-full active:scale-[0.98]"
+              >
+                <FileIcon contentType={att.content_type} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-300 truncate" title={att.filename}>
+                    {att.filename}
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    {formatBytes(att.size_bytes)}
+                  </p>
+                </div>
+                <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-200 transition-colors" />
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function EventItem({
   type,
   payload,
@@ -103,6 +203,8 @@ export function TicketDetailPage() {
   const { mutate: sendMessage, isPending: sendPending } = useSendMessage(ticketId)
 
   const [replyBody, setReplyBody] = useState('')
+  const [replyFile, setReplyFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Mark ticket as viewed so the unread dot clears and notifications stop for this ticket
@@ -114,12 +216,15 @@ export function TicketDetailPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
-  function handleSend(e: React.FormEvent) {
+  const handleSend = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = replyBody.trim()
     if (!trimmed) return
-    sendMessage({ body: trimmed }, { onSuccess: () => setReplyBody('') })
-  }
+    sendMessage(
+      { body: trimmed, file: replyFile },
+      { onSuccess: () => { setReplyBody(''); setReplyFile(null) } },
+    )
+  }, [replyBody, replyFile, sendMessage])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -193,6 +298,7 @@ export function TicketDetailPage() {
                       }`}
                     >
                       {msg.body}
+                      <MessageAttachments attachments={msg.attachments} />
                     </div>
                     <div className={`flex items-center gap-1.5 ${isOutbound ? 'flex-row-reverse' : ''}`}>
                       <span className="text-[10px] font-medium text-slate-400">{msg.author_name}</span>
@@ -222,15 +328,44 @@ export function TicketDetailPage() {
                 rows={3}
                 className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:border-brand-accent"
               />
-              <button
-                type="submit"
-                disabled={sendPending || !replyBody.trim()}
-                className="p-2.5 rounded-lg bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-40 transition-colors shrink-0"
-                title={t('inbox.detail.send')}
-              >
-                <Send className="w-4 h-4" />
-              </button>
+              <div className="flex flex-col gap-2 shrink-0">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => setReplyFile(e.target.files?.[0] ?? null)}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors"
+                  title="Anexar arquivo"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendPending || !replyBody.trim()}
+                  className="p-2.5 rounded-lg bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-40 transition-colors"
+                  title={t('inbox.detail.send')}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+            {replyFile && (
+              <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs text-slate-300">
+                <Paperclip className="w-3 h-3 text-brand-purple shrink-0" />
+                <span className="truncate flex-1">{replyFile.name}</span>
+                <button
+                  type="button"
+                  onClick={() => { setReplyFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  className="text-slate-500 hover:text-slate-200 transition-colors shrink-0"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
             <p className="text-[10px] text-slate-600 mt-1.5">{t('inbox.detail.replyHint')}</p>
           </form>
         </div>

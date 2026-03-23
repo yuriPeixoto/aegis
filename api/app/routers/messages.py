@@ -1,18 +1,30 @@
 from __future__ import annotations
 
+import base64
 from datetime import datetime
+from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile, status
+from fastapi import File as FastAPIFile
 from pydantic import BaseModel
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
 from app.models.ticket_message import TicketMessage
+from app.services.attachment_service import AttachmentService
 from app.services.message_service import MessageService
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
 
 router = APIRouter(prefix="/v1/tickets", tags=["messages"])
+
+
+class AttachmentInfo(BaseModel):
+    id: int
+    filename: str
+    content_type: str
+    size_bytes: int
+    download_url: str
 
 
 class MessageResponse(BaseModel):
@@ -21,12 +33,9 @@ class MessageResponse(BaseModel):
     author_name: str
     body: str
     created_at: datetime
+    attachments: list[AttachmentInfo] = []
 
     model_config = {"from_attributes": True}
-
-
-class SendMessageRequest(BaseModel):
-    body: str
 
 
 def _to_response(m: TicketMessage) -> MessageResponse:
@@ -36,6 +45,16 @@ def _to_response(m: TicketMessage) -> MessageResponse:
         author_name=m.author_name,
         body=m.body,
         created_at=m.created_at,
+        attachments=[
+            AttachmentInfo(
+                id=a.id,
+                filename=a.original_filename,
+                content_type=a.content_type,
+                size_bytes=a.size_bytes,
+                download_url=f"/attachments/{a.id}/download",
+            )
+            for a in (m.attachments or [])
+        ],
     )
 
 
@@ -52,28 +71,57 @@ async def list_messages(ticket_id: int, db: DbSession, _user: CurrentUser) -> li
 )
 async def send_message(
     ticket_id: int,
-    body: SendMessageRequest,
     db: DbSession,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
+    body: str = Form(...),
+    file: UploadFile | None = FastAPIFile(None),
 ) -> MessageResponse:
     ticket = await TicketService(db).get_ticket(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
-    message = await MessageService(db).create_outbound(ticket, body.body, current_user.name)
+    message = await MessageService(db).create_outbound(ticket, body, current_user.name)
+
+    # Handle optional attachment
+    webhook_attachments: list[dict] = []
+    if file and file.filename:
+        try:
+            att_service = AttachmentService(db)
+            attachment = await att_service.upload(ticket_id, file, current_user.id)
+
+            # Link to message
+            attachment.message_id = message.id
+            await db.commit()
+            await db.refresh(attachment)
+
+            # Read bytes for webhook payload
+            file_path = att_service.resolve_path(attachment)
+            content = Path(file_path).read_bytes()
+            webhook_attachments = [{
+                "filename": attachment.original_filename,
+                "content_type": attachment.content_type,
+                "size_bytes": attachment.size_bytes,
+                "data": base64.b64encode(content).decode(),
+            }]
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
     if ticket.source and ticket.source.webhook_url:
+        webhook_payload: dict = {
+            "external_id": ticket.external_id,
+            "body": body,
+            "agent_name": current_user.name,
+            "attachments": webhook_attachments,
+        }
         background_tasks.add_task(
             dispatch_webhook,
             webhook_url=ticket.source.webhook_url,
             webhook_secret=ticket.source.webhook_secret,
             event_type="agent_reply",
-            payload={
-                "external_id": ticket.external_id,
-                "body": body.body,
-                "agent_name": current_user.name,
-            },
+            payload=webhook_payload,
         )
 
+    # Reload message with attachment relationship populated
+    message = await MessageService(db).get_with_attachments(message.id)
     return _to_response(message)

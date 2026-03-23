@@ -117,10 +117,22 @@ class IngestService:
             self._db.add(ticket)
             await self._db.flush()
 
+        # Cleanse payload for storage in events table (remove huge base64 strings)
+        cleansed_payload = None
+        if data.payload:
+            import copy
+
+            cleansed_payload = copy.deepcopy(data.payload)
+            if "attachments" in cleansed_payload:
+                for att in cleansed_payload["attachments"]:
+                    if "data" in att:
+                        # Keep a hint of size but remove the blob
+                        att["data"] = f"[base64 removed, length: {len(att['data'])}]"
+
         event = TicketEvent(
             ticket_id=ticket.id,
             event_type=data.event_type,
-            payload=data.payload,
+            payload=cleansed_payload,
             occurred_at=data.occurred_at or datetime.now(UTC),
         )
         self._db.add(event)
@@ -147,15 +159,14 @@ class IngestService:
                         should_create = False
 
                 if should_create:
-                    self._db.add(
-                        TicketMessage(
-                            ticket_id=ticket.id,
-                            direction="inbound",
-                            author_name=author_name,
-                            body=body,
-                            source_message_id=source_message_id,
-                        )
+                    message = TicketMessage(
+                        ticket_id=ticket.id,
+                        direction="inbound",
+                        author_name=author_name,
+                        body=body,
+                        source_message_id=source_message_id,
                     )
+                    self._db.add(message)
                     await self._db.flush()
 
                     # Process attachments sent along with the reply
@@ -169,6 +180,7 @@ class IngestService:
                                 filename=att["filename"],
                                 content_type=att["content_type"],
                                 content=raw,
+                                message_id=message.id,
                             )
                         except Exception:
                             logger.warning(

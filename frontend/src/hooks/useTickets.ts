@@ -89,9 +89,16 @@ export function useMessages(ticketId: number) {
 
 export function useSendMessage(ticketId: number) {
   const queryClient = useQueryClient()
-  return useMutation<TicketMessage, Error, { body: string }>({
-    mutationFn: async (payload) => {
-      const { data } = await api.post<TicketMessage>(`/tickets/${ticketId}/messages`, payload)
+  return useMutation<TicketMessage, Error, { body: string; file?: File | null }>({
+    mutationFn: async ({ body, file }) => {
+      const form = new FormData()
+      form.append('body', body)
+      if (file) form.append('file', file)
+      const { data } = await api.post<TicketMessage>(
+        `/tickets/${ticketId}/messages`,
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
       return data
     },
     onSuccess: () => {
