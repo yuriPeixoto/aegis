@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.models.ticket_message import TicketMessage
     from app.models.user import User
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func  # noqa: F401
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -51,8 +51,14 @@ class Ticket(Base):
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
-    # SLA deadline — set at ingestion time based on source.sla_hours
+    # SLA deadline — computed in business hours when ticket enters in_progress
     sla_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    # When the SLA clock first started (first transition to in_progress)
+    sla_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Accumulated wall-clock seconds the ticket spent in waiting_client (paused)
+    sla_paused_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    # Non-null while the ticket is currently paused (waiting_client)
+    sla_paused_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Aegis-managed timestamps
     first_ingested_at: Mapped[datetime] = mapped_column(
