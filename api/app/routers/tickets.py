@@ -6,14 +6,17 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
+from app.core.auth import AdminUser
 from app.schemas.ticket import (
     AssigneeResponse,
     AssignTicketRequest,
+    OverrideSlaRequest,
     TicketDetailResponse,
     TicketListResponse,
     TicketResponse,
     UpdateStatusRequest,
 )
+from app.services.sla_service import SlaService
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
 
@@ -24,6 +27,39 @@ def _assignee(ticket) -> AssigneeResponse | None:  # type: ignore[no-untyped-def
     if ticket.assignee is None:
         return None
     return AssigneeResponse(id=ticket.assignee.id, name=ticket.assignee.name)
+
+
+def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
+    return TicketDetailResponse(
+        id=ticket.id,
+        source_id=ticket.source_id,
+        source_name=ticket.source.name if ticket.source else "",
+        external_id=ticket.external_id,
+        type=ticket.type,
+        priority=ticket.priority,
+        status=ticket.status,
+        subject=ticket.subject,
+        description=ticket.description,
+        source_metadata=ticket.source_metadata,
+        source_created_at=ticket.source_created_at,
+        source_updated_at=ticket.source_updated_at,
+        first_ingested_at=ticket.first_ingested_at,
+        last_synced_at=ticket.last_synced_at,
+        sla_due_at=ticket.sla_due_at,
+        sla_started_at=ticket.sla_started_at,
+        sla_paused_seconds=ticket.sla_paused_seconds or 0,
+        sla_paused_since=ticket.sla_paused_since,
+        assigned_to=_assignee(ticket),
+        events=[
+            {
+                "id": e.id,
+                "event_type": e.event_type,
+                "payload": e.payload,
+                "occurred_at": e.occurred_at,
+            }
+            for e in ticket.events
+        ],
+    )
 
 
 @router.get("", response_model=TicketListResponse)
@@ -86,33 +122,7 @@ async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
-    return TicketDetailResponse(
-        id=ticket.id,
-        source_id=ticket.source_id,
-        source_name=ticket.source.name if ticket.source else "",
-        external_id=ticket.external_id,
-        type=ticket.type,
-        priority=ticket.priority,
-        status=ticket.status,
-        subject=ticket.subject,
-        description=ticket.description,
-        source_metadata=ticket.source_metadata,
-        source_created_at=ticket.source_created_at,
-        source_updated_at=ticket.source_updated_at,
-        first_ingested_at=ticket.first_ingested_at,
-        last_synced_at=ticket.last_synced_at,
-        sla_due_at=ticket.sla_due_at,
-        assigned_to=_assignee(ticket),
-        events=[
-            {
-                "id": e.id,
-                "event_type": e.event_type,
-                "payload": e.payload,
-                "occurred_at": e.occurred_at,
-            }
-            for e in ticket.events
-        ],
-    )
+    return _detail(ticket)
 
 
 @router.patch("/{ticket_id}/status", response_model=TicketDetailResponse)
@@ -147,33 +157,7 @@ async def update_ticket_status(
             },
         )
 
-    return TicketDetailResponse(
-        id=ticket.id,
-        source_id=ticket.source_id,
-        source_name=ticket.source.name if ticket.source else "",
-        external_id=ticket.external_id,
-        type=ticket.type,
-        priority=ticket.priority,
-        status=ticket.status,
-        subject=ticket.subject,
-        description=ticket.description,
-        source_metadata=ticket.source_metadata,
-        source_created_at=ticket.source_created_at,
-        source_updated_at=ticket.source_updated_at,
-        first_ingested_at=ticket.first_ingested_at,
-        last_synced_at=ticket.last_synced_at,
-        sla_due_at=ticket.sla_due_at,
-        assigned_to=_assignee(ticket),
-        events=[
-            {
-                "id": e.id,
-                "event_type": e.event_type,
-                "payload": e.payload,
-                "occurred_at": e.occurred_at,
-            }
-            for e in ticket.events
-        ],
-    )
+    return _detail(ticket)
 
 
 @router.patch("/{ticket_id}/assign", response_model=TicketDetailResponse)
@@ -187,30 +171,37 @@ async def assign_ticket(
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
-    return TicketDetailResponse(
-        id=ticket.id,
-        source_id=ticket.source_id,
-        source_name=ticket.source.name if ticket.source else "",
-        external_id=ticket.external_id,
-        type=ticket.type,
-        priority=ticket.priority,
-        status=ticket.status,
-        subject=ticket.subject,
-        description=ticket.description,
-        source_metadata=ticket.source_metadata,
-        source_created_at=ticket.source_created_at,
-        source_updated_at=ticket.source_updated_at,
-        first_ingested_at=ticket.first_ingested_at,
-        last_synced_at=ticket.last_synced_at,
-        sla_due_at=ticket.sla_due_at,
-        assigned_to=_assignee(ticket),
-        events=[
-            {
-                "id": e.id,
-                "event_type": e.event_type,
-                "payload": e.payload,
-                "occurred_at": e.occurred_at,
-            }
-            for e in ticket.events
-        ],
+    return _detail(ticket)
+
+
+@router.patch("/{ticket_id}/sla", response_model=TicketDetailResponse)
+async def override_sla(
+    ticket_id: int,
+    body: OverrideSlaRequest,
+    db: DbSession,
+    _admin: AdminUser,
+) -> TicketDetailResponse:
+    """Override the SLA deadline for a ticket. Restricted to admin."""
+    svc = TicketService(db)
+    ticket = await svc.get_ticket(ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    from app.models.ticket_event import TicketEvent
+
+    await SlaService(db).override_due_at(ticket, body.due_at)
+
+    db.add(
+        TicketEvent(
+            ticket_id=ticket_id,
+            event_type="sla_overridden",
+            payload={
+                "new_due_at": body.due_at.isoformat(),
+                **({"reason": body.reason} if body.reason else {}),
+            },
+        )
     )
+    await db.commit()
+
+    ticket = await svc.get_ticket(ticket_id)
+    return _detail(ticket)

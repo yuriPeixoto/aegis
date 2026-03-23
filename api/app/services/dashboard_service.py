@@ -10,7 +10,7 @@ from app.models.source import Source
 from app.models.ticket import Ticket
 from app.models.user import User
 
-_INACTIVE = ('resolved', 'closed', 'cancelled')
+_INACTIVE = ('pending_closure', 'resolved', 'closed', 'cancelled')
 
 
 class DashboardService:
@@ -34,6 +34,7 @@ class DashboardService:
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
+                Ticket.sla_paused_since.is_(None),  # exclude paused tickets
             )
         )
         overdue: int = r.scalar_one()
@@ -58,7 +59,7 @@ class DashboardService:
 
         r = await self._db.execute(
             select(func.count()).where(
-                Ticket.status == 'resolved',
+                Ticket.status.in_(('pending_closure', 'resolved', 'closed')),
                 Ticket.last_synced_at >= today_start,
             )
         )
@@ -133,6 +134,7 @@ class DashboardService:
                     Ticket.assigned_to_user_id == agent.id,
                     Ticket.sla_due_at.is_not(None),
                     Ticket.sla_due_at < now,
+                    Ticket.sla_paused_since.is_(None),  # exclude paused
                 )
             )
             agent_overdue: int = r.scalar_one()
@@ -140,7 +142,7 @@ class DashboardService:
             r = await self._db.execute(
                 select(func.count()).where(
                     Ticket.assigned_to_user_id == agent.id,
-                    Ticket.status == 'resolved',
+                    Ticket.status.in_(('pending_closure', 'resolved', 'closed')),
                     Ticket.last_synced_at >= thirty_days_ago,
                 )
             )
@@ -166,6 +168,7 @@ class DashboardService:
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
+                Ticket.sla_paused_since.is_(None),
             )
             .options(selectinload(Ticket.source), selectinload(Ticket.assignee))
             .order_by(Ticket.sla_due_at.asc())
