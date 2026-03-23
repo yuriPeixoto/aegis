@@ -9,6 +9,7 @@ const STYLE: Record<string, string> = {
   IN_DEV:         'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
   WAITING_TEST:   'bg-amber-500/20 text-amber-300 border-amber-500/30',
   IN_TEST:        'bg-teal-500/20 text-teal-300 border-teal-500/30',
+  PENDING_CLOSURE: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
   RESOLVED:       'bg-green-500/20 text-green-300 border-green-500/30',
   CLOSED:         'bg-slate-500/20 text-slate-400 border-slate-500/30',
   CANCELLED:      'bg-red-500/10 text-red-400 border-red-500/20',

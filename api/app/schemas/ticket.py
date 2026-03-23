@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, computed_field
 
-_TERMINAL_STATUSES = {"resolved", "closed", "cancelled"}
+_TERMINAL_STATUSES = {"pending_closure", "resolved", "closed", "cancelled"}
 
 
 class TicketEventResponse(BaseModel):

@@ -13,12 +13,13 @@ from app.models.ticket_message import TicketMessage
 from app.models.user import User  # noqa: F401 — loaded via selectinload
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
-    "open": {"in_progress", "cancelled"},
-    "in_progress": {"waiting_client", "resolved", "cancelled"},
-    "waiting_client": {"in_progress", "resolved", "cancelled"},
-    "resolved": {"open"},
-    "closed": set(),
-    "cancelled": set(),
+    "open":            {"in_progress", "cancelled"},
+    "in_progress":     {"waiting_client", "pending_closure", "cancelled"},
+    "waiting_client":  {"in_progress", "pending_closure", "cancelled"},
+    "pending_closure": {"in_progress", "closed"},
+    "resolved":        {"open", "closed"},   # mantido por retrocompatibilidade
+    "closed":          set(),
+    "cancelled":       set(),
 }
 
 

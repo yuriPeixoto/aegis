@@ -70,9 +70,11 @@
     "action": {
       "startProgress": "Start Progress",
       "waitClient": "Await Client",
+      "pendingClosure": "Pending Closure",
       "resolve": "Resolve",
       "cancel": "Cancel",
-      "reopen": "Reopen"
+      "reopen": "Reopen",
+      "close": "Close"
     },
     "OPEN": "Open",
     "IN_PROGRESS": "In Progress",
