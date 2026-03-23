@@ -43,6 +43,14 @@ const STATUS_ACTION_LABEL: Record<string, string> = {
   closed:          'status.action.close',
 }
 
+// When the same target status means different things depending on origin
+function getActionLabel(currentStatus: string, nextStatus: string): string {
+  if (nextStatus === 'in_progress' && currentStatus !== 'open') {
+    return 'status.action.reopen'
+  }
+  return STATUS_ACTION_LABEL[nextStatus] ?? nextStatus
+}
+
 function formatDate(iso: string | null, locale: string) {
   if (!iso) return '—'
   return new Date(iso).toLocaleString(locale, {
@@ -387,7 +395,7 @@ export function TicketDetailPage() {
                     onClick={() => updateStatus.mutate({ status: next })}
                     className="text-xs font-semibold px-3 py-1 rounded border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {t(STATUS_ACTION_LABEL[next] ?? next)}
+                    {t(getActionLabel(ticket.status, next))}
                   </button>
                 ))}
               </div>
