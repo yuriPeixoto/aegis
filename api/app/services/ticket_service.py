@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent  # active — needed to create status_changed events
 from app.models.ticket_message import TicketMessage
 from app.models.user import User  # noqa: F401 — loaded via selectinload
+from app.services.sla_service import SlaService
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "open":            {"in_progress", "cancelled"},
@@ -137,6 +138,9 @@ class TicketService:
 
         old_status = ticket.status
         ticket.status = new_status
+
+        now = datetime.now(UTC)
+        await SlaService(self._db).on_status_changed(ticket, old_status, new_status, now)
 
         event = TicketEvent(
             ticket_id=ticket_id,

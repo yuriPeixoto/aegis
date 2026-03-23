@@ -64,7 +64,8 @@
     "on_time": "No Prazo",
     "at_risk": "Em Risco",
     "overdue": "Atrasado",
-    "met": "Cumprido"
+    "met": "Cumprido",
+    "paused": "Pausado"
   },
   "status": {
     "action": {

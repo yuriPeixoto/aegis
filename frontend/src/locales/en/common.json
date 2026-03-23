@@ -64,7 +64,8 @@
     "on_time": "On Time",
     "at_risk": "At Risk",
     "overdue": "Overdue",
-    "met": "Met"
+    "met": "Met",
+    "paused": "Paused"
   },
   "status": {
     "action": {
