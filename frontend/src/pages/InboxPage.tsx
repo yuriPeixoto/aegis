@@ -12,7 +12,7 @@ export function InboxPage() {
   const { t } = useTranslation()
   const { data: me } = useMe()
   const navigate = useNavigate()
-  const [queue, setQueue] = useState<Queue>('unassigned')
+  const [queue, setQueue] = useState<Queue>('mine')
   const [filters, setFilters] = useState<TicketFilters>({ offset: 0 })
 
   function queueFilters(): Pick<TicketFilters, 'assigned_to_user_id' | 'unassigned'> {

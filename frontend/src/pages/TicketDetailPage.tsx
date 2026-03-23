@@ -24,20 +24,23 @@ import { NotesPanel } from '../components/inbox/NotesPanel'
 import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  open: ['in_progress', 'cancelled'],
-  in_progress: ['waiting_client', 'resolved', 'cancelled'],
-  waiting_client: ['in_progress', 'resolved', 'cancelled'],
-  resolved: ['open'],
-  closed: [],
-  cancelled: [],
+  open:            ['in_progress', 'cancelled'],
+  in_progress:     ['waiting_client', 'pending_closure', 'cancelled'],
+  waiting_client:  ['in_progress', 'pending_closure', 'cancelled'],
+  pending_closure: ['in_progress', 'closed'],
+  resolved:        ['open', 'closed'],
+  closed:          [],
+  cancelled:       [],
 }
 
 const STATUS_ACTION_LABEL: Record<string, string> = {
-  in_progress: 'status.action.startProgress',
-  waiting_client: 'status.action.waitClient',
-  resolved: 'status.action.resolve',
-  cancelled: 'status.action.cancel',
-  open: 'status.action.reopen',
+  in_progress:     'status.action.startProgress',
+  waiting_client:  'status.action.waitClient',
+  pending_closure: 'status.action.pendingClosure',
+  resolved:        'status.action.resolve',
+  cancelled:       'status.action.cancel',
+  open:            'status.action.reopen',
+  closed:          'status.action.close',
 }
 
 function formatDate(iso: string | null, locale: string) {
