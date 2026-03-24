@@ -60,6 +60,9 @@ class Ticket(Base):
     # Non-null while the ticket is currently paused (waiting_client)
     sla_paused_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # When the ticket was moved to a terminal status (resolved, closed, etc.)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+
     # Aegis-managed timestamps
     first_ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

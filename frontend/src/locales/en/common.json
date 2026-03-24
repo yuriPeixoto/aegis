@@ -204,11 +204,47 @@
       "create": "Add",
       "creating": "Adding...",
       "errorGeneric": "Something went wrong. Try again.",
-      "apiKeyTitle": "Save the API key",
-      "apiKeyWarning": "This key will not be shown again. Copy it and store it securely before continuing.",
-      "copy": "Copy",
-      "copied": "Copied!",
-      "apiKeyConfirm": "I've saved it"
+      "apiKeyTitle": "API Key & Webhook Secret Generated",
+      "apiKeyWarning": "Store these keys securely. They will only be shown this once.",
+      "webhookSecretLabel": "Webhook Secret",
+      "apiKeyConfirm": "I have saved the keys"
+    },
+    "sla": {
+      "title": "SLA",
+      "businessHours": {
+        "title": "Business Hours",
+        "workDays": "Work days",
+        "workStart": "Start of day",
+        "workEnd": "End of day",
+        "lunchStart": "Lunch start",
+        "lunchEnd": "Lunch end",
+        "timezone": "Timezone",
+        "timezoneHint": "IANA format, e.g. America/Sao_Paulo, America/Cuiaba",
+        "save": "Save hours",
+        "saving": "Saving...",
+        "saved": "Saved ✓"
+      },
+      "policies": {
+        "title": "SLA Policies (business hours)",
+        "colPriority": "Priority",
+        "colHours": "Business hours",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "holidays": {
+        "title": "Holidays",
+        "new": "Add holiday",
+        "empty": "No holidays registered yet.",
+        "colDate": "Date",
+        "colDescription": "Description",
+        "delete": "Delete",
+        "modalTitle": "Add Holiday",
+        "fieldDate": "Date",
+        "fieldDescription": "Description",
+        "create": "Add",
+        "creating": "Adding..."
+      }
     }
   }
 }

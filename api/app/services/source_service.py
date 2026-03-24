@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import secrets
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,18 +11,20 @@ class SourceService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def create(self, data: SourceCreate) -> tuple[Source, str]:
-        """Create a source and return (source, plaintext_api_key)."""
+    async def create(self, data: SourceCreate) -> tuple[Source, str, str]:
+        """Create a source and return (source, plaintext_api_key, webhook_secret)."""
         plain_key = generate_api_key()
+        webhook_secret = secrets.token_hex(32)
         source = Source(
             name=data.name,
             slug=data.slug,
             api_key_hash=hash_api_key(plain_key),
+            webhook_secret=webhook_secret,
         )
         self._db.add(source)
         await self._db.commit()
         await self._db.refresh(source)
-        return source, plain_key
+        return source, plain_key, webhook_secret
 
     async def list_all(self) -> list[Source]:
         result = await self._db.execute(select(Source).order_by(Source.created_at.desc()))

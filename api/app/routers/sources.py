@@ -15,7 +15,7 @@ router = APIRouter(prefix="/v1/sources", tags=["sources"])
 async def create_source(data: SourceCreate, db: DbSession, _: AdminUser) -> SourceCreatedResponse:
     """Register a new source. Returns the API key — store it securely, it won't be shown again."""
     try:
-        source, plain_key = await SourceService(db).create(data)
+        source, plain_key, webhook_secret = await SourceService(db).create(data)
     except IntegrityError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -28,6 +28,7 @@ async def create_source(data: SourceCreate, db: DbSession, _: AdminUser) -> Sour
         is_active=source.is_active,
         created_at=source.created_at,
         api_key=plain_key,
+        webhook_secret=webhook_secret,
     )
 
 

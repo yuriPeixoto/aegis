@@ -13,6 +13,17 @@ from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
 from app.services.attachment_service import AttachmentService
+from app.services.sla_service import SlaService
+
+# GF native status → Aegis status (reverse of AegisWebhookController map)
+_GF_TO_AEGIS: dict[str, str] = {
+    "em_atendimento":              "in_progress",
+    "aguardando_cliente":          "waiting_client",
+    "aguardando_validacao_cliente": "pending_closure",
+    "resolvido":                   "resolved",
+    "fechado":                     "closed",
+    "cancelado":                   "cancelled",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +82,7 @@ class IngestService:
             return ticket, True
 
         # Update existing ticket
+        old_status = ticket.status
         ticket.status = data.status
         ticket.priority = data.priority
         ticket.type = data.type
@@ -79,6 +91,11 @@ class IngestService:
         ticket.source_metadata = data.source_metadata
         ticket.source_updated_at = data.source_updated_at
         ticket.last_synced_at = datetime.now(UTC)
+
+        if old_status != ticket.status:
+            await SlaService(self._db).on_status_changed(
+                ticket, old_status, ticket.status, datetime.now(UTC)
+            )
 
         self._db.add(
             TicketEvent(
@@ -189,6 +206,30 @@ class IngestService:
                                 ticket.id,
                                 exc_info=True,
                             )
+
+        # When the source system reports a status change, update the Aegis ticket
+        if data.event_type == "status_changed" and data.payload:
+            gf_status = data.payload.get("status")
+            aegis_status = _GF_TO_AEGIS.get(gf_status) if gf_status else None
+            if aegis_status and ticket.status != aegis_status:
+                old_status = ticket.status
+                ticket.status = aegis_status
+                ticket.last_synced_at = datetime.now(UTC)
+                await SlaService(self._db).on_status_changed(
+                    ticket, old_status, aegis_status, datetime.now(UTC)
+                )
+                logger.info(
+                    "ingest: ticket %s status updated %s → %s (via GF event)",
+                    ticket.external_id,
+                    old_status,
+                    aegis_status,
+                )
+            elif not aegis_status and gf_status:
+                logger.debug(
+                    "ingest: GF status '%s' has no Aegis mapping — skipped for ticket %s",
+                    gf_status,
+                    ticket.external_id,
+                )
 
         await self._db.commit()
         await self._db.refresh(event)

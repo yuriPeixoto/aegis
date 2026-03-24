@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMe } from '../hooks/useAuth'
 import { useSources, useCreateSource, type SourceCreated } from '../hooks/useSources'
 import { useAllUsers, useCreateUser, useUpdateUser } from '../hooks/useUsers'
+import { useSlaSettings, useUpdateBusinessHours, useUpdateSlaPolicy, useCreateHoliday, useDeleteHoliday } from '../hooks/useSlaSettings'
 import type { User } from '../hooks/useAuth'
 
 export function SettingsPage() {
@@ -22,6 +23,8 @@ export function SettingsPage() {
       <UsersSection currentUserId={user.id} />
       <div className="border-t border-brand-border" />
       <SourcesSection />
+      <div className="border-t border-brand-border" />
+      <SlaSection />
     </div>
   )
 }
@@ -403,6 +406,397 @@ function CreateSourceModal({ onClose, onCreated }: CreateSourceModalProps) {
   )
 }
 
+// ── SLA Section ──────────────────────────────────────────────────────────────
+
+const DAYS = [
+  { iso: 1, label: 'Seg' },
+  { iso: 2, label: 'Ter' },
+  { iso: 3, label: 'Qua' },
+  { iso: 4, label: 'Qui' },
+  { iso: 5, label: 'Sex' },
+  { iso: 6, label: 'Sáb' },
+  { iso: 7, label: 'Dom' },
+]
+
+function SlaSection() {
+  const { t } = useTranslation()
+  const { data, isLoading } = useSlaSettings()
+  const updateBH = useUpdateBusinessHours()
+  const updatePolicy = useUpdateSlaPolicy()
+
+  // Business hours form state
+  const [workDays, setWorkDays] = useState<number[]>([])
+  const [workStart, setWorkStart] = useState('')
+  const [workEnd, setWorkEnd] = useState('')
+  const [lunchStart, setLunchStart] = useState('')
+  const [lunchEnd, setLunchEnd] = useState('')
+  const [timezone, setTimezone] = useState('')
+  const [bhDirty, setBhDirty] = useState(false)
+  const [bhSaved, setBhSaved] = useState(false)
+
+  // Policy inline editing state: { priority → hours string }
+  const [editingPolicy, setEditingPolicy] = useState<string | null>(null)
+  const [editingHours, setEditingHours] = useState('')
+
+  useEffect(() => {
+    if (!data) return
+    const bh = data.business_hours
+    setWorkDays(bh.work_days)
+    setWorkStart(bh.work_start)
+    setWorkEnd(bh.work_end)
+    setLunchStart(bh.lunch_start ?? '')
+    setLunchEnd(bh.lunch_end ?? '')
+    setTimezone(bh.timezone)
+    setBhDirty(false)
+  }, [data])
+
+  const handleDayToggle = (iso: number) => {
+    setWorkDays((prev) =>
+      prev.includes(iso) ? prev.filter((d) => d !== iso) : [...prev, iso].sort()
+    )
+    setBhDirty(true)
+  }
+
+  const handleBhSave = () => {
+    updateBH.mutate(
+      {
+        work_days: workDays,
+        work_start: workStart,
+        work_end: workEnd,
+        lunch_start: lunchStart || null,
+        lunch_end: lunchEnd || null,
+        timezone,
+      },
+      {
+        onSuccess: () => {
+          setBhDirty(false)
+          setBhSaved(true)
+          setTimeout(() => setBhSaved(false), 2000)
+        },
+      },
+    )
+  }
+
+  const handlePolicySave = (priority: string) => {
+    const hours = parseInt(editingHours, 10)
+    if (!hours || hours < 1) return
+    updatePolicy.mutate(
+      { priority, resolution_hours: hours },
+      { onSuccess: () => setEditingPolicy(null) },
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <section>
+        <h2 className="text-base font-semibold text-slate-200 mb-4">{t('settings.sla.title')}</h2>
+        <p className="text-sm text-slate-500">{t('inbox.loading')}</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-8">
+      <h2 className="text-base font-semibold text-slate-200">{t('settings.sla.title')}</h2>
+
+      {/* Business Hours */}
+      <div>
+        <h3 className="text-sm font-medium text-slate-300 mb-3">{t('settings.sla.businessHours.title')}</h3>
+        <div className="space-y-4">
+          {/* Work days */}
+          <div>
+            <label className="block text-xs text-slate-500 mb-2">{t('settings.sla.businessHours.workDays')}</label>
+            <div className="flex gap-2">
+              {DAYS.map(({ iso, label }) => (
+                <button
+                  key={iso}
+                  onClick={() => handleDayToggle(iso)}
+                  className={`text-xs font-medium px-2.5 py-1 rounded border transition-colors ${
+                    workDays.includes(iso)
+                      ? 'bg-brand-accent/20 border-brand-accent/50 text-brand-accent'
+                      : 'bg-white/5 border-white/10 text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Times */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.workStart')}</label>
+              <input
+                type="time"
+                value={workStart}
+                onChange={(e) => { setWorkStart(e.target.value); setBhDirty(true) }}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.workEnd')}</label>
+              <input
+                type="time"
+                value={workEnd}
+                onChange={(e) => { setWorkEnd(e.target.value); setBhDirty(true) }}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.lunchStart')}</label>
+              <input
+                type="time"
+                value={lunchStart}
+                onChange={(e) => { setLunchStart(e.target.value); setBhDirty(true) }}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.lunchEnd')}</label>
+              <input
+                type="time"
+                value={lunchEnd}
+                onChange={(e) => { setLunchEnd(e.target.value); setBhDirty(true) }}
+                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+              />
+            </div>
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.timezone')}</label>
+            <input
+              type="text"
+              value={timezone}
+              onChange={(e) => { setTimezone(e.target.value); setBhDirty(true) }}
+              placeholder="America/Sao_Paulo"
+              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none focus:border-brand-accent"
+            />
+            <p className="text-xs text-slate-600 mt-1">
+              {t('settings.sla.businessHours.timezoneHint')}
+            </p>
+          </div>
+
+          <button
+            onClick={handleBhSave}
+            disabled={!bhDirty || updateBH.isPending}
+            className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-40 transition-colors"
+          >
+            {updateBH.isPending 
+              ? t('settings.sla.businessHours.saving') 
+              : bhSaved 
+                ? t('settings.sla.businessHours.saved') 
+                : t('settings.sla.businessHours.save')}
+          </button>
+        </div>
+      </div>
+
+      {/* SLA Policies */}
+      <div>
+        <h3 className="text-sm font-medium text-slate-300 mb-3">{t('settings.sla.policies.title')}</h3>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-slate-500 border-b border-slate-700">
+              <th className="pb-2 font-medium">{t('settings.sla.policies.colPriority')}</th>
+              <th className="pb-2 font-medium">{t('settings.sla.policies.colHours')}</th>
+              <th className="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data?.policies ?? []).map((policy) => (
+              <tr key={policy.priority} className="border-b border-slate-800">
+                <td className="py-2.5 text-slate-200">
+                  {t(`priority.${policy.priority.toUpperCase()}`)}
+                </td>
+                <td className="py-2.5">
+                  {editingPolicy === policy.priority ? (
+                    <input
+                      type="number"
+                      min={1}
+                      value={editingHours}
+                      onChange={(e) => setEditingHours(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handlePolicySave(policy.priority)
+                        if (e.key === 'Escape') setEditingPolicy(null)
+                      }}
+                      autoFocus
+                      className="w-20 bg-slate-800 border border-brand-accent/50 rounded px-2 py-0.5 text-sm text-slate-200 focus:outline-none"
+                    />
+                  ) : (
+                    <span className="text-slate-300 font-mono">{policy.resolution_hours}h</span>
+                  )}
+                </td>
+                <td className="py-2.5 text-right">
+                  {editingPolicy === policy.priority ? (
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => handlePolicySave(policy.priority)}
+                        disabled={updatePolicy.isPending}
+                        className="text-xs text-brand-accent hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        {t('settings.sla.policies.save')}
+                      </button>
+                      <button
+                        onClick={() => setEditingPolicy(null)}
+                        className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        {t('settings.sla.policies.cancel')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingPolicy(policy.priority)
+                        setEditingHours(String(policy.resolution_hours))
+                      }}
+                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      {t('settings.sla.policies.edit')}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="border-t border-brand-border/30 pt-8">
+        <HolidaysSection holidays={data?.holidays ?? []} />
+      </div>
+    </section>
+  )
+}
+
+function HolidaysSection({ holidays }: { holidays: any[] }) {
+  const { t } = useTranslation()
+  const deleteHoliday = useDeleteHoliday()
+  const [showModal, setShowModal] = useState(false)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-slate-300">{t('settings.sla.holidays.title')}</h3>
+        <button
+          onClick={() => setShowModal(true)}
+          className="text-xs font-semibold px-3 py-1 rounded bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
+        >
+          {t('settings.sla.holidays.new')}
+        </button>
+      </div>
+
+      {!holidays.length ? (
+        <p className="text-xs text-slate-500 italic">{t('settings.sla.holidays.empty')}</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-slate-500 border-b border-slate-700">
+              <th className="pb-2 font-medium">{t('settings.sla.holidays.colDate')}</th>
+              <th className="pb-2 font-medium">{t('settings.sla.holidays.colDescription')}</th>
+              <th className="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {holidays.map((h) => (
+              <tr key={h.id} className="border-b border-slate-800">
+                <td className="py-2.5 text-slate-200 font-mono text-xs">
+                  {new Date(h.date + 'T00:00:00').toLocaleDateString()}
+                </td>
+                <td className="py-2.5 text-slate-400 text-xs">{h.description}</td>
+                <td className="py-2.5 text-right">
+                  <button
+                    disabled={deleteHoliday.isPending}
+                    onClick={() => deleteHoliday.mutate(h.id)}
+                    className="text-xs text-red-500/70 hover:text-red-400 transition-colors disabled:opacity-50"
+                  >
+                    {t('settings.sla.holidays.delete')}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {showModal && <CreateHolidayModal onClose={() => setShowModal(false)} />}
+    </div>
+  )
+}
+
+function CreateHolidayModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
+  const { mutate, isPending, error } = useCreateHoliday()
+  const [date, setDate] = useState('')
+  const [description, setDescription] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    mutate({ date, description }, { onSuccess: onClose })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
+        <h3 className="text-base font-semibold text-slate-200 mb-4">
+          {t('settings.sla.holidays.modalTitle')}
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">
+              {t('settings.sla.holidays.fieldDate')}
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">
+              {t('settings.sla.holidays.fieldDescription')}
+            </label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
+              placeholder="Ex: Natal"
+            />
+          </div>
+
+          {error && (
+            <p className="text-xs text-red-400">
+              {(error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+                t('settings.users.errorGeneric')}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              {t('settings.sources.cancel')}
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
+            >
+              {isPending ? t('settings.sla.holidays.creating') : t('settings.sla.holidays.create')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 interface ApiKeyAlertProps {
   source: SourceCreated
   onClose: () => void
@@ -410,12 +804,19 @@ interface ApiKeyAlertProps {
 
 function ApiKeyAlert({ source, onClose }: ApiKeyAlertProps) {
   const { t } = useTranslation()
-  const [copied, setCopied] = useState(false)
+  const [copiedKey, setCopiedKey] = useState(false)
+  const [copiedSecret, setCopiedSecret] = useState(false)
 
-  const handleCopy = () => {
+  const handleCopyKey = () => {
     navigator.clipboard.writeText(source.api_key)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setCopiedKey(true)
+    setTimeout(() => setCopiedKey(false), 2000)
+  }
+
+  const handleCopySecret = () => {
+    navigator.clipboard.writeText(source.webhook_secret)
+    setCopiedSecret(true)
+    setTimeout(() => setCopiedSecret(false), 2000)
   }
 
   return (
@@ -426,20 +827,46 @@ function ApiKeyAlert({ source, onClose }: ApiKeyAlertProps) {
         </h3>
         <p className="text-xs text-slate-400 mb-4">{t('settings.sources.apiKeyWarning')}</p>
 
-        <div className="bg-slate-800 rounded p-3 font-mono text-sm text-slate-200 break-all mb-4">
-          {source.api_key}
+        <div className="space-y-4 mb-6">
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5 px-1">
+              API KEY
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 bg-slate-800 rounded p-3 font-mono text-xs text-slate-200 break-all border border-slate-700">
+                {source.api_key}
+              </div>
+              <button
+                onClick={handleCopyKey}
+                className="shrink-0 px-3 py-1.5 text-xs rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 transition-all self-start"
+              >
+                {copiedKey ? t('settings.sources.copied') : t('settings.sources.copy')}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5 px-1">
+              {t('settings.sources.webhookSecretLabel')}
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 bg-slate-800 rounded p-3 font-mono text-xs text-slate-200 break-all border border-slate-700">
+                {source.webhook_secret}
+              </div>
+              <button
+                onClick={handleCopySecret}
+                className="shrink-0 px-3 py-1.5 text-xs rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 transition-all self-start"
+              >
+                {copiedSecret ? t('settings.sources.copied') : t('settings.sources.copy')}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={handleCopy}
-            className="px-3 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white transition-colors"
-          >
-            {copied ? t('settings.sources.copied') : t('settings.sources.copy')}
-          </button>
+        <div className="flex justify-end pt-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
+            className="px-6 py-2 text-sm font-semibold rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-all shadow-lg shadow-brand-accent/20"
           >
             {t('settings.sources.apiKeyConfirm')}
           </button>

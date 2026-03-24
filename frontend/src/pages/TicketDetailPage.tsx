@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { 
+import {
   ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
-  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X
+  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil
 } from 'lucide-react'
 import { api } from '../lib/axios'
 import type { TicketMessage } from '../types/ticket'
@@ -14,7 +14,9 @@ import {
   useUsers,
   useMessages,
   useSendMessage,
+  useOverrideSla,
 } from '../hooks/useTickets'
+import { useMe } from '../hooks/useAuth'
 import { markTicketAsViewed } from '../hooks/useInboundNotifications'
 import { StatusBadge } from '../components/inbox/StatusBadge'
 import { PriorityBadge } from '../components/inbox/PriorityBadge'
@@ -206,9 +208,13 @@ export function TicketDetailPage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
 
+  const { data: me } = useMe()
+  const isAdmin = me?.role === 'admin'
+
   const { data: ticket, isLoading } = useTicket(ticketId)
   const updateStatus = useUpdateTicketStatus(ticketId)
   const assignTicket = useAssignTicket(ticketId)
+  const overrideSla = useOverrideSla(ticketId)
   const { data: users = [] } = useUsers()
   const { data: messages = [] } = useMessages(ticketId)
   const { mutate: sendMessage, isPending: sendPending } = useSendMessage(ticketId)
@@ -217,6 +223,10 @@ export function TicketDetailPage() {
   const [replyFile, setReplyFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const [showSlaForm, setShowSlaForm] = useState(false)
+  const [slaOverrideDueAt, setSlaOverrideDueAt] = useState('')
+  const [slaOverrideReason, setSlaOverrideReason] = useState('')
 
   // Mark ticket as viewed so the unread dot clears and notifications stop for this ticket
   useEffect(() => {
@@ -444,6 +454,81 @@ export function TicketDetailPage() {
                   </span>
                 </span>
               </div>
+
+              {/* SLA deadline + admin override */}
+              {ticket.sla_due_at && (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Clock className="w-3.5 h-3.5 shrink-0 text-brand-purple" />
+                  <span className="flex-1">
+                    SLA:{' '}
+                    <span className="text-slate-300 font-mono">
+                      {formatDate(ticket.sla_due_at, locale)}
+                    </span>
+                  </span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        const local = new Date(ticket.sla_due_at!)
+                        const offset = local.getTimezoneOffset() * 60000
+                        setSlaOverrideDueAt(
+                          new Date(local.getTime() - offset).toISOString().slice(0, 16)
+                        )
+                        setSlaOverrideReason('')
+                        setShowSlaForm((v) => !v)
+                      }}
+                      className="text-slate-500 hover:text-brand-purple transition-colors shrink-0"
+                      title="Alterar prazo SLA"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Inline SLA override form */}
+              {showSlaForm && isAdmin && (
+                <div className="mt-1 p-3 bg-white/5 border border-white/10 rounded-lg space-y-2">
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Alterar prazo SLA
+                  </p>
+                  <input
+                    type="datetime-local"
+                    value={slaOverrideDueAt}
+                    onChange={(e) => setSlaOverrideDueAt(e.target.value)}
+                    className="w-full bg-brand-surface border border-white/15 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-brand-purple"
+                  />
+                  <input
+                    type="text"
+                    value={slaOverrideReason}
+                    onChange={(e) => setSlaOverrideReason(e.target.value)}
+                    placeholder="Motivo (opcional)"
+                    className="w-full bg-brand-surface border border-white/15 rounded px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-brand-purple"
+                  />
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      disabled={!slaOverrideDueAt || overrideSla.isPending}
+                      onClick={() => {
+                        overrideSla.mutate(
+                          {
+                            due_at: new Date(slaOverrideDueAt).toISOString(),
+                            reason: slaOverrideReason || undefined,
+                          },
+                          { onSuccess: () => setShowSlaForm(false) },
+                        )
+                      }}
+                      className="flex-1 text-xs font-semibold py-1 rounded bg-brand-purple text-white hover:bg-brand-purple/80 disabled:opacity-40 transition-colors"
+                    >
+                      Salvar
+                    </button>
+                    <button
+                      onClick={() => setShowSlaForm(false)}
+                      className="flex-1 text-xs py-1 rounded border border-white/15 text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Description */}

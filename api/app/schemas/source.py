@@ -21,6 +21,7 @@ class SourceResponse(BaseModel):
 
 
 class SourceCreatedResponse(SourceResponse):
-    """Returned only once at creation — includes the plaintext API key."""
+    """Returned only once at creation — includes the plaintext API key and webhook secret."""
 
     api_key: str
+    webhook_secret: str
