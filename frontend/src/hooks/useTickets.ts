@@ -130,6 +130,20 @@ export function useAttachments(ticketId: number) {
   })
 }
 
+export function useOverrideSla(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, { due_at: string; reason?: string }>({
+    mutationFn: async (body) => {
+      const { data } = await api.patch<TicketDetail>(`/tickets/${ticketId}/sla`, body)
+      return data
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated)
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
 export function useUploadAttachment(ticketId: number) {
   const queryClient = useQueryClient()
   return useMutation<TicketAttachment, Error, File>({

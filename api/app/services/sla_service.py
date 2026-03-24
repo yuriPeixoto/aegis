@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.business_hours import BusinessHoursConfig
+from app.models.holiday import SlaHoliday
 from app.models.sla_policy import SlaPolicy
 from app.models.ticket import Ticket
 from app.services.business_hours_service import BusinessHoursService
@@ -68,7 +69,9 @@ class SlaService:
         ticket.sla_started_at = now
         ticket.sla_paused_seconds = 0
         ticket.sla_paused_since = None
-        ticket.sla_due_at = self._bh.add_business_hours(now, policy.resolution_hours, config)
+        
+        holidays = await self._get_holidays()
+        ticket.sla_due_at = self._bh.add_business_hours(now, policy.resolution_hours, config, holidays)
         logger.info(
             "sla: started for ticket %s — due at %s (%dh business)",
             ticket.id,
@@ -90,6 +93,7 @@ class SlaService:
 
     def _finalize(self, ticket: Ticket, now: datetime) -> None:
         """Flush any in-flight pause on terminal transition."""
+        ticket.resolved_at = now
         if ticket.sla_paused_since and ticket.sla_due_at:
             paused_seconds = (now - ticket.sla_paused_since).total_seconds()
             ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + int(paused_seconds)
@@ -108,3 +112,7 @@ class SlaService:
             select(SlaPolicy).where(SlaPolicy.priority == priority.lower())
         )
         return result.scalar_one_or_none()
+
+    async def _get_holidays(self) -> list[date]:
+        result = await self._db.execute(select(SlaHoliday.date))
+        return list(result.scalars().all())
