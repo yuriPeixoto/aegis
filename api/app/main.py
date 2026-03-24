@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 from app.routers import attachments, auth, dashboard, ingest, messages, notes, sources, tickets, users
+from app.routers import settings as settings_router
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -40,6 +41,7 @@ app.include_router(notes.router)
 app.include_router(messages.router)
 app.include_router(attachments.router)
 app.include_router(dashboard.router)
+app.include_router(settings_router.router)
 
 
 @app.get("/health")

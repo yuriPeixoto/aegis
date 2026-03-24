@@ -11,6 +11,7 @@ export interface Source {
 
 export interface SourceCreated extends Source {
   api_key: string
+  webhook_secret: string
 }
 
 interface SourceCreatePayload {

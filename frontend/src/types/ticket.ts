@@ -40,7 +40,9 @@ export interface Ticket {
   first_ingested_at: string
   last_synced_at: string
   sla_due_at: string | null
-  sla_status: 'on_time' | 'at_risk' | 'overdue' | 'met' | null
+  sla_started_at: string | null
+  sla_paused_since: string | null
+  sla_status: 'on_time' | 'at_risk' | 'overdue' | 'met' | 'paused' | null
   last_inbound_at: string | null
   assigned_to: Assignee | null
 }
