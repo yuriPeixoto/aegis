@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from collections import defaultdict
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.source import Source
 from app.models.ticket import Ticket
+from app.models.ticket_message import TicketMessage
 from app.models.user import User
 
 _INACTIVE = ('pending_closure', 'resolved', 'closed', 'cancelled')
@@ -238,3 +240,83 @@ class DashboardService:
             'overdue_tickets': overdue_tickets,
             'unassigned_tickets': unassigned_tickets,
         }
+
+    async def get_agent_monitor(self) -> dict:
+        now = datetime.now(timezone.utc)
+
+        # Correlated subqueries for last message per ticket
+        latest_dir = (
+            select(TicketMessage.direction)
+            .where(TicketMessage.ticket_id == Ticket.id)
+            .order_by(TicketMessage.created_at.desc())
+            .limit(1)
+            .scalar_subquery()
+            .label('latest_msg_direction')
+        )
+        latest_at = (
+            select(TicketMessage.created_at)
+            .where(TicketMessage.ticket_id == Ticket.id)
+            .order_by(TicketMessage.created_at.desc())
+            .limit(1)
+            .scalar_subquery()
+            .label('latest_msg_at')
+        )
+
+        r = await self._db.execute(
+            select(Ticket, latest_dir, latest_at)
+            .where(
+                ~Ticket.status.in_(_INACTIVE),
+                Ticket.assigned_to_user_id.is_not(None),
+            )
+            .options(selectinload(Ticket.assignee))
+            .order_by(Ticket.sla_due_at.asc().nulls_last())
+        )
+        rows = r.all()
+
+        agents_map: dict[int, dict] = {}
+        tickets_by_agent: dict[int, list] = defaultdict(list)
+
+        for ticket, msg_direction, msg_at in rows:
+            agent = ticket.assignee
+            if agent is None:
+                continue
+
+            if agent.id not in agents_map:
+                agents_map[agent.id] = {'user_id': agent.id, 'name': agent.name}
+
+            sla_status = _compute_sla_status(ticket, now)
+
+            tickets_by_agent[agent.id].append({
+                'id': ticket.id,
+                'external_id': ticket.external_id,
+                'subject': ticket.subject,
+                'priority': ticket.priority,
+                'status': ticket.status,
+                'sla_due_at': ticket.sla_due_at.isoformat() if ticket.sla_due_at else None,
+                'sla_status': sla_status,
+                'has_unanswered_message': msg_direction == 'inbound',
+                'last_message_at': msg_at.isoformat() if msg_at else None,
+                'waiting_since': ticket.sla_paused_since.isoformat() if ticket.sla_paused_since else None,
+            })
+
+        agents = [
+            {**agents_map[uid], 'tickets': tickets_by_agent[uid]}
+            for uid in agents_map
+        ]
+        agents.sort(key=lambda a: len(a['tickets']), reverse=True)
+
+        return {'agents': agents}
+
+
+def _compute_sla_status(ticket: Ticket, now: datetime) -> str | None:
+    if not ticket.sla_due_at or not ticket.sla_started_at:
+        return None
+    if ticket.sla_paused_since is not None:
+        return 'paused'
+    if ticket.sla_due_at < now:
+        return 'overdue'
+    total = (ticket.sla_due_at - ticket.sla_started_at).total_seconds()
+    remaining = (ticket.sla_due_at - now).total_seconds()
+    if total > 0 and remaining / total < 0.2:
+        return 'at_risk'
+    return 'ok'

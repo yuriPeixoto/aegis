@@ -144,6 +144,13 @@
       "title": "Chamados Sem Atribuição",
       "subtitle": "Requerem atribuição imediata",
       "assign": "Atribuir a..."
+    },
+    "monitor": {
+      "title": "Monitor de Equipe",
+      "subtitle": "Chamados em andamento por atendente — atualizado a cada 30s",
+      "empty": "Nenhum atendente com chamados ativos",
+      "unanswered": "Cliente aguardando resposta",
+      "waitingSince": "Aguardando há"
     }
   },
   "changePassword": {
