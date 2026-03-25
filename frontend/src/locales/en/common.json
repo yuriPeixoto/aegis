@@ -144,6 +144,13 @@
       "title": "Unassigned Tickets",
       "subtitle": "Require immediate assignment",
       "assign": "Assign to..."
+    },
+    "monitor": {
+      "title": "Team Monitor",
+      "subtitle": "Active tickets per agent — refreshes every 30s",
+      "empty": "No agents with active tickets",
+      "unanswered": "Awaiting agent reply",
+      "waitingSince": "Waiting for"
     }
   },
   "changePassword": {

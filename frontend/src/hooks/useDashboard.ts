@@ -1,6 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/axios'
 
+export interface AgentMonitorTicket {
+  id: number
+  external_id: string
+  subject: string
+  priority: string | null
+  status: string
+  sla_due_at: string | null
+  sla_status: 'ok' | 'at_risk' | 'overdue' | 'paused' | null
+  has_unanswered_message: boolean
+  last_message_at: string | null
+  waiting_since: string | null
+}
+
+export interface AgentMonitorEntry {
+  user_id: number
+  name: string
+  tickets: AgentMonitorTicket[]
+}
+
+export interface AgentMonitorData {
+  agents: AgentMonitorEntry[]
+}
+
 export interface AgentStat {
   user_id: number
   name: string
@@ -59,5 +82,16 @@ export function useDashboardStats() {
       return data
     },
     refetchInterval: 60_000,
+  })
+}
+
+export function useAgentMonitor() {
+  return useQuery<AgentMonitorData>({
+    queryKey: ['dashboard', 'agent-monitor'],
+    queryFn: async () => {
+      const { data } = await api.get<AgentMonitorData>('/dashboard/agent-monitor')
+      return data
+    },
+    refetchInterval: 30_000,
   })
 }
