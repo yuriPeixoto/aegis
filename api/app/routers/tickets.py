@@ -169,11 +169,25 @@ async def assign_ticket(
     ticket_id: int,
     body: AssignTicketRequest,
     db: DbSession,
-    _current_user: CurrentUser,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
 ) -> TicketDetailResponse:
     ticket = await TicketService(db).assign_ticket(ticket_id, body.user_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    if ticket.source and ticket.source.webhook_url:
+        agent_name = ticket.assignee.name if ticket.assignee else current_user.name
+        background_tasks.add_task(
+            dispatch_webhook,
+            webhook_url=ticket.source.webhook_url,
+            webhook_secret=ticket.source.webhook_secret,
+            event_type="assigned",
+            payload={
+                "external_id": ticket.external_id,
+                "assigned_to_name": agent_name,
+            },
+        )
 
     return _detail(ticket)
 
