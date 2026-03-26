@@ -36,5 +36,8 @@ class UserCreateRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
     role: str | None = None
     is_active: bool | None = None

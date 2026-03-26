@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Users, Plug, Clock } from 'lucide-react'
 import { useMe } from '../hooks/useAuth'
-import { useSources, useCreateSource, type SourceCreated } from '../hooks/useSources'
+import { useSources, useCreateSource, useUpdateSource, useRegenerateSourceKey, type SourceCreated, type Source } from '../hooks/useSources'
 import { useAllUsers, useCreateUser, useUpdateUser } from '../hooks/useUsers'
 import { useSlaSettings, useUpdateBusinessHours, useUpdateSlaPolicy, useCreateHoliday, useDeleteHoliday } from '../hooks/useSlaSettings'
 import type { User } from '../hooks/useAuth'
 
+const TABS = [
+  { id: 'users',   label: 'settings.nav.users',   icon: Users },
+  { id: 'sources', label: 'settings.nav.sources', icon: Plug  },
+  { id: 'sla',     label: 'settings.nav.sla',     icon: Clock },
+]
+
 export function SettingsPage() {
   const { t } = useTranslation()
   const { data: user } = useMe()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') ?? 'users'
 
   if (user?.role !== 'admin') {
     return (
@@ -19,15 +29,45 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl space-y-10">
-      <UsersSection currentUserId={user.id} />
-      <div className="border-t border-brand-border" />
-      <SourcesSection />
-      <div className="border-t border-brand-border" />
-      <SlaSection />
+    <div className="flex gap-8 h-full">
+      {/* Left nav */}
+      <nav className="w-44 shrink-0 pt-1">
+        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">
+          {t('settings.nav.title')}
+        </p>
+        <ul className="space-y-0.5">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <li key={id}>
+              <button
+                onClick={() => setSearchParams({ tab: id })}
+                className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-sm transition-colors text-left ${
+                  activeTab === id
+                    ? 'bg-white/8 text-slate-100 font-medium'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {t(label)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Divider */}
+      <div className="w-px bg-brand-border shrink-0" />
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pt-1">
+        {activeTab === 'users'   && <UsersSection   currentUserId={user.id} />}
+        {activeTab === 'sources' && <SourcesSection />}
+        {activeTab === 'sla'     && <SlaSection />}
+      </div>
     </div>
   )
 }
+
+// ── Users ─────────────────────────────────────────────────────────────────────
 
 interface UsersSectionProps {
   currentUserId: number
@@ -36,14 +76,18 @@ interface UsersSectionProps {
 function UsersSection({ currentUserId }: UsersSectionProps) {
   const { t } = useTranslation()
   const { data: users, isLoading } = useAllUsers()
-  const [showModal, setShowModal] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-slate-200">{t('settings.users.title')}</h2>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-base font-semibold text-slate-200">{t('settings.users.title')}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{t('settings.users.subtitle')}</p>
+        </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowCreate(true)}
           className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
         >
           {t('settings.users.new')}
@@ -67,13 +111,19 @@ function UsersSection({ currentUserId }: UsersSectionProps) {
           </thead>
           <tbody>
             {users.map((u) => (
-              <UserRow key={u.id} user={u} isSelf={u.id === currentUserId} />
+              <UserRow
+                key={u.id}
+                user={u}
+                isSelf={u.id === currentUserId}
+                onEdit={() => setEditingUser(u)}
+              />
             ))}
           </tbody>
         </table>
       )}
 
-      {showModal && <CreateUserModal onClose={() => setShowModal(false)} />}
+      {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}
+      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
     </section>
   )
 }
@@ -81,19 +131,12 @@ function UsersSection({ currentUserId }: UsersSectionProps) {
 interface UserRowProps {
   user: User
   isSelf: boolean
+  onEdit: () => void
 }
 
-function UserRow({ user, isSelf }: UserRowProps) {
+function UserRow({ user, isSelf, onEdit }: UserRowProps) {
   const { t } = useTranslation()
   const updateUser = useUpdateUser(user.id)
-
-  const toggleActive = () => {
-    updateUser.mutate({ is_active: !user.is_active })
-  }
-
-  const toggleRole = () => {
-    updateUser.mutate({ role: user.role === 'admin' ? 'agent' : 'admin' })
-  }
 
   return (
     <tr className="border-b border-slate-800">
@@ -111,7 +154,7 @@ function UserRow({ user, isSelf }: UserRowProps) {
           <span className="text-xs text-slate-400">{t(`settings.users.role.${user.role}`)}</span>
         ) : (
           <button
-            onClick={toggleRole}
+            onClick={() => updateUser.mutate({ role: user.role === 'admin' ? 'agent' : 'admin' })}
             disabled={updateUser.isPending}
             className="text-xs text-slate-400 hover:text-slate-200 underline decoration-dotted transition-colors disabled:opacity-50"
           >
@@ -127,25 +170,29 @@ function UserRow({ user, isSelf }: UserRowProps) {
         )}
       </td>
       <td className="py-2.5 text-right">
-        {!isSelf && (
+        <div className="flex items-center justify-end gap-3">
           <button
-            onClick={toggleActive}
-            disabled={updateUser.isPending}
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
+            onClick={onEdit}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
-            {user.is_active ? t('settings.users.deactivate') : t('settings.users.activate')}
+            {t('settings.users.edit')}
           </button>
-        )}
+          {!isSelf && (
+            <button
+              onClick={() => updateUser.mutate({ is_active: !user.is_active })}
+              disabled={updateUser.isPending}
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
+            >
+              {user.is_active ? t('settings.users.deactivate') : t('settings.users.activate')}
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   )
 }
 
-interface CreateUserModalProps {
-  onClose: () => void
-}
-
-function CreateUserModal({ onClose }: CreateUserModalProps) {
+function CreateUserModal({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const { mutate, isPending, error } = useCreateUser()
   const [name, setName] = useState('')
@@ -159,109 +206,84 @@ function CreateUserModal({ onClose }: CreateUserModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
-        <h3 className="text-base font-semibold text-slate-200 mb-4">
-          {t('settings.users.modalTitle')}
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.users.fieldName')}
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={2}
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.users.fieldEmail')}
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.users.fieldPassword')}
-            </label>
-            <input
-              type="text"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="off"
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none focus:border-brand-accent"
-              placeholder="••••••••"
-            />
-            <p className="text-xs text-slate-500 mt-1">{t('settings.users.passwordHint')}</p>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.users.fieldRole')}
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-            >
-              <option value="agent">{t('settings.users.role.agent')}</option>
-              <option value="admin">{t('settings.users.role.admin')}</option>
-              <option value="viewer">{t('settings.users.role.viewer')}</option>
-            </select>
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-400">
-              {(error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-                t('settings.users.errorGeneric')}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              {t('settings.sources.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
-            >
-              {isPending ? t('settings.users.creating') : t('settings.users.create')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal title={t('settings.users.modalTitle')} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label={t('settings.users.fieldName')}>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className={inputCls} />
+        </Field>
+        <Field label={t('settings.users.fieldEmail')}>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} />
+        </Field>
+        <Field label={t('settings.users.fieldPassword')}>
+          <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} autoComplete="off" className={`${inputCls} font-mono`} placeholder="••••••••" />
+          <p className="text-xs text-slate-500 mt-1">{t('settings.users.passwordHint')}</p>
+        </Field>
+        <Field label={t('settings.users.fieldRole')}>
+          <RoleSelect value={role} onChange={setRole} />
+        </Field>
+        <FormError error={error} fallback={t('settings.users.errorGeneric')} />
+        <ModalActions onClose={onClose} isPending={isPending} submitLabel={t('settings.users.create')} pendingLabel={t('settings.users.creating')} />
+      </form>
+    </Modal>
   )
 }
+
+function EditUserModal({ user, onClose }: { user: User; onClose: () => void }) {
+  const { t } = useTranslation()
+  const { mutate, isPending, error } = useUpdateUser(user.id)
+  const [name, setName] = useState(user.name)
+  const [email, setEmail] = useState(user.email)
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState(user.role)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    mutate(
+      { name, email, role, ...(password ? { password } : {}) },
+      { onSuccess: onClose }
+    )
+  }
+
+  return (
+    <Modal title={t('settings.users.editTitle')} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label={t('settings.users.fieldName')}>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className={inputCls} />
+        </Field>
+        <Field label={t('settings.users.fieldEmail')}>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputCls} />
+        </Field>
+        <Field label={t('settings.users.fieldPasswordOptional')}>
+          <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" className={`${inputCls} font-mono`} placeholder={t('settings.users.passwordBlankHint')} />
+        </Field>
+        <Field label={t('settings.users.fieldRole')}>
+          <RoleSelect value={role} onChange={setRole} />
+        </Field>
+        <FormError error={error} fallback={t('settings.users.errorGeneric')} />
+        <ModalActions onClose={onClose} isPending={isPending} submitLabel={t('settings.users.save')} pendingLabel={t('settings.users.saving')} />
+      </form>
+    </Modal>
+  )
+}
+
+// ── Sources ───────────────────────────────────────────────────────────────────
 
 function SourcesSection() {
   const { t } = useTranslation()
   const { data: sources, isLoading } = useSources()
-  const [showModal, setShowModal] = useState(false)
-  const [createdSource, setCreatedSource] = useState<SourceCreated | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
+  const [editingSource, setEditingSource] = useState<Source | null>(null)
+  const [revealedKeys, setRevealedKeys] = useState<{ api_key: string; webhook_secret: string } | null>(null)
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-slate-200">{t('settings.sources.title')}</h2>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-base font-semibold text-slate-200">{t('settings.sources.title')}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{t('settings.sources.subtitle')}</p>
+        </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowCreate(true)}
           className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
         >
           {t('settings.sources.new')}
@@ -280,52 +302,104 @@ function SourcesSection() {
               <th className="pb-2 font-medium">{t('settings.sources.colSlug')}</th>
               <th className="pb-2 font-medium">{t('settings.sources.colStatus')}</th>
               <th className="pb-2 font-medium">{t('settings.sources.colCreated')}</th>
+              <th className="pb-2 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {sources.map((source) => (
-              <tr key={source.id} className="border-b border-slate-800">
-                <td className="py-2.5 text-slate-200">{source.name}</td>
-                <td className="py-2.5 text-slate-400 font-mono text-xs">{source.slug}</td>
-                <td className="py-2.5">
-                  {source.is_active ? (
-                    <span className="text-xs text-emerald-400">{t('settings.sources.active')}</span>
-                  ) : (
-                    <span className="text-xs text-slate-500">{t('settings.sources.inactive')}</span>
-                  )}
-                </td>
-                <td className="py-2.5 text-slate-500 text-xs">
-                  {new Date(source.created_at).toLocaleDateString()}
-                </td>
-              </tr>
+              <SourceRow
+                key={source.id}
+                source={source}
+                onEdit={() => setEditingSource(source)}
+                onKeysRevealed={(keys) => setRevealedKeys(keys)}
+              />
             ))}
           </tbody>
         </table>
       )}
 
-      {showModal && (
+      {showCreate && (
         <CreateSourceModal
-          onClose={() => setShowModal(false)}
+          onClose={() => setShowCreate(false)}
           onCreated={(s) => {
-            setShowModal(false)
-            setCreatedSource(s)
+            setShowCreate(false)
+            setRevealedKeys({ api_key: s.api_key, webhook_secret: s.webhook_secret })
           }}
         />
       )}
 
-      {createdSource && (
-        <ApiKeyAlert source={createdSource} onClose={() => setCreatedSource(null)} />
+      {editingSource && (
+        <EditSourceModal
+          source={editingSource}
+          onClose={() => setEditingSource(null)}
+          onKeysRegenerated={(keys) => {
+            setEditingSource(null)
+            setRevealedKeys(keys)
+          }}
+        />
+      )}
+
+      {revealedKeys && (
+        <ApiKeyAlert
+          api_key={revealedKeys.api_key}
+          webhook_secret={revealedKeys.webhook_secret}
+          onClose={() => setRevealedKeys(null)}
+        />
       )}
     </section>
   )
 }
 
-interface CreateSourceModalProps {
-  onClose: () => void
-  onCreated: (source: SourceCreated) => void
+interface SourceRowProps {
+  source: Source
+  onEdit: () => void
+  onKeysRevealed: (keys: { api_key: string; webhook_secret: string }) => void
 }
 
-function CreateSourceModal({ onClose, onCreated }: CreateSourceModalProps) {
+function SourceRow({ source, onEdit }: SourceRowProps) {
+  const { t } = useTranslation()
+  const updateSource = useUpdateSource(source.id)
+
+  return (
+    <tr className="border-b border-slate-800">
+      <td className="py-2.5 text-slate-200">
+        {source.name}
+        {!source.is_active && (
+          <span className="ml-2 text-[10px] text-slate-500 border border-slate-700 rounded px-1 py-0.5">
+            inativa
+          </span>
+        )}
+      </td>
+      <td className="py-2.5 text-slate-400 font-mono text-xs">{source.slug}</td>
+      <td className="py-2.5">
+        {source.is_active ? (
+          <span className="text-xs text-emerald-400">{t('settings.sources.active')}</span>
+        ) : (
+          <span className="text-xs text-slate-500">{t('settings.sources.inactive')}</span>
+        )}
+      </td>
+      <td className="py-2.5 text-slate-500 text-xs">
+        {new Date(source.created_at).toLocaleDateString()}
+      </td>
+      <td className="py-2.5 text-right">
+        <div className="flex items-center justify-end gap-3">
+          <button onClick={onEdit} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            {t('settings.users.edit')}
+          </button>
+          <button
+            onClick={() => updateSource.mutate({ is_active: !source.is_active })}
+            disabled={updateSource.isPending}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
+          >
+            {source.is_active ? t('settings.sources.deactivate') : t('settings.sources.activate')}
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function CreateSourceModal({ onClose, onCreated }: { onClose: () => void; onCreated: (s: SourceCreated) => void }) {
   const { t } = useTranslation()
   const { mutate, isPending, error } = useCreateSource()
   const [name, setName] = useState('')
@@ -336,77 +410,104 @@ function CreateSourceModal({ onClose, onCreated }: CreateSourceModalProps) {
     setSlug(value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    mutate({ name, slug }, { onSuccess: onCreated })
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
-        <h3 className="text-base font-semibold text-slate-200 mb-4">
-          {t('settings.sources.modalTitle')}
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.sources.fieldName')}
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              required
-              minLength={2}
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.sources.fieldSlug')}
-            </label>
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              required
-              minLength={2}
-              pattern="^[a-z0-9-]+$"
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-400 font-mono focus:outline-none focus:border-brand-accent"
-            />
-            <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugHint')}</p>
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-400">
-              {(error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-                t('settings.sources.errorGeneric')}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              {t('settings.sources.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
-            >
-              {isPending ? t('settings.sources.creating') : t('settings.sources.create')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal title={t('settings.sources.modalTitle')} onClose={onClose}>
+      <form
+        onSubmit={(e) => { e.preventDefault(); mutate({ name, slug }, { onSuccess: onCreated }) }}
+        className="space-y-4"
+      >
+        <Field label={t('settings.sources.fieldName')}>
+          <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} required minLength={2} className={inputCls} />
+        </Field>
+        <Field label={t('settings.sources.fieldSlug')}>
+          <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required minLength={2} pattern="^[a-z0-9-]+$" className={`${inputCls} font-mono`} />
+          <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugHint')}</p>
+        </Field>
+        <FormError error={error} fallback={t('settings.sources.errorGeneric')} />
+        <ModalActions onClose={onClose} isPending={isPending} submitLabel={t('settings.sources.create')} pendingLabel={t('settings.sources.creating')} />
+      </form>
+    </Modal>
   )
 }
 
-// ── SLA Section ──────────────────────────────────────────────────────────────
+function EditSourceModal({
+  source,
+  onClose,
+  onKeysRegenerated,
+}: {
+  source: Source
+  onClose: () => void
+  onKeysRegenerated: (keys: { api_key: string; webhook_secret: string }) => void
+}) {
+  const { t } = useTranslation()
+  const updateSource = useUpdateSource(source.id)
+  const regenerateKey = useRegenerateSourceKey(source.id)
+  const [name, setName] = useState(source.name)
+  const [confirmRegen, setConfirmRegen] = useState(false)
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateSource.mutate({ name }, { onSuccess: onClose })
+  }
+
+  const handleRegen = () => {
+    regenerateKey.mutate(undefined, {
+      onSuccess: (data) => onKeysRegenerated(data),
+    })
+  }
+
+  return (
+    <Modal title={t('settings.sources.editTitle')} onClose={onClose}>
+      <form onSubmit={handleSave} className="space-y-4">
+        <Field label={t('settings.sources.fieldName')}>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className={inputCls} />
+        </Field>
+        <Field label={t('settings.sources.fieldSlug')}>
+          <div className={`${inputCls} text-slate-500 font-mono cursor-not-allowed`}>{source.slug}</div>
+          <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugImmutable')}</p>
+        </Field>
+
+        {/* Regenerate key area */}
+        <div className="border border-amber-500/20 rounded-lg p-4 bg-amber-950/10 space-y-2">
+          <p className="text-xs font-semibold text-amber-400">{t('settings.sources.regenTitle')}</p>
+          <p className="text-xs text-slate-400">{t('settings.sources.regenWarning')}</p>
+          {!confirmRegen ? (
+            <button
+              type="button"
+              onClick={() => setConfirmRegen(true)}
+              className="text-xs text-amber-400 hover:text-amber-300 underline transition-colors"
+            >
+              {t('settings.sources.regenButton')}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-slate-400">{t('settings.sources.regenConfirm')}</span>
+              <button
+                type="button"
+                onClick={handleRegen}
+                disabled={regenerateKey.isPending}
+                className="text-xs px-2 py-1 rounded bg-amber-500 text-black font-semibold hover:bg-amber-400 disabled:opacity-50 transition-colors"
+              >
+                {regenerateKey.isPending ? t('settings.sources.regenPending') : t('settings.sources.regenConfirmButton')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmRegen(false)}
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {t('settings.sources.cancel')}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <ModalActions onClose={onClose} isPending={updateSource.isPending} submitLabel={t('settings.users.save')} pendingLabel={t('settings.users.saving')} />
+      </form>
+    </Modal>
+  )
+}
+
+// ── SLA ───────────────────────────────────────────────────────────────────────
 
 const DAYS = [
   { iso: 1, label: 'Seg' },
@@ -424,7 +525,6 @@ function SlaSection() {
   const updateBH = useUpdateBusinessHours()
   const updatePolicy = useUpdateSlaPolicy()
 
-  // Business hours form state
   const [workDays, setWorkDays] = useState<number[]>([])
   const [workStart, setWorkStart] = useState('')
   const [workEnd, setWorkEnd] = useState('')
@@ -434,7 +534,6 @@ function SlaSection() {
   const [bhDirty, setBhDirty] = useState(false)
   const [bhSaved, setBhSaved] = useState(false)
 
-  // Policy inline editing state: { priority → hours string }
   const [editingPolicy, setEditingPolicy] = useState<string | null>(null)
   const [editingHours, setEditingHours] = useState('')
 
@@ -459,14 +558,7 @@ function SlaSection() {
 
   const handleBhSave = () => {
     updateBH.mutate(
-      {
-        work_days: workDays,
-        work_start: workStart,
-        work_end: workEnd,
-        lunch_start: lunchStart || null,
-        lunch_end: lunchEnd || null,
-        timezone,
-      },
+      { work_days: workDays, work_start: workStart, work_end: workEnd, lunch_start: lunchStart || null, lunch_end: lunchEnd || null, timezone },
       {
         onSuccess: () => {
           setBhDirty(false)
@@ -480,10 +572,7 @@ function SlaSection() {
   const handlePolicySave = (priority: string) => {
     const hours = parseInt(editingHours, 10)
     if (!hours || hours < 1) return
-    updatePolicy.mutate(
-      { priority, resolution_hours: hours },
-      { onSuccess: () => setEditingPolicy(null) },
-    )
+    updatePolicy.mutate({ priority, resolution_hours: hours }, { onSuccess: () => setEditingPolicy(null) })
   }
 
   if (isLoading) {
@@ -497,13 +586,15 @@ function SlaSection() {
 
   return (
     <section className="space-y-8">
-      <h2 className="text-base font-semibold text-slate-200">{t('settings.sla.title')}</h2>
+      <div>
+        <h2 className="text-base font-semibold text-slate-200">{t('settings.sla.title')}</h2>
+        <p className="text-xs text-slate-500 mt-0.5">{t('settings.sla.subtitle')}</p>
+      </div>
 
       {/* Business Hours */}
       <div>
         <h3 className="text-sm font-medium text-slate-300 mb-3">{t('settings.sla.businessHours.title')}</h3>
         <div className="space-y-4">
-          {/* Work days */}
           <div>
             <label className="block text-xs text-slate-500 mb-2">{t('settings.sla.businessHours.workDays')}</label>
             <div className="flex gap-2">
@@ -523,59 +614,29 @@ function SlaSection() {
             </div>
           </div>
 
-          {/* Times */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.workStart')}</label>
-              <input
-                type="time"
-                value={workStart}
-                onChange={(e) => { setWorkStart(e.target.value); setBhDirty(true) }}
-                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-              />
+              <input type="time" value={workStart} onChange={(e) => { setWorkStart(e.target.value); setBhDirty(true) }} className={inputCls} />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.workEnd')}</label>
-              <input
-                type="time"
-                value={workEnd}
-                onChange={(e) => { setWorkEnd(e.target.value); setBhDirty(true) }}
-                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-              />
+              <input type="time" value={workEnd} onChange={(e) => { setWorkEnd(e.target.value); setBhDirty(true) }} className={inputCls} />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.lunchStart')}</label>
-              <input
-                type="time"
-                value={lunchStart}
-                onChange={(e) => { setLunchStart(e.target.value); setBhDirty(true) }}
-                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-              />
+              <input type="time" value={lunchStart} onChange={(e) => { setLunchStart(e.target.value); setBhDirty(true) }} className={inputCls} />
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.lunchEnd')}</label>
-              <input
-                type="time"
-                value={lunchEnd}
-                onChange={(e) => { setLunchEnd(e.target.value); setBhDirty(true) }}
-                className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-              />
+              <input type="time" value={lunchEnd} onChange={(e) => { setLunchEnd(e.target.value); setBhDirty(true) }} className={inputCls} />
             </div>
           </div>
 
-          {/* Timezone */}
           <div>
             <label className="block text-xs text-slate-500 mb-1">{t('settings.sla.businessHours.timezone')}</label>
-            <input
-              type="text"
-              value={timezone}
-              onChange={(e) => { setTimezone(e.target.value); setBhDirty(true) }}
-              placeholder="America/Sao_Paulo"
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none focus:border-brand-accent"
-            />
-            <p className="text-xs text-slate-600 mt-1">
-              {t('settings.sla.businessHours.timezoneHint')}
-            </p>
+            <input type="text" value={timezone} onChange={(e) => { setTimezone(e.target.value); setBhDirty(true) }} placeholder="America/Sao_Paulo" className={`${inputCls} font-mono`} />
+            <p className="text-xs text-slate-600 mt-1">{t('settings.sla.businessHours.timezoneHint')}</p>
           </div>
 
           <button
@@ -583,11 +644,7 @@ function SlaSection() {
             disabled={!bhDirty || updateBH.isPending}
             className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-40 transition-colors"
           >
-            {updateBH.isPending 
-              ? t('settings.sla.businessHours.saving') 
-              : bhSaved 
-                ? t('settings.sla.businessHours.saved') 
-                : t('settings.sla.businessHours.save')}
+            {updateBH.isPending ? t('settings.sla.businessHours.saving') : bhSaved ? t('settings.sla.businessHours.saved') : t('settings.sla.businessHours.save')}
           </button>
         </div>
       </div>
@@ -606,9 +663,7 @@ function SlaSection() {
           <tbody>
             {(data?.policies ?? []).map((policy) => (
               <tr key={policy.priority} className="border-b border-slate-800">
-                <td className="py-2.5 text-slate-200">
-                  {t(`priority.${policy.priority.toUpperCase()}`)}
-                </td>
+                <td className="py-2.5 text-slate-200">{t(`priority.${policy.priority.toUpperCase()}`)}</td>
                 <td className="py-2.5">
                   {editingPolicy === policy.priority ? (
                     <input
@@ -630,26 +685,16 @@ function SlaSection() {
                 <td className="py-2.5 text-right">
                   {editingPolicy === policy.priority ? (
                     <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => handlePolicySave(policy.priority)}
-                        disabled={updatePolicy.isPending}
-                        className="text-xs text-brand-accent hover:text-white transition-colors disabled:opacity-50"
-                      >
+                      <button onClick={() => handlePolicySave(policy.priority)} disabled={updatePolicy.isPending} className="text-xs text-brand-accent hover:text-white transition-colors disabled:opacity-50">
                         {t('settings.sla.policies.save')}
                       </button>
-                      <button
-                        onClick={() => setEditingPolicy(null)}
-                        className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                      >
+                      <button onClick={() => setEditingPolicy(null)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
                         {t('settings.sla.policies.cancel')}
                       </button>
                     </div>
                   ) : (
                     <button
-                      onClick={() => {
-                        setEditingPolicy(policy.priority)
-                        setEditingHours(String(policy.resolution_hours))
-                      }}
+                      onClick={() => { setEditingPolicy(policy.priority); setEditingHours(String(policy.resolution_hours)) }}
                       className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
                     >
                       {t('settings.sla.policies.edit')}
@@ -730,137 +775,62 @@ function CreateHolidayModal({ onClose }: { onClose: () => void }) {
   const [date, setDate] = useState('')
   const [description, setDescription] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    mutate({ date, description }, { onSuccess: onClose })
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
-        <h3 className="text-base font-semibold text-slate-200 mb-4">
-          {t('settings.sla.holidays.modalTitle')}
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.sla.holidays.fieldDate')}
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">
-              {t('settings.sla.holidays.fieldDescription')}
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent"
-              placeholder="Ex: Natal"
-            />
-          </div>
-
-          {error && (
-            <p className="text-xs text-red-400">
-              {(error as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-                t('settings.users.errorGeneric')}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              {t('settings.sources.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
-            >
-              {isPending ? t('settings.sla.holidays.creating') : t('settings.sla.holidays.create')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal title={t('settings.sla.holidays.modalTitle')} onClose={onClose}>
+      <form
+        onSubmit={(e) => { e.preventDefault(); mutate({ date, description }, { onSuccess: onClose }) }}
+        className="space-y-4"
+      >
+        <Field label={t('settings.sla.holidays.fieldDate')}>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className={inputCls} />
+        </Field>
+        <Field label={t('settings.sla.holidays.fieldDescription')}>
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} required className={inputCls} placeholder="Ex: Natal" />
+        </Field>
+        <FormError error={error} fallback={t('settings.users.errorGeneric')} />
+        <ModalActions onClose={onClose} isPending={isPending} submitLabel={t('settings.sla.holidays.create')} pendingLabel={t('settings.sla.holidays.creating')} />
+      </form>
+    </Modal>
   )
 }
 
-interface ApiKeyAlertProps {
-  source: SourceCreated
-  onClose: () => void
-}
+// ── ApiKeyAlert ───────────────────────────────────────────────────────────────
 
-function ApiKeyAlert({ source, onClose }: ApiKeyAlertProps) {
+function ApiKeyAlert({ api_key, webhook_secret, onClose }: { api_key: string; webhook_secret: string; onClose: () => void }) {
   const { t } = useTranslation()
   const [copiedKey, setCopiedKey] = useState(false)
   const [copiedSecret, setCopiedSecret] = useState(false)
 
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText(source.api_key)
-    setCopiedKey(true)
-    setTimeout(() => setCopiedKey(false), 2000)
-  }
-
-  const handleCopySecret = () => {
-    navigator.clipboard.writeText(source.webhook_secret)
-    setCopiedSecret(true)
-    setTimeout(() => setCopiedSecret(false), 2000)
+  const copy = (text: string, setCopied: (v: boolean) => void) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-slate-900 border border-amber-500/50 rounded-lg w-full max-w-lg p-6">
-        <h3 className="text-base font-semibold text-amber-400 mb-1">
-          {t('settings.sources.apiKeyTitle')}
-        </h3>
+        <h3 className="text-base font-semibold text-amber-400 mb-1">{t('settings.sources.apiKeyTitle')}</h3>
         <p className="text-xs text-slate-400 mb-4">{t('settings.sources.apiKeyWarning')}</p>
 
         <div className="space-y-4 mb-6">
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5 px-1">
-              API KEY
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1 bg-slate-800 rounded p-3 font-mono text-xs text-slate-200 break-all border border-slate-700">
-                {source.api_key}
+          {[
+            { label: 'API KEY', value: api_key, copied: copiedKey, setCopied: setCopiedKey },
+            { label: t('settings.sources.webhookSecretLabel'), value: webhook_secret, copied: copiedSecret, setCopied: setCopiedSecret },
+          ].map(({ label, value, copied, setCopied }) => (
+            <div key={label}>
+              <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5 px-1">{label}</label>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-slate-800 rounded p-3 font-mono text-xs text-slate-200 break-all border border-slate-700">{value}</div>
+                <button
+                  onClick={() => copy(value, setCopied)}
+                  className="shrink-0 px-3 py-1.5 text-xs rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 transition-all self-start"
+                >
+                  {copied ? t('settings.sources.copied') : t('settings.sources.copy')}
+                </button>
               </div>
-              <button
-                onClick={handleCopyKey}
-                className="shrink-0 px-3 py-1.5 text-xs rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 transition-all self-start"
-              >
-                {copiedKey ? t('settings.sources.copied') : t('settings.sources.copy')}
-              </button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1.5 px-1">
-              {t('settings.sources.webhookSecretLabel')}
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1 bg-slate-800 rounded p-3 font-mono text-xs text-slate-200 break-all border border-slate-700">
-                {source.webhook_secret}
-              </div>
-              <button
-                onClick={handleCopySecret}
-                className="shrink-0 px-3 py-1.5 text-xs rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-white/5 transition-all self-start"
-              >
-                {copiedSecret ? t('settings.sources.copied') : t('settings.sources.copy')}
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="flex justify-end pt-2">
@@ -872,6 +842,71 @@ function ApiKeyAlert({ source, onClose }: ApiKeyAlertProps) {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Shared UI primitives ──────────────────────────────────────────────────────
+
+const inputCls = 'w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent'
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
+        <h3 className="text-base font-semibold text-slate-200 mb-4">{title}</h3>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs text-slate-400 mb-1">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation()
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={inputCls}>
+      <option value="agent">{t('settings.users.role.agent')}</option>
+      <option value="admin">{t('settings.users.role.admin')}</option>
+      <option value="viewer">{t('settings.users.role.viewer')}</option>
+    </select>
+  )
+}
+
+function FormError({ error, fallback }: { error: unknown; fallback: string }) {
+  if (!error) return null
+  const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+  return <p className="text-xs text-red-400">{detail ?? fallback}</p>
+}
+
+function ModalActions({
+  onClose,
+  isPending,
+  submitLabel,
+  pendingLabel,
+}: {
+  onClose: () => void
+  isPending: boolean
+  submitLabel: string
+  pendingLabel: string
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex justify-end gap-2 pt-2">
+      <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+        {t('settings.sources.cancel')}
+      </button>
+      <button type="submit" disabled={isPending} className="px-3 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors">
+        {isPending ? pendingLabel : submitLabel}
+      </button>
     </div>
   )
 }
