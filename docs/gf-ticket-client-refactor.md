@@ -33,9 +33,13 @@ O fluxo atual tem **4 passos antes de o usuário escrever uma palavra**:
 O cliente escolhe "Bug" na categoria, depois escolhe "Bug/Erro" no departamento.
 Não existe nenhum "departamento" no sistema — o label é errado. Esse campo é o `type`, que controla o fluxo interno (melhoria dispara revisão de qualidade). O cliente não precisa saber disso.
 
-**Problema 2 — Prioridade auto-declarada é problemática.**
+**Problema 2 — Prioridade auto-declarada precisa ser reformulada como estimativa.**
 
-Em qualquer sistema de suporte maduro (Zendesk, Freshdesk, Linear), o cliente **não define prioridade**. O motivo é óbvio: 100% dos clientes marcam tudo como "Urgente". A prioridade deve ser definida ou confirmada pelo time após triagem. Dar ao cliente as 4 opções com "prazo estimado" cria expectativa de SLA que o próprio código comenta que não é garantida.
+O cliente define a prioridade — e isso vai continuar assim. O problema real não é a funcionalidade, é o framing. Hoje o campo apresenta "prazo estimado" como se fosse um SLA garantido. O código até comenta que não é garantido, mas a interface não diz isso. Resultado: o cliente escolhe "Urgente (2h)" e espera que o chamado seja resolvido em 2 horas.
+
+**Decisão**: manter a seleção de prioridade pelo cliente. Reformular o campo para deixar explícito que:
+- **a)** é uma *estimativa*, não um compromisso;
+- **b)** a equipe pode ajustar a prioridade após triagem.
 
 **Problema 3 — 4 passos antes de poder escrever o problema.**
 
@@ -109,11 +113,19 @@ Mantém a seleção de módulo como está — é um dado valioso para análise (
 | Assunto | Placeholder inteligente baseado no tipo selecionado |
 | Descrição | Placeholder com perguntas-guia por tipo (bug: "O que aconteceu? O que esperava? Como reproduzir?") |
 | Anexos | Corrigir limite (definir um valor real e coerente) |
-| ~~Prioridade~~ | **Remover** da visão do cliente |
+| Prioridade | **Manter**, mas reformular como estimativa (ver abaixo) |
 | ~~URL~~ | Capturar automaticamente via referrer (já acontece), não exibir |
 | ~~Tags~~ | Mover para uso exclusivo interno/Aegis |
 
-**Prioridade**: o time define no Aegis após triagem. Se necessário deixar alguma sinalização para o cliente, usar uma pergunta binária: "Este problema está impedindo o seu trabalho agora?" → urgente / não urgente. Sem escalas de 4 pontos com SLA prometido.
+**Prioridade reformulada — o que muda:**
+
+| Aspecto | Hoje | Proposto |
+|---|---|---|
+| Label do campo | "Prioridade" | "Estimativa de prioridade" |
+| Labels das opções | "Urgente (2h)", "Alto (4h)"… | "Urgente", "Alto", "Médio", "Baixo" — sem prazo no label |
+| Prazo exibido | Dentro do label da opção | Exibir em tooltip ou rodapé: "Prazo *estimado*, sujeito a análise da equipe" |
+| Texto auxiliar | Ausente | Adicionar sob o campo: *"Nossa equipe poderá ajustar a prioridade após análise do chamado."* |
+| Destaque visual | Nenhum | Após a criação, exibir badge da prioridade com ícone de "estimativa" (ex.: relógio ou asterisco) |
 
 ---
 
@@ -143,7 +155,46 @@ Mantém a seleção de módulo como está — é um dado valioso para análise (
 
 ---
 
-### 3.3 Permissões — corrigir o que não deveria aparecer
+### 3.3 Destaques visuais — tickets atrasados e aguardando validação
+
+O cliente não tem contexto de gestão como o time interno. Se um chamado está atrasado ou esperando ação dele, a interface precisa gritar — não sussurrar. Hoje esses estados se perdem na listagem padrão.
+
+**Estado 1 — Chamado atrasado (prazo SLA vencido)**
+
+| Onde | O que mostrar |
+|---|---|
+| Listagem de chamados | Linha com fundo vermelho claro (ou borda lateral vermelha), ícone de alerta `⚠️`, data de prazo em vermelho e negrito com label "Atrasado" |
+| Topo da página de listagem | Banner/card de atenção: "Você tem **X chamado(s) com prazo vencido**" com link direto para filtrar |
+| Painel de detalhe | Destaque vermelho no prazo estimado, frase clara: "Este chamado está atrasado desde [data]" |
+| Ordenação padrão | Atrasados sempre no topo da listagem, independente de data de criação |
+
+> **Nota**: o GF não calcula SLA internamente com a mesma lógica do Aegis. O campo de referência mais próximo é `due_date` ou `resolved_at`. Se o prazo não for propagado pelo Aegis via webhook, esta funcionalidade depende de receber `technical_due_at` no payload de retorno — incluir como item D9 na Fase D.
+
+**Estado 2 — Aguardando validação do cliente (`aguardando_validacao_cliente`)**
+
+| Onde | O que mostrar |
+|---|---|
+| Listagem de chamados | Linha com fundo azul ou amarelo claro, ícone de sino `🔔`, badge "Ação necessária" |
+| Topo da página de listagem | Seção destacada "**Chamados aguardando sua resposta**" — lista compacta desses tickets antes dos demais |
+| Painel de detalhe | Banner proeminente (já proposto em 3.2) — mantido e reforçado: botões "Confirmar Resolução" e "Reabrir" em destaque máximo, acima da timeline |
+| Tab/filtro rápido | Aba ou filtro "Aguardando minha ação" que une `aguardando_validacao_cliente` + `aguardando_cliente` em um único lugar |
+
+**UX adicional sugerida — semáforo de prazo na listagem**
+
+Adicionar coluna ou badge de prazo com cores semafóricas em *todos* os chamados abertos:
+
+| Cor | Condição |
+|---|---|
+| 🟢 Verde | Prazo > 50% do tempo restante |
+| 🟡 Amarelo | Prazo < 25% do tempo restante |
+| 🔴 Vermelho | Prazo vencido |
+| ⚪ Cinza | Sem prazo definido |
+
+Isso dá ao cliente uma leitura imediata da urgência sem precisar abrir cada chamado.
+
+---
+
+### 3.4 Permissões — corrigir o que não deveria aparecer
 
 | Ação | Hoje | Deve ser |
 |---|---|---|
@@ -181,7 +232,7 @@ Redesenho da tela de criação de chamado:
 | B1 | Colapsar os 4 passos em 2: Tipo → Módulo → Formulário |
 | B2 | Substituir botões de categoria por cards visuais com ícone e descrição (Tipo) |
 | B3 | Remover seleção de Categoria da criação pelo cliente (mover para tagging interno) |
-| B4 | Remover Prioridade da criação pelo cliente |
+| B4 | Reformular campo de Prioridade: renomear para "Estimativa de prioridade", remover prazo dos labels, adicionar texto auxiliar deixando claro que é estimativa sujeita a ajuste pelo time |
 | B5 | Placeholders inteligentes na descrição baseados no tipo selecionado |
 | B6 | Redesign visual: indicador de progresso, espaçamento, hierarquia tipográfica |
 
@@ -199,42 +250,58 @@ Redesenho da tela de criação de chamado:
 | C4 | Esconder campos internos (estimativas, assignee técnico) da view do cliente |
 | C5 | Prompt de CSAT automático quando status = `resolvido` (hoje existe, melhorar visibilidade) |
 | C6 | Exibir `device` / `browser` na seção de contexto técnico |
+| C7 | Seção "Aguardando sua resposta" no topo da listagem — agrupa `aguardando_validacao_cliente` + `aguardando_cliente` |
+| C8 | Destaque visual de linha para tickets com prazo vencido (fundo/borda vermelho, label "Atrasado") |
+| C9 | Badge de semáforo de prazo na listagem (verde/amarelo/vermelho/cinza) para todos os tickets abertos |
+| C10 | Banner de contagem no topo: "Você tem X chamado(s) com prazo vencido" com filtro rápido |
+| C11 | Filtro/aba "Minha ação necessária" unificando chamados que requerem resposta do cliente |
 
 ---
 
-### Fase D — Atribuição com definição de prioridade e SLA no Aegis ⚠️ pré-requisito
+### Fase D — Override de prioridade no Aegis com propagação de volta ao GF
 
-> **Dependência direta da Fase B.** Remover a seleção de prioridade pelo cliente só é viável se o Aegis assumir essa responsabilidade durante a atribuição. Sem isso, todos os tickets chegam sem prioridade e sem SLA.
+> **Independente da Fase B.** O cliente continua definindo a estimativa de prioridade no GF. O Aegis permite que o time ajuste essa prioridade — e propaga o ajuste de volta ao GF para que o cliente veja a estimativa real atualizada. Sem isso, o cliente veria uma prioridade no portal e outra refletida nos prazos e na listagem de atrasados.
 
-**Fluxo atual (com prioridade pelo cliente):**
+**Fluxo:**
 ```
-Cliente define prioridade no GF → ticket chega ao Aegis com priority preenchida
-→ Aegis calcula technical_due_at na atribuição usando a prioridade já definida
-```
-
-**Fluxo novo (sem prioridade pelo cliente):**
-```
-Ticket chega ao Aegis com priority = null
-→ No momento da atribuição (auto ou manual), o agente/admin define a prioridade
-→ Aegis calcula technical_due_at a partir da prioridade definida agora
+Cliente define estimativa de prioridade no GF
+→ Ticket chega ao Aegis com priority preenchida
+→ Aegis calcula technical_due_at usando a prioridade declarada pelo cliente
+→ Time ajusta a prioridade no Aegis (se necessário)
+→ Aegis recalcula technical_due_at com a nova prioridade
+→ Aegis envia webhook ao GF com a prioridade atualizada
+→ GF exibe a prioridade ajustada pelo time ao cliente
 ```
 
 **O que precisa mudar no Aegis:**
 
 | # | O que fazer | Contexto |
 |---|---|---|
-| D1 | Tornar `priority` obrigatório no modal de atribuição | Hoje é opcional — precisa se tornar required quando ticket chegar sem prioridade |
-| D2 | Exibir alerta visual em tickets sem prioridade na inbox | Triagem pendente fica visível para o time |
-| D3 | Auto-atribuição: se agente pega o ticket, deve definir prioridade antes de confirmar | Fluxo de "Assumir chamado" deve exigir prioridade |
-| D4 | Admin assign via Aegis: incluir campo de prioridade obrigatório se ainda não definida | Já existe o modal, só adicionar o campo condicionalmente |
-| D5 | SLA começa a contar a partir da atribuição (já é o comportamento atual via `technical_due_at`) | Confirmar que o motor de SLA trata `priority = null` graciosamente sem calcular prazo errado |
+| D1 | Exibir a prioridade do ticket com indicação de origem: "estimativa do cliente" vs "ajustada pelo time" | Distingue prioridade original da prioridade sobrescrita |
+| D2 | Permitir override de prioridade no modal de atribuição e no painel de detalhe | Agente/admin pode ajustar sem reabrir o ticket |
+| D3 | Recalcular `technical_due_at` ao sobrescrever a prioridade | Motor de SLA usa sempre a prioridade vigente |
+| D4 | Log de auditoria: registrar quem alterou a prioridade, valor anterior e valor novo | Rastreabilidade quando o cliente questionar prazo |
+| D5 | Propagar a prioridade ajustada de volta ao GF via webhook | Novo evento `priority_updated` no payload de saída — GF já consome webhooks de status |
+
+**O que precisa mudar no GF:**
+
+| # | O que fazer | Contexto |
+|---|---|---|
+| D6 | Consumir evento `priority_updated` no webhook de entrada do Aegis | GF já tem `ReceiveAegisWebhook` ou similar — adicionar handler para este novo tipo |
+| D7 | Ao receber `priority_updated`, atualizar o campo `priority` do ticket e registrar no histórico | Manter rastreabilidade da mudança no lado do cliente |
+| D8 | Exibir ao cliente: "Prioridade ajustada pela equipe: Alto" com data e hora | Transparência — o cliente entende que sua estimativa foi revisada |
+
+**O que precisa mudar no Aegis (complemento):**
+
+| # | O que fazer | Contexto |
+|---|---|---|
+| D9 | Incluir `technical_due_at` (prazo calculado pelo Aegis) no payload do webhook de saída | Permite ao GF exibir o prazo real de SLA ao cliente sem recalcular localmente |
 
 **Contrato de dados entre GF e Aegis:**
-- O campo `priority` no payload de ingestão passa a ser `nullable` intencionalmente
-- Aegis deve aceitar e armazenar `priority = null` sem quebrar
-- A prioridade definida no Aegis **não é propagada de volta ao GF** (fluxo unidirecional — Aegis é o sistema de trabalho do time, GF é o portal do cliente)
-
-> Este item deve ser implementado **antes ou junto** com a Fase B do GF. Liberar a Fase B sem este controle no Aegis significa que todos os tickets novos chegam sem prioridade e sem SLA calculado.
+- O campo `priority` no payload de ingestão continua obrigatório e preenchido pelo cliente
+- A prioridade ajustada no Aegis **é propagada de volta ao GF** via evento de webhook de saída
+- O `technical_due_at` calculado pelo Aegis é incluído no webhook de saída para uso na UX do GF
+- O campo `source_metadata` pode carregar o valor original declarado pelo cliente para fins de histórico
 
 ---
 
