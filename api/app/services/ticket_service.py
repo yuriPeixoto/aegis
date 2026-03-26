@@ -28,6 +28,8 @@ class TicketService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
+    _TERMINAL_STATUSES = ('resolved', 'closed', 'cancelled')
+
     async def list_tickets(
         self,
         *,
@@ -37,6 +39,7 @@ class TicketService:
         type: str | None = None,
         assigned_to_user_id: int | None = None,
         unassigned: bool = False,
+        active_only: bool = False,
         created_after: datetime | None = None,
         created_before: datetime | None = None,
         limit: int = 50,
@@ -46,7 +49,9 @@ class TicketService:
 
         if source_id is not None:
             query = query.where(Ticket.source_id == source_id)
-        if status is not None:
+        if active_only:
+            query = query.where(Ticket.status.notin_(self._TERMINAL_STATUSES))
+        elif status is not None:
             query = query.where(Ticket.status == status)
         if priority is not None:
             query = query.where(Ticket.priority == priority)

@@ -99,6 +99,7 @@ export interface TicketAttachment {
 export interface TicketFilters {
   source_id?: number
   status?: string
+  active_only?: boolean
   priority?: string
   type?: string
   assigned_to_user_id?: number
