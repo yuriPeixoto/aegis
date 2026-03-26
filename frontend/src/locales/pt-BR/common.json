@@ -102,6 +102,16 @@
     "SUPPORT": "Suporte"
   },
   "dashboard": {
+    "nav": {
+      "title": "Dashboard",
+      "overview": "Visão Geral",
+      "monitor": "Monitor de Equipe",
+      "reports": "Relatórios"
+    },
+    "reports": {
+      "soon": "Em breve",
+      "soonHint": "Relatórios de desempenho, volume e SLA estão em desenvolvimento."
+    },
     "alert": {
       "overdue": "{{count}} chamados em atraso",
       "overdueHint": "ultrapassaram o prazo sem resolução",
