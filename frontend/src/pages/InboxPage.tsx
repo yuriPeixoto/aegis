@@ -13,7 +13,7 @@ export function InboxPage() {
   const { data: me } = useMe()
   const navigate = useNavigate()
   const [queue, setQueue] = useState<Queue>('mine')
-  const [filters, setFilters] = useState<TicketFilters>({ offset: 0 })
+  const [filters, setFilters] = useState<TicketFilters>({ offset: 0, active_only: true })
 
   function queueFilters(): Pick<TicketFilters, 'assigned_to_user_id' | 'unassigned'> {
     if (queue === 'mine' && me) return { assigned_to_user_id: me.id }
