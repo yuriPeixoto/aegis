@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import generate_api_key, hash_api_key, verify_api_key
 from app.models.source import Source
-from app.schemas.source import SourceCreate
+from app.schemas.source import SourceCreate, SourceUpdate
 
 
 class SourceService:
@@ -22,6 +22,34 @@ class SourceService:
             webhook_secret=webhook_secret,
         )
         self._db.add(source)
+        await self._db.commit()
+        await self._db.refresh(source)
+        return source, plain_key, webhook_secret
+
+    async def get_by_id(self, source_id: int) -> Source | None:
+        result = await self._db.execute(select(Source).where(Source.id == source_id))
+        return result.scalar_one_or_none()
+
+    async def update(self, source_id: int, data: SourceUpdate) -> Source | None:
+        source = await self.get_by_id(source_id)
+        if source is None:
+            return None
+        if data.name is not None:
+            source.name = data.name
+        if data.is_active is not None:
+            source.is_active = data.is_active
+        await self._db.commit()
+        await self._db.refresh(source)
+        return source
+
+    async def regenerate_key(self, source_id: int) -> tuple[Source, str, str] | None:
+        source = await self.get_by_id(source_id)
+        if source is None:
+            return None
+        plain_key = generate_api_key()
+        webhook_secret = secrets.token_hex(32)
+        source.api_key_hash = hash_api_key(plain_key)
+        source.webhook_secret = webhook_secret
         await self._db.commit()
         await self._db.refresh(source)
         return source, plain_key, webhook_secret

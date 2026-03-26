@@ -14,9 +14,19 @@ export interface SourceCreated extends Source {
   webhook_secret: string
 }
 
+export interface SourceKeyRegenerated {
+  api_key: string
+  webhook_secret: string
+}
+
 interface SourceCreatePayload {
   name: string
   slug: string
+}
+
+interface SourceUpdatePayload {
+  name?: string
+  is_active?: boolean
 }
 
 export function useSources() {
@@ -39,6 +49,29 @@ export function useCreateSource() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sources'] })
+    },
+  })
+}
+
+export function useUpdateSource(sourceId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: SourceUpdatePayload) => {
+      const { data } = await api.patch<Source>(`/sources/${sourceId}`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sources'] })
+    },
+  })
+}
+
+export function useRegenerateSourceKey(sourceId: number) {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<SourceKeyRegenerated>(`/sources/${sourceId}/regenerate-key`)
+      return data
     },
   })
 }

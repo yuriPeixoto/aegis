@@ -45,9 +45,20 @@ async def create_user(
 async def update_user(
     user_id: int, data: UserUpdateRequest, db: DbSession, _: AdminUser
 ) -> UserResponse:
-    user = await UserService(db).update(
-        user_id, role=data.role, is_active=data.is_active
-    )
+    try:
+        user = await UserService(db).update(
+            user_id,
+            name=data.name,
+            email=str(data.email) if data.email else None,
+            password=data.password,
+            role=data.role,
+            is_active=data.is_active,
+        )
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with that email already exists",
+        )
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponse.model_validate(user)
