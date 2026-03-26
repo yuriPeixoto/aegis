@@ -20,6 +20,7 @@
   },
   "inbox": {
     "allSources": "Todas as fontes",
+    "activeStatuses": "Em aberto",
     "allStatuses": "Todos os status",
     "allPriorities": "Todas as prioridades",
     "allTypes": "Todos os tipos",

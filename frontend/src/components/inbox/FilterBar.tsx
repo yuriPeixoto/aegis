@@ -13,6 +13,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
   const { data: sources } = useSources()
 
   const STATUSES = [
+    { value: '__active__',     label: t('inbox.activeStatuses') },
     { value: 'open',           label: t('status.OPEN') },
     { value: 'in_progress',    label: t('status.IN_PROGRESS') },
     { value: 'waiting_client', label: t('status.WAITING_CLIENT') },
@@ -39,7 +40,17 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
     { value: 'support',     label: t('type.SUPPORT') },
   ]
 
-  const hasFilters = filters.source_id || filters.status || filters.priority || filters.type
+  const statusSelectValue = filters.active_only ? '__active__' : (filters.status ?? '')
+
+  const handleStatusChange = (v: string | undefined) => {
+    if (v === '__active__') {
+      onChange({ ...filters, active_only: true, status: undefined, offset: 0 })
+    } else {
+      onChange({ ...filters, active_only: undefined, status: v || undefined, offset: 0 })
+    }
+  }
+
+  const hasFilters = filters.source_id || filters.status || filters.active_only || filters.priority || filters.type
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -54,8 +65,8 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         }))}
       />
       <FilterSelect
-        value={filters.status}
-        onChange={(v) => onChange({ ...filters, status: v || undefined, offset: 0 })}
+        value={statusSelectValue}
+        onChange={handleStatusChange}
         placeholder={t('inbox.allStatuses')}
         minWidth="170px"
         options={STATUSES}
