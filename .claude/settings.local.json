@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(grep -l \"SendTicketToAegis\\\\|SendStatusChangeToAegis\\\\|SendReplyToAegis\" /c/Users/yurip/PhpstormProjects/gestao_frota/app/**/*.php)",
+      "Bash(grep -rn \"can.*assign\\\\|can.*change_status\\\\|can.*tickets\" /c/Users/yurip/PhpstormProjects/gestao_frota/app --include=*.php)"
+    ]
+  }
+}
