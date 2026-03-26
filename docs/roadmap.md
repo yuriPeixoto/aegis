@@ -4,11 +4,11 @@
 > Goal: solve the immediate business problem — one place to see all tickets from all gestão frota instances.
 > **Completed:** 2026-03-19
 
-| # | Issue | Status | Type |
-|---|-------|--------|------|
+| # | Feature | Status | Type |
+|---|---------|--------|------|
 | 1 | Project setup: FastAPI + SQLAlchemy + Alembic + PostgreSQL + CI | ✅ | infra |
 | 2 | Source management: register sources, generate and validate API keys | ✅ | feature |
-| 3 | Database schema: sources, tickets, ticket_events, users migrations (001–008) | ✅ | infra |
+| 3 | Database schema: sources, tickets, ticket_events, users migrations | ✅ | infra |
 | 4 | Ingest API: `POST /v1/ingest/tickets` and `POST /v1/ingest/tickets/events` | ✅ | feature |
 | 5 | Ticket read API: list with filters + pagination + detail | ✅ | feature |
 | 6 | Auth: JWT login, `/me` endpoint, roles (admin/agent/viewer) | ✅ | feature |
@@ -22,53 +22,80 @@
 
 ---
 
-## Phase 2 — Team Workflow
-> Goal: the team can fully manage tickets from inside Aegis. Clients interact in gestão frota and see responses there.
+## Phase 2 — Team Workflow ✅
+> Goal: the team can fully manage tickets from inside Aegis.
+> **Completed:** 2026-03-25
 
-| # | Issue | Type |
-|---|-------|------|
-| [#33](https://github.com/yuriPeixoto/aegis/issues/33) | User management UI: create/edit agents and admins from Settings | feature |
-| [#31](https://github.com/yuriPeixoto/aegis/issues/31) | Manager dashboard: KPIs, unassigned queue, overdue, per-agent and per-client metrics | feature |
-| [#27](https://github.com/yuriPeixoto/aegis/issues/27) | Email notifications: assignment, overdue SLA, new ticket — **postergado: aguardando servidor de e-mail da empresa** | feature |
-| [#26](https://github.com/yuriPeixoto/aegis/issues/26) | Webhook-out: push status changes, team responses and attachments back to source | feature |
-| [#37](https://github.com/yuriPeixoto/aegis/issues/37) | Bidirectional conversation: client replies in GF, team replies in Aegis, both see full thread | feature |
-| [#36](https://github.com/yuriPeixoto/aegis/issues/36) | Attachment support: upload/view docs and images on tickets | feature |
+| # | Feature | Status | Type |
+|---|---------|--------|------|
+| 1 | User management UI: create/edit/activate agents and admins from Settings | ✅ | feature |
+| 2 | SLA engine: business-hours policies, holidays, pause/resume, admin override | ✅ | feature |
+| 3 | Manager dashboard: KPIs, overdue, unassigned, per-agent and per-client metrics | ✅ | feature |
+| 4 | Dashboard submenu: Visão Geral / Monitor de Equipe / Relatórios (placeholder) | ✅ | feature |
+| 5 | Webhook-out: push status changes back to source on team action | ✅ | feature |
+| 6 | Webhook URL configurable per source in Settings | ✅ | feature |
+| 7 | Bidirectional conversation: team replies in Aegis visible in source | ✅ | feature |
+| 8 | Attachment support: upload/view docs and images on tickets | ✅ | feature |
+| 9 | Source soft-delete: inactivating a client hides all its tickets everywhere | ✅ | feature |
+| 10 | Inbox: "Em aberto" filter (active_only), text search, auto-refresh (30s) | ✅ | feature |
+| 11 | Inbox: smart sort — priority order, terminal statuses at the bottom | ✅ | feature |
+| 12 | Sidebar badge: live count of agent's active ticket queue | ✅ | feature |
+| 13 | Change-password flow on first login | ✅ | feature |
 
 ---
 
 ## Phase 3 — Support Center Completeness
-> Goal: Aegis becomes a full-featured support center — on par with what teams expect from tools like Zendesk or Freshdesk, but tailored to this ecosystem.
+> Goal: Aegis becomes a full-featured support center — on par with Zendesk/Freshdesk, tailored to this ecosystem.
 
-| Feature | Description |
-|---------|-------------|
-| SLA policies per client | Configurable SLA per source + ticket type combination |
-| Auto-close | Automatically close tickets inactive beyond configurable threshold |
-| Canned responses | Pre-written reply templates for common issues |
-| Ticket merging | Merge duplicate tickets from the same client |
-| Client portal | Self-service view for clients to track their tickets without going through gestão frota |
-| Source configuration UI | Manage webhook-out URL, secret, SLA policy, escalation rules per client |
-| Escalation rules | Auto-escalate overdue or high-priority tickets to a senior agent or manager |
+| # | Feature | Description | Priority |
+|---|---------|-------------|----------|
+| 1 | Auto-close | Automatically close tickets inactive beyond configurable threshold | High |
+| 2 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | High |
+| 3 | Canned responses | Pre-written reply templates for common issues | High |
+| 4 | Ticket tags | Free-form labels for classification and filtering | Medium |
+| 5 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
+| 6 | Ticket merging | Merge duplicate tickets from the same client | Medium |
+| 7 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
+| 8 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | Medium |
+| 9 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close | Low |
+| 10 | Client portal | Self-service view for clients to track their own tickets | Low |
 
 ---
 
 ## Phase 4 — Analytics & Reporting
 > Goal: visibility into support patterns and team performance.
 
-| Feature | Description |
-|---------|-------------|
-| Analytics API | MTTR per source/type/priority, volume trends, SLA compliance rate |
-| Automatic insights | "Type X up 40% this month at Client Y" |
-| PDF report | Executive summary with charts (ReportLab / WeasyPrint) |
-| Frontend dashboard | Charts (Recharts), report download trigger |
+| # | Feature | Description | Priority |
+|---|---------|-------------|----------|
+| 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time | High |
+| 2 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High |
+| 3 | Date range picker | Filter all dashboard metrics by configurable date range | High |
+| 4 | CSV export | Export filtered ticket list or report summary to CSV | Medium |
+| 5 | PDF report | Executive summary with charts (ReportLab / WeasyPrint) | Medium |
+| 6 | Automatic insights | "Type X up 40% this month at Client Y" — surface anomalies automatically | Low |
 
 ---
 
 ## Phase 5 — Ecosystem Integration
-> Goal: connect Aegis to the rest of the ecosystem.
+> Goal: connect Aegis to the rest of the internal ecosystem.
 
-| Feature | Description |
-|---------|-------------|
-| Maestro integration | Receive anomaly webhooks as automatic incident tickets |
-| Orquestra integration | Governance decisions generate Aegis tickets |
-| Generic webhook-out | Configurable outbound webhooks per event type for any source |
-| Historical import | Bulk ingest from existing gestão frota ticket history |
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Maestro integration | Receive anomaly webhooks as automatic incident tickets |
+| 2 | Orquestra integration | Governance decisions generate trackable Aegis tickets |
+| 3 | Generic webhook-out | Configurable outbound webhooks per event type for any source |
+| 4 | Historical import | Bulk ingest from existing gestão frota ticket history |
+| 5 | Audit log API | Full immutable event trail queryable externally for compliance |
+
+---
+
+## Phase 6 — Communications (Email)
+> Goal: proactive notifications and email-based interaction — depends on company mail server availability.
+
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Email notifications: assignment | Notify agent when a ticket is assigned to them |
+| 2 | Email notifications: new ticket | Notify team/admin when a high-priority ticket arrives |
+| 3 | Email notifications: overdue SLA | Alert agent + manager when SLA deadline is breached |
+| 4 | Email digest | Daily/weekly summary of open, overdue and resolved tickets for managers |
+| 5 | Email-in | Receive client replies by email and thread them back into the ticket conversation |
