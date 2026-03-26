@@ -81,7 +81,8 @@ export function useDashboardStats() {
       const { data } = await api.get<DashboardStats>('/dashboard/stats')
       return data
     },
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -93,5 +94,6 @@ export function useAgentMonitor() {
       return data
     },
     refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
 }

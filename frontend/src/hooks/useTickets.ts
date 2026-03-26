@@ -13,6 +13,8 @@ export function useTickets(filters: TicketFilters = {}) {
       const { data } = await api.get<TicketListResponse>('/tickets', { params })
       return data
     },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
 }
 
