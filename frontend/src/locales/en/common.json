@@ -19,6 +19,7 @@
     "restricted": "Access restricted to authorized users"
   },
   "inbox": {
+    "searchPlaceholder": "Search by subject or ID...",
     "allSources": "All sources",
     "activeStatuses": "In progress (all)",
     "allStatuses": "All statuses",
@@ -236,6 +237,8 @@
       "fieldSlug": "Identifier",
       "slugHint": "Lowercase letters, numbers and hyphens only. Used internally.",
       "slugImmutable": "The identifier cannot be changed after creation.",
+      "fieldWebhookUrl": "Callback webhook (optional)",
+      "webhookUrlHint": "URL that will receive notifications when a ticket changes status. Leave empty to disable.",
       "cancel": "Cancel",
       "create": "Add",
       "creating": "Adding...",

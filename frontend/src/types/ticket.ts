@@ -102,6 +102,7 @@ export interface TicketFilters {
   active_only?: boolean
   priority?: string
   type?: string
+  search?: string
   assigned_to_user_id?: number
   unassigned?: boolean
   limit?: number

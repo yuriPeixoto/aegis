@@ -19,6 +19,7 @@
     "restricted": "Acesso restrito a usuários autorizados"
   },
   "inbox": {
+    "searchPlaceholder": "Buscar por assunto ou ID...",
     "allSources": "Todas as fontes",
     "activeStatuses": "Em aberto",
     "allStatuses": "Todos os status",
@@ -236,6 +237,8 @@
       "fieldSlug": "Identificador",
       "slugHint": "Apenas letras minúsculas, números e hífens. Usado internamente.",
       "slugImmutable": "O identificador não pode ser alterado após a criação.",
+      "fieldWebhookUrl": "Webhook de retorno (opcional)",
+      "webhookUrlHint": "URL que receberá notificações quando um chamado mudar de status. Deixe vazio para desabilitar.",
       "cancel": "Cancelar",
       "create": "Adicionar",
       "creating": "Adicionando...",

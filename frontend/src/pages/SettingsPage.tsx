@@ -443,11 +443,12 @@ function EditSourceModal({
   const updateSource = useUpdateSource(source.id)
   const regenerateKey = useRegenerateSourceKey(source.id)
   const [name, setName] = useState(source.name)
+  const [webhookUrl, setWebhookUrl] = useState(source.webhook_url ?? '')
   const [confirmRegen, setConfirmRegen] = useState(false)
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    updateSource.mutate({ name }, { onSuccess: onClose })
+    updateSource.mutate({ name, webhook_url: webhookUrl }, { onSuccess: onClose })
   }
 
   const handleRegen = () => {
@@ -465,6 +466,16 @@ function EditSourceModal({
         <Field label={t('settings.sources.fieldSlug')}>
           <div className={`${inputCls} text-slate-500 font-mono cursor-not-allowed`}>{source.slug}</div>
           <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugImmutable')}</p>
+        </Field>
+        <Field label={t('settings.sources.fieldWebhookUrl')}>
+          <input
+            type="url"
+            value={webhookUrl}
+            onChange={(e) => setWebhookUrl(e.target.value)}
+            className={inputCls}
+            placeholder="https://..."
+          />
+          <p className="text-xs text-slate-600 mt-1">{t('settings.sources.webhookUrlHint')}</p>
         </Field>
 
         {/* Regenerate key area */}

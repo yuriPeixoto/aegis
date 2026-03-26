@@ -6,6 +6,7 @@ export interface Source {
   name: string
   slug: string
   is_active: boolean
+  webhook_url: string | null
   created_at: string
 }
 
@@ -27,6 +28,7 @@ interface SourceCreatePayload {
 interface SourceUpdatePayload {
   name?: string
   is_active?: boolean
+  webhook_url?: string
 }
 
 export function useSources() {
