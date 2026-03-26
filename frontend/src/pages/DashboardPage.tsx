@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -624,13 +624,17 @@ interface OverdueRowProps {
 }
 
 function OverdueRow({ ticket, t }: OverdueRowProps) {
+  const navigate = useNavigate()
   const isCritical = ticket.hours_overdue >= 24
   const borderClass = isCritical
     ? 'bg-red-950/30 border-red-500/20'
     : 'bg-orange-950/20 border-orange-500/20'
 
   return (
-    <div className={`flex items-start gap-4 p-3 rounded-lg border ${borderClass}`}>
+    <div
+      className={`flex items-start gap-4 p-3 rounded-lg border ${borderClass} cursor-pointer hover:brightness-110 transition-[filter]`}
+      onClick={() => navigate(`/tickets/${ticket.id}`)}
+    >
       <div className="shrink-0 mt-0.5">
         <span
           className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${isCritical ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}

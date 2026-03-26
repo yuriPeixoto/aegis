@@ -24,30 +24,37 @@ class DashboardService:
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         thirty_days_ago = now - timedelta(days=30)
 
+        # Filter to only include tickets from active sources
+        _active_src = Ticket.source_id.in_(
+            select(Source.id).where(Source.is_active.is_(True))
+        )
+
         # ── Scalar KPIs ──────────────────────────────────────────────────────
 
         r = await self._db.execute(
-            select(func.count()).where(~Ticket.status.in_(_INACTIVE))
+            select(func.count()).where(_active_src, ~Ticket.status.in_(_INACTIVE))
         )
         total_open: int = r.scalar_one()
 
         r = await self._db.execute(
             select(func.count()).where(
+                _active_src,
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
-                Ticket.sla_paused_since.is_(None),  # exclude paused tickets
+                Ticket.sla_paused_since.is_(None),
             )
         )
         overdue: int = r.scalar_one()
 
         r = await self._db.execute(
-            select(func.count()).where(Ticket.status == 'waiting_client')
+            select(func.count()).where(_active_src, Ticket.status == 'waiting_client')
         )
         waiting_client: int = r.scalar_one()
 
         r = await self._db.execute(
             select(func.count()).where(
+                _active_src,
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.assigned_to_user_id.is_(None),
             )
@@ -55,12 +62,13 @@ class DashboardService:
         unassigned: int = r.scalar_one()
 
         r = await self._db.execute(
-            select(func.count()).where(Ticket.first_ingested_at >= today_start)
+            select(func.count()).where(_active_src, Ticket.first_ingested_at >= today_start)
         )
         opened_today: int = r.scalar_one()
 
         r = await self._db.execute(
             select(func.count()).where(
+                _active_src,
                 Ticket.status.in_(('pending_closure', 'resolved', 'closed')),
                 Ticket.last_synced_at >= today_start,
             )
@@ -69,7 +77,7 @@ class DashboardService:
 
         # SLA compliance — % of tickets with SLA deadline that are not overdue
         r = await self._db.execute(
-            select(func.count()).where(Ticket.sla_due_at.is_not(None))
+            select(func.count()).where(_active_src, Ticket.sla_due_at.is_not(None))
         )
         total_with_sla: int = r.scalar_one()
         sla_compliance_pct: float | None = None
@@ -86,6 +94,7 @@ class DashboardService:
                     / 3600
                 )
             ).where(
+                _active_src,
                 Ticket.status == 'resolved',
                 Ticket.last_synced_at >= thirty_days_ago,
             )
@@ -97,7 +106,7 @@ class DashboardService:
 
         r = await self._db.execute(
             select(Ticket.priority, func.count().label('cnt'))
-            .where(~Ticket.status.in_(_INACTIVE))
+            .where(_active_src, ~Ticket.status.in_(_INACTIVE))
             .group_by(Ticket.priority)
         )
         by_priority = [{'priority': row.priority or 'unknown', 'count': row.cnt} for row in r]
@@ -107,7 +116,7 @@ class DashboardService:
         r = await self._db.execute(
             select(Ticket.source_id, Source.name, func.count().label('cnt'))
             .join(Source, Ticket.source_id == Source.id)
-            .where(~Ticket.status.in_(_INACTIVE))
+            .where(Source.is_active.is_(True), ~Ticket.status.in_(_INACTIVE))
             .group_by(Ticket.source_id, Source.name)
             .order_by(func.count().desc())
         )
@@ -124,6 +133,7 @@ class DashboardService:
         for agent in agents:
             r = await self._db.execute(
                 select(func.count()).where(
+                    _active_src,
                     ~Ticket.status.in_(_INACTIVE),
                     Ticket.assigned_to_user_id == agent.id,
                 )
@@ -132,17 +142,19 @@ class DashboardService:
 
             r = await self._db.execute(
                 select(func.count()).where(
+                    _active_src,
                     ~Ticket.status.in_(_INACTIVE),
                     Ticket.assigned_to_user_id == agent.id,
                     Ticket.sla_due_at.is_not(None),
                     Ticket.sla_due_at < now,
-                    Ticket.sla_paused_since.is_(None),  # exclude paused
+                    Ticket.sla_paused_since.is_(None),
                 )
             )
             agent_overdue: int = r.scalar_one()
 
             r = await self._db.execute(
                 select(func.count()).where(
+                    _active_src,
                     Ticket.assigned_to_user_id == agent.id,
                     Ticket.status.in_(('pending_closure', 'resolved', 'closed')),
                     Ticket.last_synced_at >= thirty_days_ago,
@@ -167,6 +179,7 @@ class DashboardService:
         r = await self._db.execute(
             select(Ticket)
             .where(
+                _active_src,
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
@@ -201,6 +214,7 @@ class DashboardService:
         r = await self._db.execute(
             select(Ticket)
             .where(
+                _active_src,
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.assigned_to_user_id.is_(None),
             )
@@ -244,6 +258,10 @@ class DashboardService:
     async def get_agent_monitor(self) -> dict:
         now = datetime.now(timezone.utc)
 
+        _active_src = Ticket.source_id.in_(
+            select(Source.id).where(Source.is_active.is_(True))
+        )
+
         # Correlated subqueries for last message per ticket
         latest_dir = (
             select(TicketMessage.direction)
@@ -265,6 +283,7 @@ class DashboardService:
         r = await self._db.execute(
             select(Ticket, latest_dir, latest_at)
             .where(
+                _active_src,
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.assigned_to_user_id.is_not(None),
             )

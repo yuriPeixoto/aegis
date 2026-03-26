@@ -25,3 +25,13 @@ class SourceCreatedResponse(SourceResponse):
 
     api_key: str
     webhook_secret: str
+
+
+class SourceUpdate(BaseModel):
+    name: str | None = Field(None, min_length=2, max_length=255)
+    is_active: bool | None = None
+
+
+class SourceKeyRegeneratedResponse(BaseModel):
+    api_key: str
+    webhook_secret: str

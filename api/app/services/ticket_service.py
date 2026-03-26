@@ -42,7 +42,7 @@ class TicketService:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Ticket], int]:
-        query = select(Ticket)
+        query = select(Ticket).join(Source, Ticket.source_id == Source.id).where(Source.is_active.is_(True))
 
         if source_id is not None:
             query = query.where(Ticket.source_id == source_id)
