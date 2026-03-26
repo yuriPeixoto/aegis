@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -74,9 +74,21 @@ class TicketService:
         count_result = await self._db.execute(select(func.count()).select_from(query.subquery()))
         total = count_result.scalar_one()
 
+        # Terminal statuses sink to the bottom; within each group sort by priority then recency
+        _terminal_rank = case(
+            (Ticket.status.in_(self._TERMINAL_STATUSES), 1),
+            else_=0,
+        )
+        _priority_rank = case(
+            (Ticket.priority == "urgent", 1),
+            (Ticket.priority == "high", 2),
+            (Ticket.priority == "medium", 3),
+            (Ticket.priority == "low", 4),
+            else_=5,
+        )
         result = await self._db.execute(
             query.options(selectinload(Ticket.source), selectinload(Ticket.assignee))
-            .order_by(Ticket.first_ingested_at.desc())
+            .order_by(_terminal_rank, _priority_rank, Ticket.first_ingested_at.desc())
             .limit(limit)
             .offset(offset)
         )
