@@ -15,6 +15,7 @@ class SourceResponse(BaseModel):
     name: str
     slug: str
     is_active: bool
+    webhook_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -30,6 +31,7 @@ class SourceCreatedResponse(SourceResponse):
 class SourceUpdate(BaseModel):
     name: str | None = Field(None, min_length=2, max_length=255)
     is_active: bool | None = None
+    webhook_url: str | None = Field(None, max_length=500)
 
 
 class SourceKeyRegeneratedResponse(BaseModel):

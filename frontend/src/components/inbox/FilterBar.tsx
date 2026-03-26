@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Search, X } from 'lucide-react'
 import type { TicketFilters } from '../../types/ticket'
 import { useSources } from '../../hooks/useTickets'
 import { FilterSelect } from './FilterSelect'
@@ -11,6 +13,7 @@ interface FilterBarProps {
 export function FilterBar({ filters, onChange }: FilterBarProps) {
   const { t } = useTranslation()
   const { data: sources } = useSources()
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const STATUSES = [
     { value: '__active__',     label: t('inbox.activeStatuses') },
@@ -50,10 +53,32 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
     }
   }
 
-  const hasFilters = filters.source_id || filters.status || filters.active_only || filters.priority || filters.type
+  const hasFilters = filters.source_id || filters.status || filters.active_only || filters.priority || filters.type || filters.search
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+        <input
+          ref={searchRef}
+          type="text"
+          value={filters.search ?? ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value || undefined, offset: 0 })}
+          placeholder={t('inbox.searchPlaceholder')}
+          className="pl-7 pr-6 py-2 text-sm bg-brand-surface border border-brand-border rounded-lg text-slate-200
+            placeholder:text-slate-500 focus:outline-none focus:border-brand-accent/60 w-64 transition-colors"
+        />
+        {filters.search && (
+          <button
+            onClick={() => { onChange({ ...filters, search: undefined, offset: 0 }); searchRef.current?.focus() }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
       <FilterSelect
         value={filters.source_id?.toString()}
         onChange={(v) => onChange({ ...filters, source_id: v ? Number(v) : undefined, offset: 0 })}

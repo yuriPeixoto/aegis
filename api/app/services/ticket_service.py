@@ -40,6 +40,7 @@ class TicketService:
         assigned_to_user_id: int | None = None,
         unassigned: bool = False,
         active_only: bool = False,
+        search: str | None = None,
         created_after: datetime | None = None,
         created_before: datetime | None = None,
         limit: int = 50,
@@ -61,6 +62,10 @@ class TicketService:
             query = query.where(Ticket.assigned_to_user_id.is_(None))
         elif assigned_to_user_id is not None:
             query = query.where(Ticket.assigned_to_user_id == assigned_to_user_id)
+        if search is not None:
+            term = f"%{search}%"
+            from sqlalchemy import or_
+            query = query.where(or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term)))
         if created_after is not None:
             query = query.where(Ticket.first_ingested_at >= created_after)
         if created_before is not None:
