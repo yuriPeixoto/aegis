@@ -102,6 +102,16 @@
     "SUPPORT": "Support"
   },
   "dashboard": {
+    "nav": {
+      "title": "Dashboard",
+      "overview": "Overview",
+      "monitor": "Team Monitor",
+      "reports": "Reports"
+    },
+    "reports": {
+      "soon": "Coming soon",
+      "soonHint": "Performance, volume and SLA reports are under development."
+    },
     "alert": {
       "overdue": "{{count}} overdue tickets",
       "overdueHint": "past deadline without resolution",

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -11,6 +11,9 @@ import {
   CalendarDays,
   Timer,
   ShieldCheck,
+  LayoutDashboard,
+  MonitorCheck,
+  BarChart2,
 } from 'lucide-react'
 import {
   useDashboardStats,
@@ -41,10 +44,17 @@ const PRIORITY_CELL_STYLES: Record<string, string> = {
   low: 'bg-emerald-500/15 text-emerald-400',
 }
 
+const TABS = [
+  { id: 'overview', label: 'dashboard.nav.overview', icon: LayoutDashboard },
+  { id: 'monitor',  label: 'dashboard.nav.monitor',  icon: MonitorCheck     },
+  { id: 'reports',  label: 'dashboard.nav.reports',  icon: BarChart2        },
+]
+
 export function DashboardPage() {
   const { t } = useTranslation()
   const { data: user } = useMe()
-  const { data: stats, isLoading } = useDashboardStats()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') ?? 'overview'
 
   if (user?.role !== 'admin') {
     return (
@@ -53,6 +63,51 @@ export function DashboardPage() {
       </div>
     )
   }
+
+  return (
+    <div className="flex gap-8 h-full">
+      {/* Left nav */}
+      <nav className="w-44 shrink-0 pt-1">
+        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3 px-2">
+          {t('dashboard.nav.title')}
+        </p>
+        <ul className="space-y-0.5">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <li key={id}>
+              <button
+                onClick={() => setSearchParams({ tab: id })}
+                className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-sm transition-colors text-left ${
+                  activeTab === id
+                    ? 'bg-white/8 text-slate-100 font-medium'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {t(label)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Divider */}
+      <div className="w-px bg-brand-border shrink-0" />
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pt-1 overflow-y-auto">
+        {activeTab === 'overview' && <OverviewTab />}
+        {activeTab === 'monitor'  && <MonitorTab />}
+        {activeTab === 'reports'  && <ReportsTab />}
+      </div>
+    </div>
+  )
+}
+
+// ── Visão Geral ───────────────────────────────────────────────────────────────
+
+function OverviewTab() {
+  const { t } = useTranslation()
+  const { data: stats, isLoading } = useDashboardStats()
 
   if (isLoading || !stats) {
     return (
@@ -167,7 +222,6 @@ export function DashboardPage() {
 
       {/* Middle row: Agent workload + Client/Priority breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Agent workload table */}
         <div className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-xl p-5">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-slate-200">{t('dashboard.agents.title')}</h3>
@@ -176,9 +230,7 @@ export function DashboardPage() {
           <AgentTable agents={stats.by_agent} t={t} />
         </div>
 
-        {/* By client + By priority */}
         <div className="bg-brand-surface border border-brand-border rounded-xl p-5 space-y-6">
-          {/* Volume por cliente */}
           <div>
             <h3 className="text-sm font-semibold text-slate-200 mb-3">
               {t('dashboard.byClient.title')}
@@ -205,7 +257,6 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Por prioridade */}
           <div className="pt-4 border-t border-brand-border">
             <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">
               {t('dashboard.byPriority.title')}
@@ -231,10 +282,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Agent Monitor */}
-      <AgentMonitorSection t={t} />
-
-      {/* Overdue + Unassigned side by side when both exist, stacked otherwise */}
+      {/* Overdue + Unassigned */}
       <div className={`grid gap-6 ${stats.overdue_tickets.length > 0 && stats.unassigned_tickets.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
         {stats.overdue_tickets.length > 0 && (
           <div id="overdue" className="bg-brand-surface border border-red-500/20 rounded-xl p-5">
@@ -274,7 +322,65 @@ export function DashboardPage() {
   )
 }
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+// ── Monitor de Equipe ─────────────────────────────────────────────────────────
+
+function MonitorTab() {
+  const { t } = useTranslation()
+  const { data, isLoading } = useAgentMonitor()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-sm text-slate-500 animate-pulse">{t('inbox.loading')}</p>
+      </div>
+    )
+  }
+
+  const agents = data?.agents.filter((a) => a.tickets.length > 0) ?? []
+  const totalTickets = agents.reduce((s, a) => s + a.tickets.length, 0)
+
+  return (
+    <div className="space-y-5 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-200">{t('dashboard.monitor.title')}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{t('dashboard.monitor.subtitle')}</p>
+        </div>
+        <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">
+          {totalTickets} {t('dashboard.kpi.totalOpen').toLowerCase()}
+        </span>
+      </div>
+
+      {agents.length === 0 ? (
+        <div className="flex items-center justify-center h-48 bg-brand-surface border border-brand-border rounded-xl">
+          <p className="text-sm text-slate-500">{t('dashboard.monitor.empty')}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {agents.map((agent, i) => (
+            <AgentMonitorCard key={agent.user_id} agent={agent} index={i} t={t} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Relatórios ────────────────────────────────────────────────────────────────
+
+function ReportsTab() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-center">
+      <BarChart2 className="w-10 h-10 text-slate-600" />
+      <p className="text-sm font-medium text-slate-400">{t('dashboard.reports.soon')}</p>
+      <p className="text-xs text-slate-600 max-w-xs">{t('dashboard.reports.soonHint')}</p>
+    </div>
+  )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 interface KpiCardProps {
   label: string
@@ -314,12 +420,7 @@ function AgentTable({ agents, t }: AgentTableProps) {
   }
 
   const initials = (name: string) =>
-    name
-      .split(' ')
-      .slice(0, 2)
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
+    name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
 
   const avatarColors = [
     'bg-brand-accent/20 text-brand-accent',
@@ -385,11 +486,7 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
     if (!userId) return
     assign(
       { user_id: Number(userId) },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-        },
-      },
+      { onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dashboard'] }) } },
     )
   }
 
@@ -405,9 +502,7 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
         <div className="flex flex-wrap items-center gap-2 mt-1">
           <span className="text-xs text-slate-400">{ticket.source_name}</span>
           {ticket.priority && (
-            <span
-              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${PRIORITY_STYLES[ticket.priority] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}
-            >
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${PRIORITY_STYLES[ticket.priority] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}>
               {t(`priority.${ticket.priority.toUpperCase()}`)}
             </span>
           )}
@@ -420,13 +515,9 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
           onChange={(e) => handleAssign(e.target.value)}
           className="text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-slate-300 focus:outline-none focus:border-brand-accent disabled:opacity-50"
         >
-          <option value="" disabled>
-            {t('dashboard.unassigned.assign')}
-          </option>
+          <option value="" disabled>{t('dashboard.unassigned.assign')}</option>
           {users?.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
+            <option key={u.id} value={u.id}>{u.name}</option>
           ))}
         </select>
       </div>
@@ -434,62 +525,20 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
   )
 }
 
-// ── Agent Monitor ────────────────────────────────────────────────────────────
+// ── Agent Monitor cards ───────────────────────────────────────────────────────
 
 const SLA_BADGE: Record<string, string> = {
-  ok: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  ok:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   at_risk: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
   overdue: 'bg-red-500/15 text-red-400 border-red-500/30',
-  paused: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  paused:  'bg-sky-500/15 text-sky-400 border-sky-500/30',
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  open: 'bg-slate-700 text-slate-300',
-  in_progress: 'bg-blue-500/15 text-blue-400',
-  waiting_client: 'bg-amber-500/15 text-amber-400',
-}
-
-function formatTimeAgo(isoDate: string, t: (key: string) => string): string {
+function formatTimeAgo(isoDate: string): string {
   const diff = Math.floor((Date.now() - new Date(isoDate).getTime()) / 60_000)
   if (diff < 60) return `${diff}min`
   if (diff < 1440) return `${Math.floor(diff / 60)}h`
   return `${Math.floor(diff / 1440)}d`
-}
-
-interface AgentMonitorSectionProps {
-  t: (key: string, opts?: Record<string, unknown>) => string
-}
-
-function AgentMonitorSection({ t }: AgentMonitorSectionProps) {
-  const { data, isLoading } = useAgentMonitor()
-
-  if (isLoading) return null
-
-  const agents = data?.agents.filter((a) => a.tickets.length > 0) ?? []
-
-  return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-200">{t('dashboard.monitor.title')}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{t('dashboard.monitor.subtitle')}</p>
-        </div>
-        <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">
-          {agents.reduce((s, a) => s + a.tickets.length, 0)} {t('dashboard.kpi.totalOpen').toLowerCase()}
-        </span>
-      </div>
-
-      {agents.length === 0 ? (
-        <p className="text-xs text-slate-500 py-2">{t('dashboard.monitor.empty')}</p>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {agents.map((agent, i) => (
-            <AgentMonitorCard key={agent.user_id} agent={agent} index={i} t={t} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 const AVATAR_COLORS = [
@@ -517,11 +566,8 @@ function AgentMonitorCard({ agent, index, t }: AgentMonitorCardProps) {
 
   return (
     <div className="border border-slate-700/50 rounded-lg overflow-hidden">
-      {/* Agent header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/40 border-b border-slate-700/50">
-        <div
-          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${AVATAR_COLORS[index % AVATAR_COLORS.length]}`}
-        >
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${AVATAR_COLORS[index % AVATAR_COLORS.length]}`}>
           {initials(agent.name)}
         </div>
         <span className="text-sm font-semibold text-slate-200 flex-1 min-w-0 truncate">
@@ -545,7 +591,6 @@ function AgentMonitorCard({ agent, index, t }: AgentMonitorCardProps) {
         </div>
       </div>
 
-      {/* Ticket list */}
       <div className="divide-y divide-slate-800">
         {agent.tickets.map((ticket) => (
           <AgentMonitorTicketRow key={ticket.id} ticket={ticket} t={t} />
@@ -566,50 +611,39 @@ function AgentMonitorTicketRow({ ticket, t }: AgentMonitorTicketRowProps) {
       to={`/tickets/${ticket.id}`}
       className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-800/40 transition-colors group"
     >
-      {/* Priority dot */}
-      <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          ticket.priority === 'urgent' ? 'bg-red-400' :
-          ticket.priority === 'high' ? 'bg-orange-400' :
-          ticket.priority === 'medium' ? 'bg-yellow-400' : 'bg-emerald-400'
-        }`}
-      />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+        ticket.priority === 'urgent' ? 'bg-red-400' :
+        ticket.priority === 'high'   ? 'bg-orange-400' :
+        ticket.priority === 'medium' ? 'bg-yellow-400' : 'bg-emerald-400'
+      }`} />
 
-      {/* ID */}
       <span className="text-[10px] font-bold text-slate-500 shrink-0 w-24 truncate">
         {ticket.external_id}
       </span>
 
-      {/* Subject */}
       <span className="text-xs text-slate-300 flex-1 min-w-0 truncate group-hover:text-slate-100">
         {ticket.subject}
       </span>
 
-      {/* Indicators */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {/* Unanswered message */}
         {ticket.has_unanswered_message && (
           <span
             className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded"
             title={t('dashboard.monitor.unanswered')}
           >
             <MessageSquare className="w-3 h-3" />
-            {ticket.last_message_at && formatTimeAgo(ticket.last_message_at, t)}
+            {ticket.last_message_at && formatTimeAgo(ticket.last_message_at)}
           </span>
         )}
 
-        {/* Waiting since (waiting_client status) */}
         {ticket.status === 'waiting_client' && ticket.waiting_since && (
           <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-            ⏸ {formatTimeAgo(ticket.waiting_since, t)}
+            ⏸ {formatTimeAgo(ticket.waiting_since)}
           </span>
         )}
 
-        {/* SLA badge */}
         {ticket.sla_status && (
-          <span
-            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${SLA_BADGE[ticket.sla_status] ?? ''}`}
-          >
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${SLA_BADGE[ticket.sla_status] ?? ''}`}>
             {t(`sla.${ticket.sla_status}`)}
           </span>
         )}
@@ -636,9 +670,7 @@ function OverdueRow({ ticket, t }: OverdueRowProps) {
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
       <div className="shrink-0 mt-0.5">
-        <span
-          className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${isCritical ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}
-        >
+        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${isCritical ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}>
           {ticket.external_id}
         </span>
       </div>
@@ -647,9 +679,7 @@ function OverdueRow({ ticket, t }: OverdueRowProps) {
         <div className="flex flex-wrap items-center gap-2 mt-1">
           <span className="text-xs text-slate-400">{ticket.source_name}</span>
           {ticket.priority && (
-            <span
-              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${PRIORITY_STYLES[ticket.priority] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}
-            >
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${PRIORITY_STYLES[ticket.priority] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}>
               {t(`priority.${ticket.priority.toUpperCase()}`)}
             </span>
           )}
