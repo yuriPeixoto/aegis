@@ -20,6 +20,7 @@
   },
   "inbox": {
     "allSources": "All sources",
+    "activeStatuses": "In progress (all)",
     "allStatuses": "All statuses",
     "allPriorities": "All priorities",
     "allTypes": "All types",
