@@ -53,6 +53,33 @@ class SlaService:
         """Directly set sla_due_at (admin/manager override)."""
         ticket.sla_due_at = new_due_at
 
+    async def infer_priority_for_deadline(self, due_at: datetime) -> str | None:
+        """
+        Return the appropriate priority string based on how many business
+        hours remain until due_at.  Uses the configured SLA policies as
+        thresholds (sorted ascending by resolution_hours).
+        """
+        config = await self._get_config()
+        if config is None:
+            return None
+        holidays = await self._get_holidays()
+        now = datetime.now(UTC)
+        remaining = self._bh.remaining_business_hours(now, due_at, config, holidays)
+
+        result = await self._db.execute(
+            select(SlaPolicy).order_by(SlaPolicy.resolution_hours.asc())
+        )
+        policies = list(result.scalars().all())
+        if not policies:
+            return None
+
+        for policy in policies:
+            if remaining <= policy.resolution_hours:
+                return policy.priority
+
+        # More hours remaining than any policy ceiling → lowest priority
+        return policies[-1].priority
+
     # ── private ───────────────────────────────────────────────────────────────
 
     async def _start(self, ticket: Ticket, now: datetime) -> None:

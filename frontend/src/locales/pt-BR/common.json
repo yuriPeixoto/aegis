@@ -2,10 +2,31 @@
   "nav": {
     "inbox": "Caixa de Entrada",
     "dashboard": "Dashboard",
-    "settings": "Configurações"
+    "settings": "Configurações",
+    "reportIssue": "Reportar Problema",
+    "shortcuts": "Atalhos",
+    "shortcutsTitle": "Atalhos de Teclado",
+    "shortcutsGeneral": "Geral",
+    "shortcutsInbox": "Inbox",
+    "shortcutInbox": "Ir para a Caixa de Entrada",
+    "shortcutReport": "Abrir 'Reportar Problema'",
+    "shortcutClose": "Fechar modais/seleções",
+    "shortcutDashboard": "Ir para o Dashboard",
+    "shortcutSettings": "Ir para Configurações",
+    "shortcutNext": "Próximo ticket",
+    "shortcutPrev": "Ticket anterior",
+    "shortcutOpen": "Abrir ticket selecionado",
+    "shortcutRefresh": "Atualizar lista",
+    "shortcutAssign": "Atribuir",
+    "shortcutBulkStatus": "Mudar status (em lote)",
+    "shortcutBulkPriority": "Mudar prioridade (em lote)"
   },
   "topbar": {
     "signOut": "Sair"
+  },
+  "common": {
+    "clear": "Limpar",
+    "processing": "Processando"
   },
   "login": {
     "subtitle": "Central de Suporte",
@@ -28,8 +49,20 @@
     "clearFilters": "Limpar",
     "ticketCount_one": "{{count}} ticket",
     "ticketCount_other": "{{count}} tickets",
+    "bulk": {
+      "selected": "{{count}} selecionados",
+      "assign": "Atribuir",
+      "unassign": "Remover atribuição",
+      "status": "Mudar Status",
+      "priority": "Prioridade",
+      "shortcutAssign": "Atribuir (A)",
+      "shortcutStatus": "Mudar Status (S)",
+      "shortcutPriority": "Mudar Prioridade (P)"
+    },
     "empty": "Nenhum ticket encontrado",
     "loading": "Carregando...",
+    "cancel": "Cancelar",
+    "send": "Enviar",
     "queue": {
       "mine": "Minha fila",
       "unassigned": "Sem atribuição",
@@ -50,6 +83,7 @@
       "noMessages": "Nenhuma mensagem ainda.",
       "replyPlaceholder": "Digite uma resposta ao cliente...",
       "replyHint": "Ctrl+Enter para enviar",
+      "processing": "Processando",
       "send": "Enviar",
       "eventHistory": "Histórico de Eventos",
       "noEvents": "Nenhum evento registrado.",
@@ -60,6 +94,19 @@
       "uploadAttachment": "Enviar arquivo",
       "noAttachments": "Nenhum anexo.",
       "download": "Baixar"
+    },
+    "internalTicket": {
+      "title": "Reportar Problema / Sugestão",
+      "error": "Ocorreu um erro ao enviar seu feedback.",
+      "subject": "Assunto",
+      "subjectPlaceholder": "Resumo do problema ou melhoria",
+      "type": "Tipo",
+      "typeBug": "Bug",
+      "typeImprovement": "Melhoria",
+      "typeSuggestion": "Sugestão",
+      "priority": "Prioridade",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Explique com detalhes o que aconteceu ou o que poderia melhorar..."
     }
   },
   "sla": {
@@ -72,8 +119,8 @@
   "status": {
     "action": {
       "startProgress": "Iniciar Atendimento",
-      "waitClient": "Ag. Cliente",
-      "pendingClosure": "Ag. Validação",
+      "waitClient": "Aguardar Cliente",
+      "pendingClosure": "Aguardar Validação",
       "resolve": "Resolver",
       "cancel": "Cancelar",
       "reopen": "Reabrir",
@@ -81,7 +128,8 @@
     },
     "OPEN": "Aberto",
     "IN_PROGRESS": "Em Atendimento",
-    "WAITING_CLIENT": "Ag. Cliente",
+    "WAITING_CLIENT": "Aguardando Cliente",
+    "PENDING_CLOSURE": "Aguardando Validação",
     "WAITING_DEV": "Ag. Desenvolvimento",
     "IN_DEV": "Em Desenvolvimento",
     "WAITING_TEST": "Ag. Teste",
@@ -130,7 +178,9 @@
       "slaCompliance": "SLA Compliance",
       "slaTarget": "Meta: 80%",
       "mttr": "Tempo Médio",
-      "mttrPeriod": "Últimos 30 dias"
+      "mttrPeriod": "Últimos 30 dias",
+      "autoClosed": "Auto-fechados",
+      "autoClosedHint": "Inatividade (30d)"
     },
     "agents": {
       "title": "Carga por Atendente",
@@ -181,7 +231,8 @@
       "title": "Configurações",
       "users": "Usuários",
       "sources": "Clientes",
-      "sla": "SLA"
+      "sla": "SLA",
+      "autoClose": "Auto-close"
     },
     "users": {
       "title": "Usuários",
@@ -292,6 +343,22 @@
         "fieldDescription": "Descrição",
         "create": "Adicionar",
         "creating": "Adicionando..."
+      },
+      "autoClose": {
+        "title": "Fechamento Automático",
+        "subtitle": "Encerre chamados inativos sem interação.",
+        "enabled": "Ativar auto-close",
+        "waitDays": "Dias para fechamento (total)",
+        "waitDaysHint": "Total de dias sem resposta antes de fechar o chamado.",
+        "warningDays": "Dias para aviso",
+        "warningDaysHint": "Quantos dias antes do fechamento enviar o lembrete.",
+        "warningMessage": "Mensagem de aviso",
+        "warningMessageHint": "Enviada quando o tempo de aviso é atingido.",
+        "closeMessage": "Mensagem de fechamento",
+        "closeMessageHint": "Enviada quando o chamado é encerrado automaticamente.",
+        "save": "Salvar configurações",
+        "saving": "Salvando...",
+        "saved": "Configurações salvas ✓"
       }
     }
   }

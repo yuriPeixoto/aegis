@@ -187,3 +187,149 @@ class TicketService:
             )
         )
         return result.scalar_one_or_none(), None
+
+    async def bulk_update(
+        self,
+        ticket_ids: list[int],
+        *,
+        status: str | None = None,
+        priority: str | None = None,
+        assigned_to_user_id: int | None = None,
+        changed_by_user_name: str,
+        comment: str | None = None,
+    ) -> list[Ticket]:
+        """Update multiple tickets at once. Returns the list of updated tickets."""
+        # Note: In a large production system, we'd use a single UPDATE ... WHERE id IN (...)
+        # for performance. But Aegis needs to trigger SLA logic, events, and webhooks
+        # per ticket. We iterate for now, which is safe for typical bulk sizes (20-50).
+        updated_tickets = []
+        for tid in ticket_ids:
+            ticket = await self.get_ticket(tid)
+            if not ticket:
+                continue
+
+            changed = False
+            if status and ticket.status != status:
+                # We skip transition validation for bulk updates to allow "cleanup" actions
+                old_status = ticket.status
+                ticket.status = status
+                self._db.add(
+                    TicketEvent(
+                        ticket_id=ticket.id,
+                        event_type="status_changed",
+                        payload={
+                            "old_status": old_status,
+                            "new_status": status,
+                            "changed_by": changed_by_user_name,
+                            **({"comment": comment} if comment else {}),
+                        },
+                    )
+                )
+                await SlaService(self._db).handle_status_change(ticket, old_status, status)
+                changed = True
+
+            if priority and ticket.priority != priority:
+                old_priority = ticket.priority
+                ticket.priority = priority
+                self._db.add(
+                    TicketEvent(
+                        ticket_id=ticket.id,
+                        event_type="priority_changed",
+                        payload={
+                            "old_priority": old_priority,
+                            "new_priority": priority,
+                            "changed_by": changed_by_user_name,
+                        },
+                    )
+                )
+                changed = True
+
+            if assigned_to_user_id is not None:
+                # We use -1 or similar if we wanted to unassign, but schema says int | None
+                # If the user passed a specific ID or None, we apply it
+                if ticket.assigned_to_user_id != assigned_to_user_id:
+                    ticket.assigned_to_user_id = assigned_to_user_id
+                    self._db.add(
+                        TicketEvent(
+                            ticket_id=ticket.id,
+                            event_type="assigned",
+                            payload={
+                                "assigned_to_user_id": assigned_to_user_id,
+                                "changed_by": changed_by_user_name,
+                            },
+                        )
+                    )
+                    changed = True
+
+            if changed:
+                self._db.add(ticket)
+                updated_tickets.append(ticket)
+
+        if updated_tickets:
+            await self._db.commit()
+            # Refresh to load relationships (source, assignee) for the response
+            for t in updated_tickets:
+                await self._db.refresh(t, ["source", "assignee"])
+
+        return updated_tickets
+
+    async def create_internal_ticket(
+        self,
+        subject: str,
+        description: str,
+        type: str,
+        priority: str,
+        user_id: int,
+        meta: dict | None = None,
+    ) -> Ticket:
+        # Find the Aegis Internal source
+        source_result = await self._db.execute(select(Source).where(Source.slug == "aegis"))
+        source = source_result.scalar_one()
+
+        # Generate external_id: AEGIS-<timestamp>
+        now = datetime.now(UTC)
+        external_id = f"AEGIS-{int(now.timestamp())}"
+
+        ticket = Ticket(
+            source_id=source.id,
+            external_id=external_id,
+            type=type,
+            priority=priority,
+            status="open",
+            subject=subject,
+            description=description,
+            source_metadata={
+                **(meta or {}),
+                "reported_by_user_id": user_id,
+            },
+            source_created_at=now,
+            source_updated_at=now,
+        )
+        self._db.add(ticket)
+        await self._db.flush()
+
+        # Create initial event
+        event = TicketEvent(
+            ticket_id=ticket.id,
+            event_type="created",
+            payload={
+                "created_by_user_id": user_id,
+                "via": "internal_portal",
+            },
+            occurred_at=now,
+        )
+        self._db.add(event)
+
+        await self._db.commit()
+
+        # Return the ticket with relationships loaded
+        result = await self._db.execute(
+            select(Ticket)
+            .where(Ticket.id == ticket.id)
+            .options(
+                selectinload(Ticket.source),
+                selectinload(Ticket.events),
+                selectinload(Ticket.assignee),
+            )
+        )
+        return result.scalar_one()

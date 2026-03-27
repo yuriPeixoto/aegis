@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.source import Source
 from app.models.ticket import Ticket
+from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.models.user import User
 
@@ -89,18 +90,30 @@ class DashboardService:
             select(
                 func.avg(
                     func.extract(
-                        'epoch', Ticket.last_synced_at - Ticket.first_ingested_at
+                        'epoch', func.coalesce(Ticket.resolved_at, Ticket.last_synced_at) - Ticket.first_ingested_at
                     )
                     / 3600
                 )
             ).where(
                 _active_src,
-                Ticket.status == 'resolved',
-                Ticket.last_synced_at >= thirty_days_ago,
+                Ticket.status.in_(('pending_closure', 'resolved', 'closed')),
+                func.coalesce(Ticket.resolved_at, Ticket.last_synced_at) >= thirty_days_ago,
             )
         )
         mttr_raw = r.scalar_one()
         mttr_hours: float | None = round(float(mttr_raw), 1) if mttr_raw is not None else None
+
+        # Auto-closed tickets in the last 30 days
+        r = await self._db.execute(
+            select(func.count(Ticket.id))
+            .join(TicketEvent, Ticket.id == TicketEvent.ticket_id)
+            .where(
+                _active_src,
+                TicketEvent.event_type == 'auto_closed',
+                TicketEvent.occurred_at >= thirty_days_ago
+            )
+        )
+        auto_closed_30d: int = r.scalar_one()
 
         # ── By priority (active tickets) ──────────────────────────────────────
 
@@ -248,6 +261,7 @@ class DashboardService:
             'resolved_today': resolved_today,
             'sla_compliance_pct': sla_compliance_pct,
             'mttr_hours': mttr_hours,
+            'auto_closed_30d': auto_closed_30d,
             'by_priority': by_priority,
             'by_client': by_client,
             'by_agent': by_agent,

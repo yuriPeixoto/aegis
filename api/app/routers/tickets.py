@@ -10,11 +10,14 @@ from app.core.auth import AdminUser
 from app.schemas.ticket import (
     AssigneeResponse,
     AssignTicketRequest,
+    InternalTicketCreate,
     OverrideSlaRequest,
     TicketDetailResponse,
     TicketListResponse,
     TicketResponse,
+    UpdatePriorityRequest,
     UpdateStatusRequest,
+    BulkUpdateTicketsRequest,
 )
 from app.services.sla_service import SlaService
 from app.services.ticket_service import TicketService
@@ -129,6 +132,23 @@ async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
     return _detail(ticket)
 
 
+@router.post("/internal", response_model=TicketDetailResponse, status_code=status.HTTP_201_CREATED)
+async def create_internal_ticket(
+    body: InternalTicketCreate,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> TicketDetailResponse:
+    ticket = await TicketService(db).create_internal_ticket(
+        subject=body.subject,
+        description=body.description,
+        type=body.type,
+        priority=body.priority,
+        user_id=current_user.id,
+        meta=body.meta,
+    )
+    return _detail(ticket)
+
+
 @router.patch("/{ticket_id}/status", response_model=TicketDetailResponse)
 async def update_ticket_status(
     ticket_id: int,
@@ -197,7 +217,8 @@ async def override_sla(
     ticket_id: int,
     body: OverrideSlaRequest,
     db: DbSession,
-    _admin: AdminUser,
+    admin: AdminUser,
+    background_tasks: BackgroundTasks,
 ) -> TicketDetailResponse:
     """Override the SLA deadline for a ticket. Restricted to admin."""
     svc = TicketService(db)
@@ -207,9 +228,13 @@ async def override_sla(
 
     from app.models.ticket_event import TicketEvent
 
-    await SlaService(db).override_due_at(ticket, body.due_at)
+    old_priority = ticket.priority
+    sla_svc = SlaService(db)
+    await sla_svc.override_due_at(ticket, body.due_at)
 
-    db.add(
+    new_priority = await sla_svc.infer_priority_for_deadline(body.due_at)
+
+    events: list[TicketEvent] = [
         TicketEvent(
             ticket_id=ticket_id,
             event_type="sla_overridden",
@@ -218,8 +243,153 @@ async def override_sla(
                 **({"reason": body.reason} if body.reason else {}),
             },
         )
+    ]
+
+    if new_priority and new_priority != old_priority:
+        ticket.priority = new_priority
+        events.append(
+            TicketEvent(
+                ticket_id=ticket_id,
+                event_type="priority_changed",
+                payload={
+                    "old_priority": old_priority,
+                    "new_priority": new_priority,
+                    "changed_by": admin.name,
+                    "reason": "SLA override",
+                },
+            )
+        )
+
+    for event in events:
+        db.add(event)
+    await db.commit()
+
+    if ticket.source and ticket.source.webhook_url:
+        background_tasks.add_task(
+            dispatch_webhook,
+            webhook_url=ticket.source.webhook_url,
+            webhook_secret=ticket.source.webhook_secret,
+            event_type="deadline_updated",
+            payload={
+                "external_id": ticket.external_id,
+                "sla_due_at": body.due_at.isoformat(),
+                "changed_by": admin.name,
+                **({"reason": body.reason} if body.reason else {}),
+            },
+        )
+
+    ticket = await svc.get_ticket(ticket_id)
+    return _detail(ticket)
+
+
+_VALID_PRIORITIES = {"low", "medium", "high", "urgent"}
+
+
+@router.patch("/{ticket_id}/priority", response_model=TicketDetailResponse)
+async def update_ticket_priority(
+    ticket_id: int,
+    body: UpdatePriorityRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> TicketDetailResponse:
+    """Override the priority of a ticket."""
+    if body.priority not in _VALID_PRIORITIES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid priority. Must be one of: {', '.join(sorted(_VALID_PRIORITIES))}",
+        )
+
+    from app.models.ticket_event import TicketEvent
+
+    svc = TicketService(db)
+    ticket = await svc.get_ticket(ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    old_priority = ticket.priority
+    ticket.priority = body.priority
+    db.add(
+        TicketEvent(
+            ticket_id=ticket_id,
+            event_type="priority_changed",
+            payload={
+                "old_priority": old_priority,
+                "new_priority": body.priority,
+                "changed_by": current_user.name,
+            },
+        )
     )
     await db.commit()
 
     ticket = await svc.get_ticket(ticket_id)
     return _detail(ticket)
+
+
+@router.post("/bulk-update", response_model=list[TicketResponse])
+async def bulk_update_tickets(
+    body: BulkUpdateTicketsRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> list[TicketResponse]:
+    """Update multiple tickets at once."""
+    if body.priority and body.priority not in _VALID_PRIORITIES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid priority: {body.priority}",
+        )
+
+    svc = TicketService(db)
+    updated_tickets = await svc.bulk_update(
+        ticket_ids=body.ticket_ids,
+        status=body.status,
+        priority=body.priority,
+        assigned_to_user_id=body.assigned_to_user_id,
+        changed_by_user_name=current_user.name,
+        comment=body.comment,
+    )
+
+    # Dispatch webhooks for each updated ticket
+    for ticket in updated_tickets:
+        if ticket.source and ticket.source.webhook_url:
+            # Determine which webhooks to send based on what changed
+            if body.status:
+                background_tasks.add_task(
+                    dispatch_webhook,
+                    webhook_url=ticket.source.webhook_url,
+                    webhook_secret=ticket.source.webhook_secret,
+                    event_type="status_updated",
+                    payload={
+                        "external_id": ticket.external_id,
+                        "status": body.status,
+                        "changed_by": current_user.name,
+                        **({"comment": body.comment} if body.comment else {}),
+                    },
+                )
+            if body.priority:
+                background_tasks.add_task(
+                    dispatch_webhook,
+                    webhook_url=ticket.source.webhook_url,
+                    webhook_secret=ticket.source.webhook_secret,
+                    event_type="priority_updated",
+                    payload={
+                        "external_id": ticket.external_id,
+                        "priority": body.priority,
+                        "changed_by": current_user.name,
+                    },
+                )
+            if body.assigned_to_user_id is not None:
+                agent_name = ticket.assignee.name if ticket.assignee else "Unassigned"
+                background_tasks.add_task(
+                    dispatch_webhook,
+                    webhook_url=ticket.source.webhook_url,
+                    webhook_secret=ticket.source.webhook_secret,
+                    event_type="assigned",
+                    payload={
+                        "external_id": ticket.external_id,
+                        "assigned_to_name": agent_name,
+                    },
+                )
+
+    return updated_tickets

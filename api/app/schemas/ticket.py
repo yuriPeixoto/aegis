@@ -83,6 +83,26 @@ class OverrideSlaRequest(BaseModel):
     reason: str | None = None
 
 
+class UpdatePriorityRequest(BaseModel):
+    priority: str
+
+
+class InternalTicketCreate(BaseModel):
+    subject: str
+    description: str
+    type: str  # Bug / Melhoria / Sugestão
+    priority: str
+    meta: dict | None = None
+
+
+class BulkUpdateTicketsRequest(BaseModel):
+    ticket_ids: list[int]
+    status: str | None = None
+    priority: str | None = None
+    assigned_to_user_id: int | None = None
+    comment: str | None = None
+
+
 class TicketDetailResponse(TicketResponse):
     events: list[TicketEventResponse]
 

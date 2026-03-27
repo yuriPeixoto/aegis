@@ -6,6 +6,7 @@ import { DashboardPage } from '../pages/DashboardPage'
 import { SettingsPage } from '../pages/SettingsPage'
 import { ChangePasswordPage } from '../pages/ChangePasswordPage'
 import { TicketDetailPage } from '../pages/TicketDetailPage'
+import { ShortcutsPage } from '../pages/ShortcutsPage'
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
       {
         path: '/tickets/:id',
         element: <TicketDetailPage />,
+      },
+      {
+        path: '/shortcuts',
+        element: <ShortcutsPage />,
       },
     ],
   },

@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   MonitorCheck,
   BarChart2,
+  Trash2,
 } from 'lucide-react'
 import {
   useDashboardStats,
@@ -179,7 +180,7 @@ function OverviewTab() {
       </div>
 
       {/* KPI Row 2 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <KpiCard
           label={t('dashboard.kpi.openedToday')}
           value={stats.opened_today}
@@ -217,6 +218,14 @@ function OverviewTab() {
           icon={<Timer className="w-5 h-5 text-slate-400" />}
           iconBg="bg-slate-500/10"
           sub={t('dashboard.kpi.mttrPeriod')}
+        />
+        <KpiCard
+          label={t('dashboard.kpi.autoClosed')}
+          value={stats.auto_closed_30d}
+          valueClass="text-slate-400"
+          icon={<Trash2 className="w-5 h-5 text-slate-500" />}
+          iconBg="bg-slate-500/10"
+          sub={t('dashboard.kpi.autoClosedHint')}
         />
       </div>
 
