@@ -17,6 +17,8 @@
     "shortcutPrev": "Previous ticket",
     "shortcutOpen": "Open selected ticket",
     "shortcutRefresh": "Refresh list",
+    "shortcutReply": "Focus reply field",
+    "shortcutsTicketDetail": "Ticket Details",
     "shortcutAssign": "Assign",
     "shortcutBulkStatus": "Change status (bulk)",
     "shortcutBulkPriority": "Change priority (bulk)"
@@ -227,7 +229,8 @@
       "users": "Users",
       "sources": "Clients",
       "sla": "SLA",
-      "autoClose": "Auto-close"
+      "autoClose": "Auto-close",
+      "cannedResponses": "Canned Responses"
     },
     "users": {
       "title": "Users",
@@ -301,6 +304,31 @@
       "apiKeyWarning": "Store these keys securely. They will only be shown this once.",
       "webhookSecretLabel": "Webhook Secret",
       "apiKeyConfirm": "I have saved the keys"
+    },
+    "cannedResponses": {
+      "title": "Canned Responses",
+      "subtitle": "Message templates to speed up support.",
+      "new": "New response",
+      "empty": "No canned responses found.",
+      "colTitle": "Title",
+      "colActions": "Automatic Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "modal": {
+        "title": "Add Response",
+        "editTitle": "Edit Response",
+        "fieldTitle": "Response Title",
+        "titlePlaceholder": "e.g. Greeting",
+        "fieldBody": "Message Content",
+        "bodyPlaceholder": "Hi {{ticket.requester.name}}...",
+        "variables": "Available variables:",
+        "fieldStatus": "Change Status to",
+        "fieldPriority": "Change Priority to",
+        "fieldAssignee": "Assign to",
+        "noAction": "Do not change",
+        "save": "Save",
+        "cancel": "Cancel"
+      }
     },
     "sla": {
       "title": "SLA",
