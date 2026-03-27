@@ -11,6 +11,7 @@ import {
   useTicket,
   useUpdateTicketStatus,
   useAssignTicket,
+  useUpdatePriority,
   useUsers,
   useMessages,
   useSendMessage,
@@ -214,6 +215,7 @@ export function TicketDetailPage() {
   const { data: ticket, isLoading } = useTicket(ticketId)
   const updateStatus = useUpdateTicketStatus(ticketId)
   const assignTicket = useAssignTicket(ticketId)
+  const updatePriority = useUpdatePriority(ticketId)
   const overrideSla = useOverrideSla(ticketId)
   const { data: users = [] } = useUsers()
   const { data: messages = [] } = useMessages(ticketId)
@@ -431,6 +433,22 @@ export function TicketDetailPage() {
                     {u.name}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            {/* Priority */}
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="shrink-0">Prioridade:</span>
+              <select
+                disabled={updatePriority.isPending}
+                value={ticket.priority ?? ''}
+                onChange={(e) => updatePriority.mutate({ priority: e.target.value })}
+                className="flex-1 bg-brand-surface border border-white/15 rounded px-2 py-0.5 text-xs text-slate-200 cursor-pointer focus:outline-none focus:border-brand-purple disabled:opacity-50"
+              >
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+                <option value="urgent">Urgente</option>
               </select>
             </div>
 

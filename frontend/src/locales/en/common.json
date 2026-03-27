@@ -2,7 +2,24 @@
   "nav": {
     "inbox": "Inbox",
     "dashboard": "Dashboard",
-    "settings": "Settings"
+    "settings": "Settings",
+    "reportIssue": "Report an Issue",
+    "shortcuts": "Shortcuts",
+    "shortcutsTitle": "Keyboard Shortcuts",
+    "shortcutsGeneral": "General",
+    "shortcutsInbox": "Inbox",
+    "shortcutInbox": "Go to Inbox",
+    "shortcutReport": "Open 'Report Issue'",
+    "shortcutClose": "Close modals/selections",
+    "shortcutDashboard": "Go to Dashboard",
+    "shortcutSettings": "Go to Settings",
+    "shortcutNext": "Next ticket",
+    "shortcutPrev": "Previous ticket",
+    "shortcutOpen": "Open selected ticket",
+    "shortcutRefresh": "Refresh list",
+    "shortcutAssign": "Assign",
+    "shortcutBulkStatus": "Change status (bulk)",
+    "shortcutBulkPriority": "Change priority (bulk)"
   },
   "topbar": {
     "signOut": "Sign out"
@@ -28,8 +45,20 @@
     "clearFilters": "Clear",
     "ticketCount_one": "{{count}} ticket",
     "ticketCount_other": "{{count}} tickets",
+    "bulk": {
+      "selected": "{{count}} selected",
+      "assign": "Assign",
+      "unassign": "Unassign",
+      "status": "Change Status",
+      "priority": "Priority",
+      "shortcutAssign": "Assign (A)",
+      "shortcutStatus": "Change Status (S)",
+      "shortcutPriority": "Change Priority (P)"
+    },
     "empty": "No tickets found",
     "loading": "Loading...",
+    "cancel": "Cancel",
+    "send": "Send",
     "queue": {
       "mine": "My queue",
       "unassigned": "Unassigned",
@@ -60,6 +89,19 @@
       "uploadAttachment": "Upload file",
       "noAttachments": "No attachments.",
       "download": "Download"
+    },
+    "internalTicket": {
+      "title": "Report an Issue / Suggestion",
+      "error": "An error occurred while sending your feedback.",
+      "subject": "Subject",
+      "subjectPlaceholder": "Summary of the issue or improvement",
+      "type": "Type",
+      "typeBug": "Bug",
+      "typeImprovement": "Improvement",
+      "typeSuggestion": "Suggestion",
+      "priority": "Priority",
+      "description": "Description",
+      "descriptionPlaceholder": "Explain in detail what happened or what could be improved..."
     }
   },
   "sla": {
@@ -82,6 +124,7 @@
     "OPEN": "Open",
     "IN_PROGRESS": "In Progress",
     "WAITING_CLIENT": "Awaiting Client",
+    "PENDING_CLOSURE": "Pending Closure",
     "WAITING_DEV": "Awaiting Dev",
     "IN_DEV": "In Development",
     "WAITING_TEST": "Awaiting Test",
@@ -130,7 +173,9 @@
       "slaCompliance": "SLA Compliance",
       "slaTarget": "Target: 80%",
       "mttr": "Avg. Resolution",
-      "mttrPeriod": "Last 30 days"
+      "mttrPeriod": "Last 30 days",
+      "autoClosed": "Auto-closed",
+      "autoClosedHint": "Inactivity (30d)"
     },
     "agents": {
       "title": "Agent Workload",
@@ -181,7 +226,8 @@
       "title": "Settings",
       "users": "Users",
       "sources": "Clients",
-      "sla": "SLA"
+      "sla": "SLA",
+      "autoClose": "Auto-close"
     },
     "users": {
       "title": "Users",
@@ -292,6 +338,22 @@
         "fieldDescription": "Description",
         "create": "Add",
         "creating": "Adding..."
+      },
+      "autoClose": {
+        "title": "Automatic Closure",
+        "subtitle": "Close inactive tickets without interaction.",
+        "enabled": "Enable auto-close",
+        "waitDays": "Days to close (total)",
+        "waitDaysHint": "Total days without response before closing the ticket.",
+        "warningDays": "Days for warning",
+        "warningDaysHint": "How many days before closure to send a reminder.",
+        "warningMessage": "Warning message",
+        "warningMessageHint": "Sent when the warning threshold is reached.",
+        "closeMessage": "Closure message",
+        "closeMessageHint": "Sent when the ticket is automatically closed.",
+        "save": "Save settings",
+        "saving": "Saving...",
+        "saved": "Settings saved ✓"
       }
     }
   }

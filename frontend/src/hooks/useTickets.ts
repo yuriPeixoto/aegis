@@ -146,6 +146,41 @@ export function useOverrideSla(ticketId: number) {
   })
 }
 
+export function useUpdatePriority(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, { priority: string }>({
+    mutationFn: async (body) => {
+      const { data } = await api.patch<TicketDetail>(`/tickets/${ticketId}/priority`, body)
+      return data
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated)
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
+export interface BulkUpdatePayload {
+  ticket_ids: number[]
+  status?: string
+  priority?: string
+  assigned_to_user_id?: number | null
+  comment?: string
+}
+
+export function useBulkUpdateTickets() {
+  const queryClient = useQueryClient()
+  return useMutation<any, Error, BulkUpdatePayload>({
+    mutationFn: async (payload) => {
+      const { data } = await api.post('/tickets/bulk-update', payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
 export function useUploadAttachment(ticketId: number) {
   const queryClient = useQueryClient()
   return useMutation<TicketAttachment, Error, File>({
@@ -173,5 +208,26 @@ export function useSources() {
       return Array.isArray(data) ? data : []
     },
     staleTime: 60_000,
+  })
+}
+
+export interface InternalTicketPayload {
+  subject: string
+  description: string
+  type: string
+  priority: string
+  meta?: Record<string, any>
+}
+
+export function useCreateInternalTicket() {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, InternalTicketPayload>({
+    mutationFn: async (payload) => {
+      const { data } = await api.post<TicketDetail>('/tickets/internal', payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
   })
 }

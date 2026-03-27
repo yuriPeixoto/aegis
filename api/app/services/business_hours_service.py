@@ -28,6 +28,80 @@ class BusinessHoursService:
         local_end = self._add_hours_local(local_start, hours, config, holidays)
         return local_end.astimezone(ZoneInfo("UTC"))
 
+    def remaining_business_hours(
+        self,
+        from_dt: datetime,  # any tz-aware datetime (typically UTC)
+        to_dt: datetime,
+        config: BusinessHoursConfig,
+        holidays: list[date] | None = None,
+    ) -> float:
+        """Return how many business hours remain between from_dt and to_dt."""
+        if to_dt <= from_dt:
+            return 0.0
+        tz = ZoneInfo(config.timezone)
+        local_from = from_dt.astimezone(tz)
+        local_to = to_dt.astimezone(tz)
+        seconds = self._count_business_seconds(local_from, local_to, config, holidays)
+        return round(seconds / 3600, 1)
+
+    def _count_business_seconds(
+        self,
+        from_dt: datetime,
+        to_dt: datetime,
+        config: BusinessHoursConfig,
+        holidays: list[date] | None = None,
+    ) -> float:
+        work_days = set(config.work_days)
+        holiday_set = set(holidays or [])
+        current = self._snap_to_work(from_dt, work_days, config, holiday_set)
+        total = 0.0
+
+        while current < to_dt:
+            if current.isoweekday() not in work_days or current.date() in holiday_set or current.time() >= config.work_end:
+                current = self._next_work_day(current, work_days, config, holiday_set)
+                continue
+
+            if config.lunch_start and config.lunch_end and config.lunch_start <= current.time() < config.lunch_end:
+                current = current.replace(
+                    hour=config.lunch_end.hour,
+                    minute=config.lunch_end.minute,
+                    second=0,
+                    microsecond=0,
+                )
+                continue
+
+            if config.lunch_start and config.lunch_end and current.time() < config.lunch_start:
+                boundary = current.replace(
+                    hour=config.lunch_start.hour,
+                    minute=config.lunch_start.minute,
+                    second=0,
+                    microsecond=0,
+                )
+            else:
+                boundary = current.replace(
+                    hour=config.work_end.hour,
+                    minute=config.work_end.minute,
+                    second=0,
+                    microsecond=0,
+                )
+
+            segment_end = min(boundary, to_dt)
+            total += (segment_end - current).total_seconds()
+            current = segment_end
+
+            if current == boundary and boundary.time() == (config.lunch_start if config.lunch_start else config.work_end):
+                if config.lunch_start and current.time() == config.lunch_start:
+                    current = current.replace(
+                        hour=config.lunch_end.hour,
+                        minute=config.lunch_end.minute,
+                        second=0,
+                        microsecond=0,
+                    )
+                else:
+                    current = self._next_work_day(current, work_days, config, holiday_set)
+
+        return total
+
     # ── private helpers ───────────────────────────────────────────────────────
 
     def _add_hours_local(

@@ -6,6 +6,9 @@ import { SlaBadge } from './SlaBadge'
 
 interface TicketRowProps {
   ticket: Ticket
+  isSelected?: boolean
+  isBulkSelected?: boolean
+  onToggleBulk?: (id: number, multi: boolean) => void
   onClick: () => void
 }
 
@@ -20,17 +23,60 @@ function formatDate(iso: string | null) {
   })
 }
 
-export function TicketRow({ ticket, onClick }: TicketRowProps) {
+export function TicketRow({
+  ticket,
+  isSelected,
+  isBulkSelected,
+  onToggleBulk,
+  onClick,
+}: TicketRowProps) {
   const lastViewed = localStorage.getItem(`ticket-viewed-${ticket.id}`)
   const hasUnread =
     ticket.last_inbound_at !== null &&
     (!lastViewed || ticket.last_inbound_at > lastViewed)
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left px-4 py-3.5 border-b border-brand-border/50 transition-all duration-150 hover:bg-white/5 group border-l-2 border-l-transparent hover:border-l-brand-purple/40"
+    <div
+      className={`group flex items-stretch border-b border-brand-border/50 transition-all duration-150 border-l-2
+        ${isSelected
+          ? 'bg-white/10 border-l-brand-purple'
+          : 'hover:bg-white/5 border-l-transparent hover:border-l-brand-purple/40'}
+        ${isBulkSelected ? 'bg-brand-purple/5' : ''}`}
     >
+      {/* Selection Checkbox Area */}
+      {onToggleBulk && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleBulk(ticket.id, e.shiftKey)
+          }}
+          className="w-10 flex items-center justify-center cursor-pointer hover:bg-white/5 shrink-0"
+        >
+          <div
+            className={`w-4 h-4 rounded border transition-colors flex items-center justify-center
+              ${isBulkSelected
+                ? 'bg-brand-purple border-brand-purple text-white'
+                : 'border-white/20 group-hover:border-white/40 bg-transparent'}`}
+          >
+            {isBulkSelected && (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="4"
+                className="w-2.5 h-2.5"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={onClick}
+        className="flex-1 text-left px-4 py-3.5 outline-none focus:bg-white/5"
+      >
       {/* Top row: source + type + date */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
@@ -73,6 +119,7 @@ export function TicketRow({ ticket, onClick }: TicketRowProps) {
           <span className="text-xs font-mono text-slate-400">#{ticket.external_id}</span>
         </div>
       </div>
-    </button>
+      </button>
+    </div>
   )
 }

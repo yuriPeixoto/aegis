@@ -8,6 +8,9 @@ const PAGE_SIZE = 20
 
 interface TicketListProps {
   filters: TicketFilters
+  selectedIndex?: number
+  selectedIds?: number[]
+  onToggleBulk?: (id: number, multi: boolean) => void
   onSelect: (id: number) => void
   onOffsetChange: (offset: number) => void
 }
@@ -28,9 +31,16 @@ function Skeleton() {
   )
 }
 
-export function TicketList({ filters, onSelect, onOffsetChange }: TicketListProps) {
+export function TicketList({
+  filters,
+  selectedIndex,
+  selectedIds = [],
+  onToggleBulk,
+  onSelect,
+  onOffsetChange,
+}: TicketListProps) {
   const { t } = useTranslation()
-  const { data, isLoading } = useTickets({ ...filters, limit: PAGE_SIZE })
+  const { data, isLoading } = useTickets(filters)
   const offset = filters.offset ?? 0
   const total = data?.total ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1
@@ -64,10 +74,13 @@ export function TicketList({ filters, onSelect, onOffsetChange }: TicketListProp
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {data.items.map((ticket) => (
+        {data.items.map((ticket, index) => (
           <TicketRow
             key={ticket.id}
             ticket={ticket}
+            isSelected={index === selectedIndex}
+            isBulkSelected={selectedIds.includes(ticket.id)}
+            onToggleBulk={onToggleBulk}
             onClick={() => onSelect(ticket.id)}
           />
         ))}

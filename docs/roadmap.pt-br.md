@@ -47,18 +47,19 @@
 ## Fase 3 — Central de Suporte Completa
 > Objetivo: Aegis se torna uma central de suporte completa — à altura do Zendesk/Freshdesk, adaptada a este ecossistema.
 
-| # | Funcionalidade | Descrição | Prioridade |
-|---|----------------|-----------|------------|
-| 1 | Fechamento automático | Fechar automaticamente chamados inativos além de um prazo configurável | Alta |
-| 2 | Operações em lote | Atribuir, fechar e alterar prioridade em massa direto da inbox | Alta |
-| 3 | Respostas prontas | Templates de resposta pré-escritos para problemas recorrentes | Alta |
-| 4 | Etiquetas de chamado | Rótulos livres para classificação e filtragem | Média |
-| 5 | Notas internas na conversa | Notas visíveis apenas para o time, intercaladas na visualização da conversa | Média |
-| 6 | Mesclagem de chamados | Mesclar chamados duplicados do mesmo cliente | Média |
-| 7 | Regras de escalonamento | Escalonar automaticamente chamados vencidos ou de alta prioridade para agente sênior | Média |
-| 8 | Visões customizadas / filtros salvos | Salvar um conjunto de filtros como uma visão nomeada (ex.: "Urgentes sem atribuição") | Média |
-| 9 | CSAT (pesquisa de satisfação) | Breve pedido de feedback enviado ao cliente ao fechar o chamado | Baixa |
-| 10 | Portal do cliente | Área de autoatendimento para clientes acompanharem seus próprios chamados | Baixa |
+| # | Funcionalidade | Descrição | Status |
+|---|----------------|-----------|--------|
+| 1 | Relatar um problema | Opção interna de gerar um chamado de dentro do Aegis | ✅ |
+| 2 | Fechamento automático | Fechar automaticamente chamados inativos além de um prazo configurável | ✅ |
+| 3 | Operações em lote | Atribuir, fechar e alterar prioridade em massa direto da inbox | ✅ |
+| 4 | Respostas prontas | Templates de resposta pré-escritos para problemas recorrentes | Alta |
+| 5 | Etiquetas de chamado | Rótulos livres para classificação e filtragem | Média |
+| 6 | Notas internas na conversa | Notas visíveis apenas para o time, intercaladas na visualização da conversa | Média |
+| 7 | Mesclagem de chamados | Mesclar chamados duplicados do mesmo cliente | Média |
+| 8 | Regras de escalonamento | Escalonar automaticamente chamados vencidos ou de alta prioridade para agente sênior | Média |
+| 9 | Visões customizadas / filtros salvos | Salvar um conjunto de filtros como uma visão nomeada (ex.: "Urgentes sem atribuição") | Média |
+| 10 | CSAT (pesquisa de satisfação) | Breve pedido de feedback enviado ao cliente ao fechar o chamado | Baixa |
+| 11 | Portal do cliente | Área de autoatendimento para clientes acompanharem seus próprios chamados | Baixa |
 
 ---
 
@@ -99,3 +100,18 @@
 | 3 | Notificação por e-mail: SLA vencido | Alertar agente e gestor quando o prazo de SLA for ultrapassado |
 | 4 | Digest por e-mail | Resumo diário/semanal de chamados abertos, vencidos e resolvidos para gestores |
 | 5 | E-mail de entrada | Receber respostas do cliente por e-mail e encadeá-las de volta na conversa do chamado |
+
+---
+
+## Fase 7 — Suporte Interno (Aegis-on-Aegis) ✅
+> Objetivo: transformar o Aegis em sua própria ferramenta de melhoria e feedback.
+
+| # | Funcionalidade | Descrição | Status |
+|---|----------------|-----------|--------|
+| 1 | Documentar proposta | Analisar ferramentas e definir estrutura de tickets internos | ✅ |
+| 2 | Source 'Aegis' | Criar e garantir a fonte de dados interna no banco | ✅ |
+| 3 | Endpoint de criação | API para usuários autenticados criarem chamados sem chave externa | ✅ |
+| 4 | UI de criação | Modal e botão flutuante para feedback rápido dentro da ferramenta | ✅ |
+| 5 | Notificação interna | Notificar admins sobre novos feedbacks de agentes | ⏳ |
+
+---
