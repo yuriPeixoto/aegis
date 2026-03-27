@@ -6,6 +6,7 @@ import './lib/i18n'
 import './index.css'
 import { router } from './router'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { Toaster } from 'sonner'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <RouterProvider router={router} />
+        <Toaster position="top-right" richColors />
       </LanguageProvider>
     </QueryClientProvider>
   </StrictMode>,
