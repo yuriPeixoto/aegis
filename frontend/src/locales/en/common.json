@@ -90,7 +90,14 @@
       "attachFile": "Attach",
       "uploadAttachment": "Upload file",
       "noAttachments": "No attachments.",
-      "download": "Download"
+      "download": "Download",
+      "tags": {
+        "add": "Add Tag",
+        "no_tags": "No tags available",
+        "manage": "Manage tags"
+      },
+      "addTag": "Add Tag",
+      "noTagsFound": "No tags available"
     },
     "internalTicket": {
       "title": "Report an Issue / Suggestion",
@@ -228,8 +235,10 @@
       "title": "Settings",
       "users": "Users",
       "sources": "Clients",
+      "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
+      "tags": "Tags",
       "cannedResponses": "Canned Responses"
     },
     "users": {
@@ -383,6 +392,28 @@
         "saving": "Saving...",
         "saved": "Settings saved ✓"
       }
+    },
+    "tags": {
+      "title": "Tags",
+      "subtitle": "Manage labels for ticket classification.",
+      "new": "New Tag",
+      "empty": "No tags registered yet.",
+      "colName": "Name",
+      "colColor": "Color",
+      "colDescription": "Description",
+      "modalTitle": "Add Tag",
+      "editTitle": "Edit Tag",
+      "fieldName": "Tag name",
+      "fieldColor": "Color (Hex)",
+      "fieldDescription": "Description (optional)",
+      "create": "Add",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "Tag updated successfully!",
+      "created": "Tag created successfully!",
+      "deleted": "Tag deleted.",
+      "error": "Error saving tag.",
+      "errorDelete": "Error deleting tag."
     }
   }
 }

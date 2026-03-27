@@ -24,6 +24,13 @@ export interface Assignee {
   name: string
 }
 
+export interface Tag {
+  id: number
+  name: string
+  color: string
+  description: string | null
+}
+
 export interface Ticket {
   id: number
   source_id: number
@@ -45,6 +52,7 @@ export interface Ticket {
   sla_status: 'on_time' | 'at_risk' | 'overdue' | 'met' | 'paused' | null
   last_inbound_at: string | null
   assigned_to: Assignee | null
+  tags: Tag[]
 }
 
 export interface TicketDetail extends Ticket {
@@ -105,6 +113,7 @@ export interface TicketFilters {
   search?: string
   assigned_to_user_id?: number
   unassigned?: boolean
+  tag_ids?: number[]
   limit?: number
   offset?: number
 }
