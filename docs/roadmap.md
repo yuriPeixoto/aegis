@@ -47,18 +47,19 @@
 ## Phase 3 — Support Center Completeness
 > Goal: Aegis becomes a full-featured support center — on par with Zendesk/Freshdesk, tailored to this ecosystem.
 
-| # | Feature | Description | Priority |
-|---|---------|-------------|----------|
-| 1 | Auto-close | Automatically close tickets inactive beyond configurable threshold | High |
-| 2 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | High |
-| 3 | Canned responses | Pre-written reply templates for common issues | High |
-| 4 | Ticket tags | Free-form labels for classification and filtering | Medium |
-| 5 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
-| 6 | Ticket merging | Merge duplicate tickets from the same client | Medium |
-| 7 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
-| 8 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | Medium |
-| 9 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close | Low |
-| 10 | Client portal | Self-service view for clients to track their own tickets | Low |
+| # | Feature | Description | Status |
+|---|---------|-------------|--------|
+| 1 | Report an Issue | Internal option to generate a ticket from within Aegis | ✅ |
+| 2 | Auto-close | Automatically close tickets inactive beyond configurable threshold | ✅ |
+| 3 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | ✅ |
+| 4 | Canned responses | Pre-written reply templates for common issues | High |
+| 5 | Ticket tags | Free-form labels for classification and filtering | Medium |
+| 6 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
+| 7 | Ticket merging | Merge duplicate tickets from the same client | Medium |
+| 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
+| 9 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | Medium |
+| 10 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close | Low |
+| 11 | Client portal | Self-service view for clients to track their own tickets | Low |
 
 ---
 

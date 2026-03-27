@@ -67,6 +67,7 @@ export interface DashboardStats {
   resolved_today: number
   sla_compliance_pct: number | null
   mttr_hours: number | null
+  auto_closed_30d: number
   by_priority: { priority: string; count: number }[]
   by_client: ClientStat[]
   by_agent: AgentStat[]
