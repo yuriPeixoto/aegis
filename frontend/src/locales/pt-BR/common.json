@@ -17,6 +17,8 @@
     "shortcutPrev": "Ticket anterior",
     "shortcutOpen": "Abrir ticket selecionado",
     "shortcutRefresh": "Atualizar lista",
+    "shortcutReply": "Focar campo de resposta",
+    "shortcutsTicketDetail": "Detalhes do Ticket",
     "shortcutAssign": "Atribuir",
     "shortcutBulkStatus": "Mudar status (em lote)",
     "shortcutBulkPriority": "Mudar prioridade (em lote)"
@@ -232,7 +234,8 @@
       "users": "Usuários",
       "sources": "Clientes",
       "sla": "SLA",
-      "autoClose": "Auto-close"
+      "autoClose": "Auto-close",
+      "cannedResponses": "Respostas Prontas"
     },
     "users": {
       "title": "Usuários",
@@ -306,6 +309,31 @@
       "apiKeyWarning": "Guarde estas chaves com segurança. Elas só serão exibidas esta vez.",
       "webhookSecretLabel": "Secret do Webhook",
       "apiKeyConfirm": "Eu salvei as chaves"
+    },
+    "cannedResponses": {
+      "title": "Respostas Prontas",
+      "subtitle": "Templates de mensagens para agilizar o atendimento.",
+      "new": "Nova resposta",
+      "empty": "Nenhuma resposta pronta cadastrada.",
+      "colTitle": "Título",
+      "colActions": "Ações Automáticas",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "modal": {
+        "title": "Adicionar Resposta",
+        "editTitle": "Editar Resposta",
+        "fieldTitle": "Título da Resposta",
+        "titlePlaceholder": "Ex: Saudação Inicial",
+        "fieldBody": "Conteúdo da Mensagem",
+        "bodyPlaceholder": "Olá {{ticket.requester.name}}...",
+        "variables": "Variáveis disponíveis:",
+        "fieldStatus": "Alterar Status para",
+        "fieldPriority": "Alterar Prioridade para",
+        "fieldAssignee": "Atribuir para",
+        "noAction": "Não alterar",
+        "save": "Salvar",
+        "cancel": "Cancelar"
+      }
     },
     "sla": {
       "title": "SLA",

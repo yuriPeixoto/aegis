@@ -225,7 +225,9 @@ class TicketService:
                         },
                     )
                 )
-                await SlaService(self._db).handle_status_change(ticket, old_status, status)
+                await SlaService(self._db).on_status_changed(
+                    ticket, old_status, status, datetime.now(UTC)
+                )
                 changed = True
 
             if priority and ticket.priority != priority:

@@ -28,6 +28,13 @@ export function ShortcutsPage() {
       ],
     },
     {
+      title: t('nav.shortcutsTicketDetail'),
+      shortcuts: [
+        { keys: ['R'], description: t('nav.shortcutReply') },
+        { keys: ['Ctrl', 'Enter'], description: t('inbox.detail.send') },
+      ],
+    },
+    {
       title: t('inbox.bulk.selected', { count: '' }).trim(),
       shortcuts: [
         { keys: ['A'], description: t('nav.shortcutAssign') },

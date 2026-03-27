@@ -18,6 +18,9 @@ import {
   useOverrideSla,
 } from '../hooks/useTickets'
 import { useMe } from '../hooks/useAuth'
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
+import { useCannedResponses, useApplyCannedResponse } from '../hooks/useCannedResponses'
+import { toast } from 'sonner'
 import { markTicketAsViewed } from '../hooks/useInboundNotifications'
 import { StatusBadge } from '../components/inbox/StatusBadge'
 import { PriorityBadge } from '../components/inbox/PriorityBadge'
@@ -220,6 +223,8 @@ export function TicketDetailPage() {
   const { data: users = [] } = useUsers()
   const { data: messages = [] } = useMessages(ticketId)
   const { mutate: sendMessage, isPending: sendPending } = useSendMessage(ticketId)
+  const { data: canned = [] } = useCannedResponses()
+  const applyCanned = useApplyCannedResponse()
 
   const [replyBody, setReplyBody] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
@@ -229,6 +234,11 @@ export function TicketDetailPage() {
   const [showSlaForm, setShowSlaForm] = useState(false)
   const [slaOverrideDueAt, setSlaOverrideDueAt] = useState('')
   const [slaOverrideReason, setSlaOverrideReason] = useState('')
+  const replyRef = useRef<HTMLTextAreaElement>(null)
+
+  useKeyboardShortcut('r', () => {
+    replyRef.current?.focus()
+  }, { enabled: !!ticket })
 
   // Mark ticket as viewed so the unread dot clears and notifications stop for this ticket
   useEffect(() => {
@@ -338,12 +348,36 @@ export function TicketDetailPage() {
           </div>
 
           {/* Reply input — sticky at bottom */}
-          <form
-            onSubmit={handleSend}
-            className="shrink-0 px-6 py-4 border-t border-brand-border/50 bg-brand-dark"
-          >
-            <div className="flex gap-3 items-end">
+          <div className="shrink-0 px-6 py-4 border-t border-brand-border/50 bg-brand-dark space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                {canned.map((res) => (
+                  <button
+                    key={res.id}
+                    type="button"
+                    disabled={applyCanned.isPending}
+                    onClick={() => {
+                      toast.promise(applyCanned.mutateAsync({ ticket_id: ticketId, canned_response_id: res.id }), {
+                        loading: 'Aplicando resposta...',
+                        success: 'Resposta aplicada com sucesso!',
+                        error: 'Erro ao aplicar resposta.',
+                      })
+                    }}
+                    className="shrink-0 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-[10px] font-medium text-slate-400 hover:text-brand-purple hover:border-brand-purple/40 hover:bg-brand-purple/5 transition-all whitespace-nowrap disabled:opacity-50"
+                  >
+                    {res.title}
+                  </button>
+                ))}
+                {canned.length === 0 && (
+                  <span className="text-[10px] text-slate-600 italic">Nenhuma resposta pronta configurada</span>
+                )}
+              </div>
+            </div>
+
+            <form onSubmit={handleSend}>
+              <div className="flex gap-3 items-end">
               <textarea
+                ref={replyRef}
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -390,7 +424,8 @@ export function TicketDetailPage() {
               </div>
             )}
             <p className="text-[10px] text-slate-600 mt-1.5">{t('inbox.detail.replyHint')}</p>
-          </form>
+            </form>
+          </div>
         </div>
 
         {/* Right: metadata + notes + history */}

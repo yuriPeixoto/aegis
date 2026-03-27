@@ -1,4 +1,5 @@
 from app.models.business_hours import BusinessHoursConfig
+from app.models.canned_response import CannedResponse
 from app.models.holiday import SlaHoliday
 from app.models.sla_policy import SlaPolicy
 from app.models.source import Source
@@ -11,6 +12,7 @@ from app.models.user import User
 
 __all__ = [
     "BusinessHoursConfig",
+    "CannedResponse",
     "SlaHoliday",
     "SlaPolicy",
     "Source",

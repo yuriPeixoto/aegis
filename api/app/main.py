@@ -7,7 +7,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.routers import attachments, auth, dashboard, ingest, messages, notes, sources, tickets, users
+from app.routers import (
+    attachments,
+    auth,
+    canned_responses,
+    dashboard,
+    ingest,
+    messages,
+    notes,
+    sources,
+    tickets,
+    users,
+)
 from app.routers import settings as settings_router
 
 logging.basicConfig(
@@ -39,6 +50,7 @@ app.include_router(tickets.router)
 app.include_router(users.router)
 app.include_router(notes.router)
 app.include_router(messages.router)
+app.include_router(canned_responses.router)
 app.include_router(attachments.router)
 app.include_router(dashboard.router)
 app.include_router(settings_router.router)

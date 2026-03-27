@@ -52,7 +52,7 @@
 | 1 | Report an Issue | Internal option to generate a ticket from within Aegis | ✅ |
 | 2 | Auto-close | Automatically close tickets inactive beyond configurable threshold | ✅ |
 | 3 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | ✅ |
-| 4 | Canned responses | Pre-written reply templates for common issues | High |
+| 4 | Canned responses | Pre-written reply templates for common issues | ✅ |
 | 5 | Ticket tags | Free-form labels for classification and filtering | Medium |
 | 6 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
 | 7 | Ticket merging | Merge duplicate tickets from the same client | Medium |

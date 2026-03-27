@@ -52,7 +52,7 @@
 | 1 | Relatar um problema | Opção interna de gerar um chamado de dentro do Aegis | ✅ |
 | 2 | Fechamento automático | Fechar automaticamente chamados inativos além de um prazo configurável | ✅ |
 | 3 | Operações em lote | Atribuir, fechar e alterar prioridade em massa direto da inbox | ✅ |
-| 4 | Respostas prontas | Templates de resposta pré-escritos para problemas recorrentes | Alta |
+| 4 | Respostas prontas | Templates de resposta pré-escritos para problemas recorrentes | ✅ |
 | 5 | Etiquetas de chamado | Rótulos livres para classificação e filtragem | Média |
 | 6 | Notas internas na conversa | Notas visíveis apenas para o time, intercaladas na visualização da conversa | Média |
 | 7 | Mesclagem de chamados | Mesclar chamados duplicados do mesmo cliente | Média |
