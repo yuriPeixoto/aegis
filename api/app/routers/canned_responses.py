@@ -105,6 +105,7 @@ async def apply_canned_response(
     # 2. Apply actions if present
     if canned.actions:
         actions = canned.actions
+        old_status = ticket.status
         # We use bulk_update logic for simplicity even for a single ticket
         await ticket_svc.bulk_update(
             [ticket.id],
@@ -116,6 +117,21 @@ async def apply_canned_response(
         )
         # Reload ticket to get updated state for webhook
         ticket = await ticket_svc.get_ticket(ticket.id)
+
+        # Dispatch status webhook if it changed
+        new_status = actions.get("status")
+        if new_status and new_status != old_status and ticket.source and ticket.source.webhook_url:
+            background_tasks.add_task(
+                dispatch_webhook,
+                webhook_url=ticket.source.webhook_url,
+                webhook_secret=ticket.source.webhook_secret,
+                event_type="status_changed",
+                payload={
+                    "external_id": ticket.external_id,
+                    "status": new_status,
+                    "changed_by": current_user.name,
+                },
+            )
 
     # 3. Send the message (reply)
     message = await msg_svc.create_outbound(ticket, final_body, current_user.name)

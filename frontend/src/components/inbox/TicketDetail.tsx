@@ -7,6 +7,7 @@ import { TypeBadge } from './TypeBadge'
 import { ConversationPanel } from './ConversationPanel'
 import { NotesPanel } from './NotesPanel'
 import { SlaBadge } from './SlaBadge'
+import TagSelector from './TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open: ['in_progress', 'cancelled'],
@@ -121,6 +122,10 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               {ticket.priority && <PriorityBadge priority={ticket.priority} />}
               <StatusBadge status={ticket.status} />
               <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
+            </div>
+
+            <div className="mb-4 bg-brand-border/10 p-2 rounded-lg border border-white/5">
+              <TagSelector ticketId={ticket.id} currentTags={ticket.tags || []} />
             </div>
 
             {(ALLOWED_TRANSITIONS[ticket.status] ?? []).length > 0 && (

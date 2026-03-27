@@ -1,21 +1,102 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/axios'
-import type { TicketListResponse, TicketDetail, TicketFilters, TicketMessage, TicketNote, TicketAttachment } from '../types/ticket'
+import type {
+  TicketListResponse,
+  TicketDetail,
+  TicketFilters,
+  TicketMessage,
+  TicketNote,
+  TicketAttachment,
+  Tag,
+} from '../types/ticket'
 
 export function useTickets(filters: TicketFilters = {}) {
-  const params = Object.fromEntries(
-    Object.entries(filters).filter(([, v]) => v !== undefined && v !== ''),
-  )
+  // Use URLSearchParams for array support (tag_ids)
+  const queryKey = ['tickets', filters]
 
   return useQuery<TicketListResponse>({
-    queryKey: ['tickets', params],
+    queryKey,
     queryFn: async () => {
-      const { data } = await api.get<TicketListResponse>('/tickets', { params })
+      const params = new URLSearchParams()
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            value.forEach((v) => params.append(key, String(v)))
+          } else {
+            params.append(key, String(value))
+          }
+        }
+      })
+
+      const { data } = await api.get<TicketListResponse>(`/tickets?${params.toString()}`)
       return data
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   })
+}
+
+export function useTags() {
+  return useQuery<Tag[]>({
+    queryKey: ['tags'],
+    queryFn: async () => {
+      const { data } = await api.get<Tag[]>('/tags')
+      return data
+    },
+  })
+}
+
+export function useUpdateTicketTags(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, number[]>({
+    mutationFn: async (tagIds) => {
+      const { data } = await api.put<TicketDetail>(`/tickets/${ticketId}/tags`, {
+        tag_ids: tagIds,
+      })
+      return data
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated)
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
+export function useTagManagement() {
+  const queryClient = useQueryClient()
+
+  const createTag = useMutation<Tag, Error, Omit<Tag, 'id'>>({
+    mutationFn: async (tagData) => {
+      const { data } = await api.post<Tag>('/tags', tagData)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+    },
+  })
+
+  const updateTag = useMutation<Tag, Error, Tag>({
+    mutationFn: async ({ id, ...tagData }) => {
+      const { data } = await api.patch<Tag>(`/tags/${id}`, tagData)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+
+  const deleteTag = useMutation<void, Error, number>({
+    mutationFn: async (id) => {
+      await api.delete(`/tags/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+
+  return { createTag, updateTag, deleteTag }
 }
 
 export function useTicket(id: number | null) {

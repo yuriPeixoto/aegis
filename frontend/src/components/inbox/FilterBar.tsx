@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
 import type { TicketFilters } from '../../types/ticket'
 import { useSources } from '../../hooks/useTickets'
+import { useTags } from '../../hooks/useTags'
 import { FilterSelect } from './FilterSelect'
 
 interface FilterBarProps {
@@ -13,6 +14,7 @@ interface FilterBarProps {
 export function FilterBar({ filters, onChange }: FilterBarProps) {
   const { t } = useTranslation()
   const { data: sources } = useSources()
+  const { tags } = useTags()
   const searchRef = useRef<HTMLInputElement>(null)
 
   const STATUSES = [
@@ -53,7 +55,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
     }
   }
 
-  const hasFilters = filters.source_id || filters.status || filters.active_only || filters.priority || filters.type || filters.search
+  const hasFilters = filters.source_id || filters.status || filters.active_only || filters.priority || filters.type || filters.search || (filters.tag_ids && filters.tag_ids.length > 0)
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -107,6 +109,15 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         onChange={(v) => onChange({ ...filters, type: v || undefined, offset: 0 })}
         placeholder={t('inbox.allTypes')}
         options={TYPES}
+      />
+      <FilterSelect
+        value={filters.tag_ids?.[0]?.toString()}
+        onChange={(v) => onChange({ ...filters, tag_ids: v ? [Number(v)] : undefined, offset: 0 })}
+        placeholder={t('settings.nav.tags')}
+        options={(tags || []).map((t) => ({
+          value: t.id.toString(),
+          label: t.name,
+        }))}
       />
       {hasFilters && (
         <button

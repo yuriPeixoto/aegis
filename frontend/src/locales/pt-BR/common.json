@@ -95,7 +95,14 @@
       "attachFile": "Anexar",
       "uploadAttachment": "Enviar arquivo",
       "noAttachments": "Nenhum anexo.",
-      "download": "Baixar"
+      "download": "Baixar",
+      "tags": {
+        "add": "Adicionar Tag",
+        "no_tags": "Nenhuma tag disponível",
+        "manage": "Gerenciar tags"
+      },
+      "addTag": "Adicionar Tag",
+      "noTagsFound": "Nenhuma tag disponível"
     },
     "internalTicket": {
       "title": "Reportar Problema / Sugestão",
@@ -233,8 +240,10 @@
       "title": "Configurações",
       "users": "Usuários",
       "sources": "Clientes",
+      "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
+      "tags": "Tags",
       "cannedResponses": "Respostas Prontas"
     },
     "users": {
@@ -388,6 +397,28 @@
         "saving": "Salvando...",
         "saved": "Configurações salvas ✓"
       }
+    },
+    "tags": {
+      "title": "Tags",
+      "subtitle": "Gerencie as etiquetas para classificação de tickets.",
+      "new": "Nova Tag",
+      "empty": "Nenhuma tag cadastrada.",
+      "colName": "Nome",
+      "colColor": "Cor",
+      "colDescription": "Descrição",
+      "modalTitle": "Adicionar Tag",
+      "editTitle": "Editar Tag",
+      "fieldName": "Nome da Tag",
+      "fieldColor": "Cor (Hex)",
+      "fieldDescription": "Descrição (opcional)",
+      "create": "Adicionar",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "saved": "Tag atualizada com sucesso!",
+      "created": "Tag criada com sucesso!",
+      "deleted": "Tag excluída.",
+      "error": "Erro ao salvar tag.",
+      "errorDelete": "Erro ao excluir tag."
     }
   }
 }

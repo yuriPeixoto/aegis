@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, computed_field
+
+from .tag import TagResponse
+
 
 _TERMINAL_STATUSES = {"pending_closure", "resolved", "closed", "cancelled"}
 _PAUSED_STATUSES = {"waiting_client"}
@@ -45,6 +49,7 @@ class TicketResponse(BaseModel):
     sla_paused_since: datetime | None = None
     last_inbound_at: datetime | None = None
     assigned_to: AssigneeResponse | None = None
+    tags: list[TagResponse] = []
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -101,6 +106,10 @@ class BulkUpdateTicketsRequest(BaseModel):
     priority: str | None = None
     assigned_to_user_id: int | None = None
     comment: str | None = None
+
+
+class TicketTagsUpdateRequest(BaseModel):
+    tag_ids: list[int]
 
 
 class TicketDetailResponse(TicketResponse):

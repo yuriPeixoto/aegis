@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.source import Source  # noqa: F401 — loaded via selectinload
+from app.models.tag import Tag
 from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent  # active — needed to create status_changed events
 from app.models.ticket_message import TicketMessage
@@ -43,10 +44,19 @@ class TicketService:
         search: str | None = None,
         created_after: datetime | None = None,
         created_before: datetime | None = None,
+        tag_ids: list[int] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Ticket], int]:
         query = select(Ticket).join(Source, Ticket.source_id == Source.id).where(Source.is_active.is_(True))
+
+        if tag_ids:
+            # Filter tickets that have ALL specified tags (AND logic)
+            # Or use ANY? Zendesk tags usually work as "has any of these" or "has all".
+            # Let's start with "has any of these" for simpler filtering unless specified otherwise.
+            from app.models.tag import ticket_tags
+            query = query.join(Ticket.tags).where(Tag.id.in_(tag_ids))
+            # If we wanted AND logic, we'd need multiple joins or a subquery with count.
 
         if source_id is not None:
             query = query.where(Ticket.source_id == source_id)
@@ -87,7 +97,11 @@ class TicketService:
             else_=5,
         )
         result = await self._db.execute(
-            query.options(selectinload(Ticket.source), selectinload(Ticket.assignee))
+            query.options(
+                selectinload(Ticket.source),
+                selectinload(Ticket.assignee),
+                selectinload(Ticket.tags)
+            )
             .order_by(_terminal_rank, _priority_rank, Ticket.first_ingested_at.desc())
             .limit(limit)
             .offset(offset)
@@ -119,6 +133,7 @@ class TicketService:
                 selectinload(Ticket.source),
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
+                selectinload(Ticket.tags),
             )
         )
         return result.scalar_one_or_none()
@@ -138,6 +153,7 @@ class TicketService:
                 selectinload(Ticket.source),
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
+                selectinload(Ticket.tags),
             )
         )
         return result.scalar_one_or_none()
@@ -184,6 +200,7 @@ class TicketService:
                 selectinload(Ticket.source),
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
+                selectinload(Ticket.tags),
             )
         )
         return result.scalar_one_or_none(), None
@@ -332,6 +349,37 @@ class TicketService:
                 selectinload(Ticket.source),
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
+                selectinload(Ticket.tags),
             )
         )
         return result.scalar_one()
+
+    async def update_tags(self, ticket_id: int, tag_ids: list[int], changed_by: str) -> Ticket | None:
+        ticket = await self.get_ticket(ticket_id)
+        if not ticket:
+            return None
+
+        # Fetch tags
+        result = await self._db.execute(select(Tag).where(Tag.id.in_(tag_ids)))
+        new_tags = list(result.scalars().all())
+
+        old_tag_names = [t.name for t in ticket.tags]
+        new_tag_names = [t.name for t in new_tags]
+
+        if set(old_tag_names) != set(new_tag_names):
+            ticket.tags = new_tags
+            self._db.add(
+                TicketEvent(
+                    ticket_id=ticket.id,
+                    event_type="tags_updated",
+                    payload={
+                        "old_tags": old_tag_names,
+                        "new_tags": new_tag_names,
+                        "changed_by": changed_by,
+                    },
+                )
+            )
+            await self._db.commit()
+            await self._db.refresh(ticket, ["tags", "source", "assignee"])
+        
+        return ticket

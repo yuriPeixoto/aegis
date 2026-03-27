@@ -18,8 +18,9 @@ from app.schemas.ticket import (
     UpdatePriorityRequest,
     UpdateStatusRequest,
     BulkUpdateTicketsRequest,
+    TicketTagsUpdateRequest,
 )
-from app.services.sla_service import SlaService
+from app.schemas.tag import TagResponse
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
 
@@ -53,6 +54,10 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         sla_paused_seconds=ticket.sla_paused_seconds or 0,
         sla_paused_since=ticket.sla_paused_since,
         assigned_to=_assignee(ticket),
+        tags=[
+            TagResponse.model_validate(t)
+            for t in ticket.tags
+        ],
         events=[
             {
                 "id": e.id,
@@ -78,6 +83,7 @@ async def list_tickets(
     search: str | None = Query(None),
     created_after: datetime | None = Query(None),
     created_before: datetime | None = Query(None),
+    tag_ids: list[int] | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> TicketListResponse:
@@ -92,6 +98,7 @@ async def list_tickets(
         search=search,
         created_after=created_after,
         created_before=created_before,
+        tag_ids=tag_ids,
         limit=limit,
         offset=offset,
     )
@@ -117,6 +124,7 @@ async def list_tickets(
                 sla_due_at=t.sla_due_at,
                 last_inbound_at=inbound_map.get(t.id),
                 assigned_to=_assignee(t),
+                tags=[TagResponse.model_validate(tag) for tag in t.tags],
             )
         )
 
@@ -227,6 +235,7 @@ async def override_sla(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
     from app.models.ticket_event import TicketEvent
+    from app.services.sla_service import SlaService
 
     old_priority = ticket.priority
     sla_svc = SlaService(db)
@@ -279,6 +288,25 @@ async def override_sla(
         )
 
     ticket = await svc.get_ticket(ticket_id)
+    return _detail(ticket)
+
+
+@router.put("/{ticket_id}/tags", response_model=TicketDetailResponse)
+async def update_ticket_tags(
+    ticket_id: int,
+    body: TicketTagsUpdateRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> TicketDetailResponse:
+    """Update tags for a ticket."""
+    ticket = await TicketService(db).update_tags(
+        ticket_id=ticket_id,
+        tag_ids=body.tag_ids,
+        changed_by=current_user.name
+    )
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+    
     return _detail(ticket)
 
 

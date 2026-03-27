@@ -3,6 +3,7 @@ import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
 import { SlaBadge } from './SlaBadge'
+import TagBadge from './TagBadge'
 
 interface TicketRowProps {
   ticket: Ticket
@@ -102,6 +103,15 @@ export function TicketRow({
           {ticket.subject}
         </p>
       </div>
+
+      {/* Tags row */}
+      {ticket.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {ticket.tags.map((tag) => (
+            <TagBadge key={tag.id} tag={tag} />
+          ))}
+        </div>
+      )}
 
       {/* Bottom row: priority + status + assignee + external_id */}
       <div className="flex items-center justify-between">
