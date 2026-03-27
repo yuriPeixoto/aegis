@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.source import Source
+    from app.models.tag import Tag
     from app.models.ticket_attachment import TicketAttachment
     from app.models.ticket_event import TicketEvent
     from app.models.ticket_message import TicketMessage
@@ -15,6 +16,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.tag import ticket_tags
 
 
 class Ticket(Base):
@@ -80,6 +82,9 @@ class Ticket(Base):
     )
     attachments: Mapped[list[TicketAttachment]] = relationship(
         "TicketAttachment", back_populates="ticket", order_by="TicketAttachment.created_at"
+    )
+    tags: Mapped[list[Tag]] = relationship(
+        "Tag", secondary=ticket_tags, back_populates="tickets"
     )
     assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to_user_id])
 

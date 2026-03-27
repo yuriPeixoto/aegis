@@ -16,6 +16,8 @@ import {
   useMessages,
   useSendMessage,
   useOverrideSla,
+  useTags,
+  useUpdateTicketTags,
 } from '../hooks/useTickets'
 import { useMe } from '../hooks/useAuth'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
@@ -28,6 +30,7 @@ import { TypeBadge } from '../components/inbox/TypeBadge'
 import { SlaBadge } from '../components/inbox/SlaBadge'
 import { NotesPanel } from '../components/inbox/NotesPanel'
 import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
+import TagSelector from '../components/inbox/TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open:            ['in_progress', 'cancelled'],
@@ -300,6 +303,9 @@ export function TicketDetailPage() {
           {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
           <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
+        </div>
+        <div className="ml-4 border-l border-white/10 pl-4 h-6 flex items-center">
+          <TagSelector ticketId={ticket.id} currentTags={ticket.tags || []} />
         </div>
       </div>
 

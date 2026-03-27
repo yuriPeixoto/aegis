@@ -53,7 +53,7 @@
 | 2 | Auto-close | Automatically close tickets inactive beyond configurable threshold | ✅ |
 | 3 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | ✅ |
 | 4 | Canned responses | Pre-written reply templates for common issues | ✅ |
-| 5 | Ticket tags | Free-form labels for classification and filtering | Medium |
+| 5 | Ticket tags | Free-form labels for classification and filtering | ✅ |
 | 6 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
 | 7 | Ticket merging | Merge duplicate tickets from the same client | Medium |
 | 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
