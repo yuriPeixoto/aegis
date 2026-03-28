@@ -231,6 +231,26 @@ class IngestService:
                     ticket.external_id,
                 )
 
+        # When the client submits a CSAT rating, store it on the ticket
+        if data.event_type == "csat_submitted" and data.payload:
+            rating = data.payload.get("rating")
+            comment = data.payload.get("comment")
+            if isinstance(rating, int) and 1 <= rating <= 5:
+                ticket.csat_rating = rating
+                ticket.csat_comment = comment
+                ticket.csat_submitted_at = data.occurred_at or datetime.now(UTC)
+                logger.info(
+                    "ingest: CSAT rating %d recorded for ticket %s",
+                    rating,
+                    ticket.external_id,
+                )
+            else:
+                logger.warning(
+                    "ingest: invalid CSAT rating '%s' for ticket %s — skipped",
+                    rating,
+                    ticket.external_id,
+                )
+
         await self._db.commit()
         await self._db.refresh(event)
         return event

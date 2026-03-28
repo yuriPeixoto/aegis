@@ -28,7 +28,13 @@
   },
   "common": {
     "clear": "Limpar",
-    "processing": "Processando"
+    "processing": "Processando",
+    "yes": "Sim",
+    "no": "Não",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "loading": "Carregando..."
   },
   "login": {
     "subtitle": "Central de Suporte",
@@ -104,6 +110,21 @@
       },
       "addTag": "Adicionar Tag",
       "noTagsFound": "Nenhuma tag disponível"
+    },
+    "views": {
+      "section": "Vistas",
+      "save": "Salvar vista",
+      "saveTitle": "Salvar filtros como vista",
+      "clearTitle": "Limpar vista",
+      "deleteTitle": "Remover vista",
+      "modalTitle": "Salvar vista",
+      "iconLabel": "Ícone",
+      "nameLabel": "Nome",
+      "namePlaceholder": "Ex.: Urgentes sem dono",
+      "share": "Compartilhar com a equipe",
+      "cancel": "Cancelar",
+      "saving": "Salvando...",
+      "submit": "Salvar vista"
     },
     "internalTicket": {
       "title": "Reportar Problema / Sugestão",
@@ -311,6 +332,11 @@
       "create": "Adicionar",
       "creating": "Adicionando...",
       "errorGeneric": "Algo deu errado. Tente novamente.",
+      "csatTitle": "Pesquisa de satisfação (CSAT)",
+      "csatEnable": "Ativar CSAT para este cliente",
+      "csatSampling": "Amostrar",
+      "csatSamplingHint": "% dos tickets resolvidos",
+      "csatDescription": "Quando ativado, Aegis envia um webhook {{req}} ao resolver um ticket (conforme amostragem). O cliente exibe o banner de avaliação e envia a nota de volta via evento {{sub}}.",
       "regenTitle": "Regenerar chaves de integração",
       "regenWarning": "A chave atual será invalidada imediatamente. Todos os sistemas que usam esta source precisarão ser atualizados.",
       "regenButton": "Quero regenerar as chaves",
@@ -401,6 +427,51 @@
         "save": "Salvar configurações",
         "saving": "Salvando...",
         "saved": "Configurações salvas ✓"
+      }
+    },
+    "escalation": {
+      "title": "Regras de escalação",
+      "subtitle": "Defina condições para escalação automática de tickets. Execute manualmente ou via cron:",
+      "runNow": "Executar agora",
+      "running": "Executando...",
+      "runResult": "{{rules}} regras avaliadas — {{tickets}} tickets escalados.",
+      "newRule": "Nova regra",
+      "colName": "Nome",
+      "colTrigger": "Gatilho",
+      "colAction": "Ação",
+      "colActive": "Ativo",
+      "loading": "Carregando...",
+      "empty": "Nenhuma regra configurada.",
+      "createTitle": "Nova regra de escalação",
+      "editTitle": "Editar regra de escalação",
+      "fieldName": "Nome da regra",
+      "namePlaceholder": "Ex.: Escalar SLA violado urgente",
+      "fieldTrigger": "Gatilho",
+      "fieldThreshold": "Limiar (horas)",
+      "fieldConditions": "Condições",
+      "conditionsHint": "(vazio = todos)",
+      "priorities": "Prioridades",
+      "statuses": "Status",
+      "fieldAction": "Ação",
+      "selectAgent": "Selecionar agente...",
+      "selectTag": "Selecionar tag...",
+      "fieldCooldown": "Cooldown (horas)",
+      "isActive": "Regra ativa",
+      "cancel": "Cancelar",
+      "save": "Salvar alterações",
+      "create": "Criar regra",
+      "trigger": {
+        "sla_at_risk": "SLA em risco",
+        "sla_breach": "SLA violado",
+        "no_update": "Sem atualização",
+        "unassigned_time": "Sem responsável"
+      },
+      "action": {
+        "reassign_to_user": "Reatribuir para usuário",
+        "notify_admins": "Notificar admins",
+        "increase_priority": "Aumentar prioridade",
+        "add_tag": "Adicionar tag",
+        "notify_senior_agents": "Notificar agentes sênior"
       }
     },
     "tags": {

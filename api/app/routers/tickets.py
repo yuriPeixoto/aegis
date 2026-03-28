@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
@@ -59,6 +60,12 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
             TagResponse.model_validate(t)
             for t in ticket.tags
         ],
+        merged_into_ticket_id=ticket.merged_into_ticket_id,
+        merged_at=ticket.merged_at,
+        csat_rating=ticket.csat_rating,
+        csat_comment=ticket.csat_comment,
+        csat_submitted_at=ticket.csat_submitted_at,
+        csat_requested_at=ticket.csat_requested_at,
         events=[
             {
                 "id": e.id,
@@ -187,6 +194,32 @@ async def update_ticket_status(
                 "external_id": ticket.external_id,
                 "status": body.status,
                 "changed_by": current_user.name,
+            },
+        )
+
+    # CSAT request: send when ticket is resolved/closed and source has CSAT enabled
+    _CSAT_TRIGGER_STATUSES = {"resolved", "closed"}
+    if (
+        body.status in _CSAT_TRIGGER_STATUSES
+        and ticket.source
+        and ticket.source.webhook_url
+        and ticket.source.csat_enabled
+        and ticket.csat_submitted_at is None  # don't re-request if already rated
+        and random.randint(1, 100) <= ticket.source.csat_sampling_pct
+    ):
+        from datetime import UTC
+
+        ticket.csat_requested_at = datetime.now(UTC)
+        await db.commit()
+
+        background_tasks.add_task(
+            dispatch_webhook,
+            webhook_url=ticket.source.webhook_url,
+            webhook_secret=ticket.source.webhook_secret,
+            event_type="csat_request",
+            payload={
+                "external_id": ticket.external_id,
+                "ticket_id": ticket.id,
             },
         )
 
