@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Users, Plug, Clock, Trash2, MessageSquare, Edit, Tag as TagIcon } from 'lucide-react'
+import { Users, Plug, Clock, Trash2, MessageSquare, Edit, Tag as TagIcon, AlertTriangle, Play, Plus, X } from 'lucide-react'
 import { useMe } from '../hooks/useAuth'
 import { useSources, useCreateSource, useUpdateSource, useRegenerateSourceKey, type SourceCreated, type Source } from '../hooks/useSources'
 import { useAllUsers, useCreateUser, useUpdateUser } from '../hooks/useUsers'
@@ -10,17 +10,19 @@ import { useSlaSettings, useUpdateBusinessHours, useUpdateSlaPolicy, useCreateHo
 import { useAutoCloseSettings, useUpdateAutoCloseSettings } from '../hooks/useAutoCloseSettings'
 import { useCannedResponses, useCreateCannedResponse, useUpdateCannedResponse, useDeleteCannedResponse } from '../hooks/useCannedResponses'
 import { useTags, type TagCreate, type TagUpdate } from '../hooks/useTags'
+import { useEscalationRules, useCreateEscalationRule, useUpdateEscalationRule, useDeleteEscalationRule, useRunEscalation, type EscalationRule, type EscalationRuleCreate } from '../hooks/useEscalation'
 import type { User } from '../hooks/useAuth'
 import type { CannedResponse, CannedResponseActions } from '../hooks/useCannedResponses'
 import type { Tag } from '../types/ticket'
 
 const TABS = [
-  { id: 'users',   label: 'settings.nav.users',   icon: Users },
-  { id: 'sources', label: 'settings.nav.sources', icon: Plug  },
-  { id: 'tags',    label: 'settings.nav.tags',    icon: TagIcon },
-  { id: 'sla',     label: 'settings.nav.sla',     icon: Clock },
-  { id: 'autoclose', label: 'settings.nav.autoClose', icon: Trash2 },
-  { id: 'canned',    label: 'settings.nav.cannedResponses', icon: MessageSquare },
+  { id: 'users',      label: 'settings.nav.users',            icon: Users },
+  { id: 'sources',    label: 'settings.nav.sources',          icon: Plug  },
+  { id: 'tags',       label: 'settings.nav.tags',             icon: TagIcon },
+  { id: 'sla',        label: 'settings.nav.sla',              icon: Clock },
+  { id: 'autoclose',  label: 'settings.nav.autoClose',        icon: Trash2 },
+  { id: 'canned',     label: 'settings.nav.cannedResponses',  icon: MessageSquare },
+  { id: 'escalation', label: 'settings.nav.escalation',       icon: AlertTriangle },
 ]
 
 export function SettingsPage() {
@@ -73,7 +75,8 @@ export function SettingsPage() {
         {activeTab === 'tags'    && <TagsSection />}
         {activeTab === 'sla'     && <SlaSection />}
         {activeTab === 'autoclose' && <AutoCloseSection />}
-        {activeTab === 'canned'    && <CannedResponsesSection />}
+        {activeTab === 'canned'     && <CannedResponsesSection />}
+        {activeTab === 'escalation' && <EscalationSection />}
       </div>
     </div>
   )
@@ -515,6 +518,7 @@ function UsersSection({ currentUserId }: UsersSectionProps) {
               <th className="pb-2 font-medium">{t('settings.users.colName')}</th>
               <th className="pb-2 font-medium">{t('settings.users.colEmail')}</th>
               <th className="pb-2 font-medium">{t('settings.users.colRole')}</th>
+              <th className="pb-2 font-medium">{t('settings.users.colSenior')}</th>
               <th className="pb-2 font-medium">{t('settings.users.colStatus')}</th>
               <th className="pb-2 font-medium"></th>
             </tr>
@@ -570,6 +574,21 @@ function UserRow({ user, isSelf, onEdit }: UserRowProps) {
           >
             {t(`settings.users.role.${user.role}`)}
           </button>
+        )}
+      </td>
+      <td className="py-2.5">
+        {user.role === 'agent' && !isSelf ? (
+          <button
+            onClick={() => updateUser.mutate({ is_senior: !user.is_senior })}
+            disabled={updateUser.isPending}
+            className={`text-xs underline decoration-dotted transition-colors disabled:opacity-50 ${
+              user.is_senior ? 'text-amber-400 hover:text-amber-200' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {user.is_senior ? t('settings.users.senior') : t('settings.users.regular')}
+          </button>
+        ) : (
+          <span className="text-xs text-slate-600">—</span>
         )}
       </td>
       <td className="py-2.5">
@@ -1475,6 +1494,410 @@ function TagsSection() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Escalation Section
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TRIGGER_LABELS: Record<string, string> = {
+  sla_at_risk:     'SLA em risco',
+  sla_breach:      'SLA violado',
+  no_update:       'Sem atualização',
+  unassigned_time: 'Sem responsável',
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  reassign_to_user:    'Reatribuir para usuário',
+  notify_admins:       'Notificar admins',
+  increase_priority:   'Aumentar prioridade',
+  add_tag:             'Adicionar tag',
+  notify_senior_agents: 'Notificar agentes sênior',
+}
+
+const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
+const STATUS_OPTIONS = ['open', 'in_progress', 'waiting_client']
+
+const blankForm: EscalationRuleCreate = {
+  name: '',
+  is_active: true,
+  trigger_type: 'sla_breach',
+  trigger_hours: 2,
+  condition_priority: [],
+  condition_status: [],
+  action_type: 'notify_admins',
+  action_user_id: null,
+  action_tag_id: null,
+  cooldown_hours: 24,
+}
+
+function EscalationSection() {
+  const { t } = useTranslation()
+  const { data: rules = [], isLoading } = useEscalationRules()
+  const createRule = useCreateEscalationRule()
+  const deleteRule = useDeleteEscalationRule()
+  const runEscalation = useRunEscalation()
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState<EscalationRule | null>(null)
+  const [runResult, setRunResult] = useState<string | null>(null)
+  const { data: users = [] } = useAllUsers()
+  const { tags = [] } = useTags()
+
+  function openCreate() { setEditing(null); setModalOpen(true) }
+  function openEdit(rule: EscalationRule) { setEditing(rule); setModalOpen(true) }
+
+  function handleRunNow() {
+    runEscalation.mutate(undefined, {
+      onSuccess: (result) => {
+        setRunResult(
+          `${result.rules_evaluated} regras avaliadas — ${result.tickets_escalated} tickets escalados.`
+        )
+        setTimeout(() => setRunResult(null), 6000)
+      },
+    })
+  }
+
+  return (
+    <section className="max-w-3xl pb-10">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-200">Regras de escalação</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Defina condições para escalação automática de tickets. Execute manualmente ou via cron:
+            {' '}<code className="font-mono bg-white/5 px-1.5 py-0.5 rounded text-xs text-slate-300">POST /v1/escalation/run</code>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {runResult && (
+            <span className="text-xs text-emerald-400 font-mono">{runResult}</span>
+          )}
+          <button
+            onClick={handleRunNow}
+            disabled={runEscalation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-amber-700/50 text-amber-400 hover:bg-amber-950/30 disabled:opacity-50 transition-colors"
+          >
+            <Play className="w-3 h-3" />
+            {runEscalation.isPending ? 'Executando...' : 'Executar agora'}
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Nova regra
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-brand-surface border border-brand-border rounded-lg overflow-hidden">
+        <table className="w-full text-left text-sm">
+          <thead className="text-[10px] uppercase tracking-wider text-slate-500 font-bold border-b border-brand-border bg-white/2">
+            <tr>
+              <th className="px-4 py-3">Nome</th>
+              <th className="px-4 py-3">Gatilho</th>
+              <th className="px-4 py-3">Ação</th>
+              <th className="px-4 py-3 text-center">Ativo</th>
+              <th className="px-4 py-3 w-20 text-right"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-brand-border">
+            {isLoading ? (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 font-mono animate-pulse">Carregando...</td></tr>
+            ) : rules.length === 0 ? (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">Nenhuma regra configurada.</td></tr>
+            ) : rules.map((rule) => (
+              <tr key={rule.id} className="hover:bg-white/2 transition-colors">
+                <td className="px-4 py-3 font-medium text-slate-200">{rule.name}</td>
+                <td className="px-4 py-3 text-slate-400 text-xs">
+                  {TRIGGER_LABELS[rule.trigger_type] ?? rule.trigger_type}
+                  <span className="text-slate-600 ml-1">({rule.trigger_hours}h)</span>
+                </td>
+                <td className="px-4 py-3 text-slate-400 text-xs">
+                  {ACTION_LABELS[rule.action_type] ?? rule.action_type}
+                  {rule.action_user_name && <span className="text-slate-500 ml-1">→ {rule.action_user_name}</span>}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`text-xs font-medium ${rule.is_active ? 'text-emerald-400' : 'text-slate-600'}`}>
+                    {rule.is_active ? 'Sim' : 'Não'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button onClick={() => openEdit(rule)} className="p-1 text-slate-500 hover:text-slate-200 transition-colors">
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteRule.mutate(rule.id)} className="p-1 text-slate-500 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {modalOpen && (
+        <EscalationRuleModal
+          editing={editing}
+          users={users}
+          tags={tags}
+          onCreate={(data) => createRule.mutate(data, { onSuccess: () => setModalOpen(false) })}
+          onClose={() => setModalOpen(false)}
+          isPending={createRule.isPending}
+          editingId={editing?.id ?? null}
+        />
+      )}
+    </section>
+  )
+}
+
+function EscalationRuleModal({
+  editing,
+  users,
+  tags,
+  onCreate,
+  onClose,
+  isPending,
+  editingId,
+}: {
+  editing: EscalationRule | null
+  users: { id: number; name: string; role: string }[]
+  tags: { id: number; name: string }[]
+  onCreate: (data: EscalationRuleCreate) => void
+  onClose: () => void
+  isPending: boolean
+  editingId: number | null
+}) {
+  const updateRule = useUpdateEscalationRule(editingId ?? 0)
+
+  const [form, setForm] = useState<EscalationRuleCreate>(
+    editing
+      ? {
+          name: editing.name,
+          is_active: editing.is_active,
+          trigger_type: editing.trigger_type,
+          trigger_hours: editing.trigger_hours,
+          condition_priority: editing.condition_priority,
+          condition_status: editing.condition_status,
+          action_type: editing.action_type,
+          action_user_id: editing.action_user_id,
+          action_tag_id: editing.action_tag_id,
+          cooldown_hours: editing.cooldown_hours,
+        }
+      : { ...blankForm }
+  )
+
+  function togglePriority(p: string) {
+    setForm((f) => ({
+      ...f,
+      condition_priority: f.condition_priority?.includes(p)
+        ? f.condition_priority.filter((x) => x !== p)
+        : [...(f.condition_priority ?? []), p],
+    }))
+  }
+
+  function toggleStatus(s: string) {
+    setForm((f) => ({
+      ...f,
+      condition_status: f.condition_status?.includes(s)
+        ? f.condition_status.filter((x) => x !== s)
+        : [...(f.condition_status ?? []), s],
+    }))
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (editing && editingId) {
+      updateRule.mutate(form, { onSuccess: onClose })
+    } else {
+      onCreate(form)
+    }
+  }
+
+  const agents = users.filter((u) => u.role === 'agent')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-brand-surface border border-brand-border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <header className="px-6 py-4 border-b border-brand-border flex items-center justify-between shrink-0">
+          <h3 className="text-base font-semibold text-white">
+            {editing ? 'Editar regra de escalação' : 'Nova regra de escalação'}
+          </h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-200 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </header>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome da regra</label>
+            <input
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={inputCls}
+              placeholder="Ex.: Escalar SLA violado urgente"
+            />
+          </div>
+
+          {/* Trigger */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gatilho</label>
+              <select
+                value={form.trigger_type}
+                onChange={(e) => setForm({ ...form, trigger_type: e.target.value })}
+                className={inputCls}
+              >
+                {Object.entries(TRIGGER_LABELS).map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Limiar (horas)</label>
+              <input
+                type="number"
+                min={0.5}
+                step={0.5}
+                value={form.trigger_hours}
+                onChange={(e) => setForm({ ...form, trigger_hours: Number(e.target.value) })}
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          {/* Conditions */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Condições <span className="normal-case font-normal text-slate-600">(vazio = todos)</span>
+            </label>
+            <div>
+              <p className="text-xs text-slate-500 mb-1.5">Prioridades</p>
+              <div className="flex flex-wrap gap-1.5">
+                {PRIORITY_OPTIONS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => togglePriority(p)}
+                    className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                      form.condition_priority?.includes(p)
+                        ? 'bg-brand-purple/20 border-brand-purple/50 text-brand-purple'
+                        : 'bg-white/5 border-white/15 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1.5">Status</p>
+              <div className="flex flex-wrap gap-1.5">
+                {STATUS_OPTIONS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleStatus(s)}
+                    className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                      form.condition_status?.includes(s)
+                        ? 'bg-brand-purple/20 border-brand-purple/50 text-brand-purple'
+                        : 'bg-white/5 border-white/15 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Action */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ação</label>
+            <select
+              value={form.action_type}
+              onChange={(e) => setForm({ ...form, action_type: e.target.value, action_user_id: null, action_tag_id: null })}
+              className={inputCls}
+            >
+              {Object.entries(ACTION_LABELS).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </select>
+            {form.action_type === 'reassign_to_user' && (
+              <select
+                required
+                value={form.action_user_id ?? ''}
+                onChange={(e) => setForm({ ...form, action_user_id: Number(e.target.value) || null })}
+                className={inputCls}
+              >
+                <option value="">Selecionar agente...</option>
+                {agents.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            )}
+            {form.action_type === 'add_tag' && (
+              <select
+                required
+                value={form.action_tag_id ?? ''}
+                onChange={(e) => setForm({ ...form, action_tag_id: Number(e.target.value) || null })}
+                className={inputCls}
+              >
+                <option value="">Selecionar tag...</option>
+                {tags.map((tg) => (
+                  <option key={tg.id} value={tg.id}>{tg.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Cooldown + Active */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cooldown (horas)</label>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={form.cooldown_hours}
+                onChange={(e) => setForm({ ...form, cooldown_hours: Number(e.target.value) })}
+                className={inputCls}
+              />
+            </div>
+            <div className="flex items-end pb-0.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                  className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-accent focus:ring-brand-accent"
+                />
+                <span className="text-sm text-slate-300">Regra ativa</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isPending || updateRule.isPending}
+              className="px-4 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
+            >
+              {editing ? 'Salvar alterações' : 'Criar regra'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

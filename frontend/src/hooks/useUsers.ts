@@ -15,6 +15,7 @@ export interface UserUpdate {
   password?: string
   role?: string
   is_active?: boolean
+  is_senior?: boolean
 }
 
 export function useAllUsers() {
