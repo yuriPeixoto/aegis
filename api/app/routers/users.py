@@ -53,6 +53,7 @@ async def update_user(
             password=data.password,
             role=data.role,
             is_active=data.is_active,
+            is_senior=data.is_senior,
         )
     except IntegrityError:
         raise HTTPException(

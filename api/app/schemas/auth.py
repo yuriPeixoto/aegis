@@ -22,6 +22,7 @@ class UserResponse(BaseModel):
     name: str
     role: str
     is_active: bool
+    is_senior: bool
     must_change_password: bool
     created_at: datetime
 
@@ -41,3 +42,4 @@ class UserUpdateRequest(BaseModel):
     password: str | None = None
     role: str | None = None
     is_active: bool | None = None
+    is_senior: bool | None = None

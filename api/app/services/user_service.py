@@ -39,6 +39,7 @@ class UserService:
         password: str | None = None,
         role: str | None = None,
         is_active: bool | None = None,
+        is_senior: bool | None = None,
     ) -> User | None:
         user = await self.get_by_id_any(user_id)
         if user is None:
@@ -53,6 +54,8 @@ class UserService:
             user.role = role
         if is_active is not None:
             user.is_active = is_active
+        if is_senior is not None:
+            user.is_senior = is_senior
         await self._db.commit()
         await self._db.refresh(user)
         return user

@@ -55,9 +55,9 @@
 | 4 | Canned responses | Pre-written reply templates for common issues | ✅ |
 | 5 | Ticket tags | Free-form labels for classification and filtering | ✅ |
 | 6 | Internal notes on conversation | Notes visible only to team, interleaved in timeline — with @mention of agents | ✅ |
-| 6.1 | @mention notification center | Bell icon in header with unread badge; dropdown with "X mentioned you in #ID"; click navigates to ticket + marks as read; auto-mark on ticket open | Medium |
+| 6.1 | @mention notification center | Bell icon in header with unread badge; dropdown with "X mentioned you in #ID"; click navigates to ticket + marks as read; auto-mark on ticket open | ✅ |
 | 7 | Ticket merging | Merge duplicate tickets — messages consolidated, source becomes status=merged, irreversible | ✅ |
-| 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
+| 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | ✅ |
 | 9 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | Medium |
 | 10 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close | Low |
 
