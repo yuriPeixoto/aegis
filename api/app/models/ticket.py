@@ -65,6 +65,12 @@ class Ticket(Base):
     # When the ticket was moved to a terminal status (resolved, closed, etc.)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
+    # CSAT — satisfaction survey
+    csat_rating: Mapped[int | None] = mapped_column(nullable=True)
+    csat_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    csat_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    csat_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Merge — set when this ticket is absorbed into another
     merged_into_ticket_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True

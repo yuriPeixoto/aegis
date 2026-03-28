@@ -461,7 +461,7 @@ export function TicketDetailPage() {
                   </button>
                 ))}
                 {canned.length === 0 && (
-                  <span className="text-[10px] text-slate-600 italic">Nenhuma resposta pronta configurada</span>
+                  <span className="text-[10px] text-slate-600 italic">{t('settings.cannedResponses.empty')}</span>
                 )}
               </div>
             </div>

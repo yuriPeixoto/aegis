@@ -23,6 +23,16 @@
     "shortcutBulkStatus": "Change status (bulk)",
     "shortcutBulkPriority": "Change priority (bulk)"
   },
+  "common": {
+    "clear": "Clear",
+    "processing": "Processing",
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "loading": "Loading..."
+  },
   "topbar": {
     "signOut": "Sign out"
   },
@@ -82,6 +92,7 @@
       "internalNotePlaceholder": "Note visible only to the team... use @ to mention someone",
       "replyHint": "Ctrl+Enter to send",
       "internalNoteHint": "Visible only to the team — never sent to the client",
+      "processing": "Processing",
       "send": "Send",
       "eventHistory": "Event History",
       "noEvents": "No events recorded.",
@@ -99,6 +110,21 @@
       },
       "addTag": "Add Tag",
       "noTagsFound": "No tags available"
+    },
+    "views": {
+      "section": "Views",
+      "save": "Save view",
+      "saveTitle": "Save filters as view",
+      "clearTitle": "Clear view",
+      "deleteTitle": "Remove view",
+      "modalTitle": "Save view",
+      "iconLabel": "Icon",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Urgent unassigned",
+      "share": "Share with the team",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "submit": "Save view"
     },
     "internalTicket": {
       "title": "Report an Issue / Suggestion",
@@ -306,6 +332,11 @@
       "create": "Add",
       "creating": "Adding...",
       "errorGeneric": "Something went wrong. Try again.",
+      "csatTitle": "Satisfaction survey (CSAT)",
+      "csatEnable": "Enable CSAT for this client",
+      "csatSampling": "Sample",
+      "csatSamplingHint": "% of resolved tickets",
+      "csatDescription": "When enabled, Aegis sends a {{req}} webhook on ticket resolution (per sampling rate). The client shows a rating banner and sends the score back via {{sub}} event.",
       "regenTitle": "Regenerate integration keys",
       "regenWarning": "The current key will be immediately invalidated. All systems using this source will need to be updated.",
       "regenButton": "I want to regenerate the keys",
@@ -396,6 +427,51 @@
         "save": "Save settings",
         "saving": "Saving...",
         "saved": "Settings saved ✓"
+      }
+    },
+    "escalation": {
+      "title": "Escalation rules",
+      "subtitle": "Define conditions for automatic ticket escalation. Run manually or via cron:",
+      "runNow": "Run now",
+      "running": "Running...",
+      "runResult": "{{rules}} rules evaluated — {{tickets}} tickets escalated.",
+      "newRule": "New rule",
+      "colName": "Name",
+      "colTrigger": "Trigger",
+      "colAction": "Action",
+      "colActive": "Active",
+      "loading": "Loading...",
+      "empty": "No rules configured.",
+      "createTitle": "New escalation rule",
+      "editTitle": "Edit escalation rule",
+      "fieldName": "Rule name",
+      "namePlaceholder": "e.g. Escalate breached urgent SLA",
+      "fieldTrigger": "Trigger",
+      "fieldThreshold": "Threshold (hours)",
+      "fieldConditions": "Conditions",
+      "conditionsHint": "(empty = all)",
+      "priorities": "Priorities",
+      "statuses": "Statuses",
+      "fieldAction": "Action",
+      "selectAgent": "Select agent...",
+      "selectTag": "Select tag...",
+      "fieldCooldown": "Cooldown (hours)",
+      "isActive": "Rule active",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "create": "Create rule",
+      "trigger": {
+        "sla_at_risk": "SLA at risk",
+        "sla_breach": "SLA breached",
+        "no_update": "No update",
+        "unassigned_time": "Unassigned"
+      },
+      "action": {
+        "reassign_to_user": "Reassign to user",
+        "notify_admins": "Notify admins",
+        "increase_priority": "Increase priority",
+        "add_tag": "Add tag",
+        "notify_senior_agents": "Notify senior agents"
       }
     },
     "tags": {

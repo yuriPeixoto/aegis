@@ -7,6 +7,8 @@ export interface Source {
   slug: string
   is_active: boolean
   webhook_url: string | null
+  csat_enabled: boolean
+  csat_sampling_pct: number
   created_at: string
 }
 
@@ -29,6 +31,8 @@ interface SourceUpdatePayload {
   name?: string
   is_active?: boolean
   webhook_url?: string
+  csat_enabled?: boolean
+  csat_sampling_pct?: number
 }
 
 export function useSources() {
