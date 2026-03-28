@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { useNavigate, NavLink } from 'react-router-dom'
+import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2 } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 import { useTickets } from '../../hooks/useTickets'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
+import { useSavedViews, useDeleteSavedView } from '../../hooks/useSavedViews'
 import { InternalTicketModal } from './InternalTicketModal'
 
 function InboxBadge({ userId }: { userId: number }) {
@@ -21,8 +22,14 @@ function InboxBadge({ userId }: { userId: number }) {
 export function Sidebar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { data: user } = useMe()
+  const { data: views = [] } = useSavedViews()
+  const deleteView = useDeleteSavedView()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [hoveredViewId, setHoveredViewId] = useState<number | null>(null)
+
+  const activeViewId = searchParams.get('view') ? Number(searchParams.get('view')) : null
 
   useKeyboardShortcut('i', () => navigate('/'))
   useKeyboardShortcut('d', () => navigate('/dashboard'), { enabled: user?.role === 'admin' })
@@ -45,8 +52,8 @@ export function Sidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1">
+        <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive && !activeViewId ? ' active' : ''}`}>
           <Inbox className="w-4 h-4 shrink-0" />
           {t('nav.inbox')}
           {user && <InboxBadge userId={user.id} />}
@@ -68,6 +75,50 @@ export function Sidebar() {
           <Keyboard className="w-4 h-4 shrink-0" />
           {t('nav.shortcuts')}
         </NavLink>
+
+        {/* Views section */}
+        {views.length > 0 && (
+          <div className="pt-4 mt-2">
+            <p className="text-[10px] uppercase tracking-widest text-slate-600 font-bold px-3 mb-1.5">
+              Vistas
+            </p>
+            <div className="space-y-0.5">
+              {views.map((view) => {
+                const isActive = activeViewId === view.id
+                const canDelete = user && (view.user_id === user.id || user.role === 'admin')
+                return (
+                  <div
+                    key={view.id}
+                    className="relative group"
+                    onMouseEnter={() => setHoveredViewId(view.id)}
+                    onMouseLeave={() => setHoveredViewId(null)}
+                  >
+                    <button
+                      onClick={() => navigate(`/?view=${view.id}`)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left pr-8 ${
+                        isActive
+                          ? 'bg-brand-purple/20 text-brand-purple font-medium'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="text-base leading-none shrink-0">{view.icon}</span>
+                      <span className="truncate">{view.name}</span>
+                    </button>
+                    {canDelete && hoveredViewId === view.id && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteView.mutate(view.id) }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-red-400 transition-colors p-0.5"
+                        title="Remover vista"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="pt-4 mt-4 border-t border-brand-border/50">
           <button

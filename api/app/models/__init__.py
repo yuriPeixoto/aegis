@@ -1,6 +1,7 @@
 from app.models.business_hours import BusinessHoursConfig
 from app.models.canned_response import CannedResponse
 from app.models.escalation_rule import EscalationRule, TicketEscalation
+from app.models.saved_view import SavedView
 from app.models.global_setting import GlobalSetting
 from app.models.holiday import SlaHoliday
 from app.models.sla_policy import SlaPolicy
@@ -25,6 +26,7 @@ __all__ = [
     "Tag",
     "Ticket",
     "TicketAttachment",
+    "SavedView",
     "TicketEscalation",
     "TicketEvent",
     "TicketMessage",

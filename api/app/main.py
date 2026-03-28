@@ -20,6 +20,7 @@ from app.routers import (
     tags,
     tickets,
     users,
+    views,
 )
 from app.routers import settings as settings_router
 
@@ -57,6 +58,7 @@ app.include_router(canned_responses.router)
 app.include_router(attachments.router)
 app.include_router(dashboard.router)
 app.include_router(escalation.router)
+app.include_router(views.router)
 app.include_router(settings_router.router)
 
 
