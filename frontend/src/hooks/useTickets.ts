@@ -5,7 +5,6 @@ import type {
   TicketDetail,
   TicketFilters,
   TicketMessage,
-  TicketNote,
   TicketAttachment,
   Tag,
 } from '../types/ticket'
@@ -149,16 +148,6 @@ export function useUpdateTicketStatus(ticketId: number) {
   })
 }
 
-export function useNotes(ticketId: number) {
-  return useQuery<TicketNote[]>({
-    queryKey: ['notes', ticketId],
-    queryFn: async () => {
-      const { data } = await api.get<TicketNote[]>(`/tickets/${ticketId}/notes`)
-      return data
-    },
-  })
-}
-
 export function useMessages(ticketId: number) {
   return useQuery<TicketMessage[]>({
     queryKey: ['messages', ticketId],
@@ -172,10 +161,16 @@ export function useMessages(ticketId: number) {
 
 export function useSendMessage(ticketId: number) {
   const queryClient = useQueryClient()
-  return useMutation<TicketMessage, Error, { body: string; file?: File | null }>({
-    mutationFn: async ({ body, file }) => {
+  return useMutation<
+    TicketMessage,
+    Error,
+    { body: string; is_internal?: boolean; mentioned_user_ids?: number[]; file?: File | null }
+  >({
+    mutationFn: async ({ body, is_internal = false, mentioned_user_ids = [], file }) => {
       const form = new FormData()
       form.append('body', body)
+      form.append('is_internal', String(is_internal))
+      form.append('mentioned_user_ids', JSON.stringify(mentioned_user_ids))
       if (file) form.append('file', file)
       const { data } = await api.post<TicketMessage>(
         `/tickets/${ticketId}/messages`,
@@ -186,19 +181,6 @@ export function useSendMessage(ticketId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', ticketId] })
-    },
-  })
-}
-
-export function useCreateNote(ticketId: number) {
-  const queryClient = useQueryClient()
-  return useMutation<TicketNote, Error, { body: string }>({
-    mutationFn: async (payload) => {
-      const { data } = await api.post<TicketNote>(`/tickets/${ticketId}/notes`, payload)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', ticketId] })
     },
   })
 }

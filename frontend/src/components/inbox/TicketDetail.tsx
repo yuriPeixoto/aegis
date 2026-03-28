@@ -5,7 +5,6 @@ import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
 import { ConversationPanel } from './ConversationPanel'
-import { NotesPanel } from './NotesPanel'
 import { SlaBadge } from './SlaBadge'
 import TagSelector from './TagSelector'
 
@@ -194,10 +193,6 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
 
           <div className="border-t border-brand-border/50">
             <ConversationPanel ticketId={ticket.id} locale={locale} />
-          </div>
-
-          <div className="border-t border-brand-border/50">
-            <NotesPanel ticketId={ticket.id} locale={locale} />
           </div>
 
           <div className="px-5 py-4 border-t border-brand-border/50">

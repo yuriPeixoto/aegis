@@ -54,12 +54,12 @@
 | 3 | Bulk operations | Bulk assign, bulk close, bulk change priority from inbox | ✅ |
 | 4 | Canned responses | Pre-written reply templates for common issues | ✅ |
 | 5 | Ticket tags | Free-form labels for classification and filtering | ✅ |
-| 6 | Internal notes on conversation | Notes visible only to team, interleaved in conversation view | Medium |
+| 6 | Internal notes on conversation | Notes visible only to team, interleaved in timeline — with @mention of agents | ✅ |
+| 6.1 | @mention notification center | Bell icon in header with unread badge; dropdown with "X mentioned you in #ID"; click navigates to ticket + marks as read; auto-mark on ticket open | Medium |
 | 7 | Ticket merging | Merge duplicate tickets from the same client | Medium |
 | 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | Medium |
 | 9 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | Medium |
 | 10 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close | Low |
-| 11 | Client portal | Self-service view for clients to track their own tickets | Low |
 
 ---
 
@@ -87,6 +87,7 @@
 | 3 | Generic webhook-out | Configurable outbound webhooks per event type for any source |
 | 4 | Historical import | Bulk ingest from existing gestão frota ticket history |
 | 5 | Audit log API | Full immutable event trail queryable externally for compliance |
+| 6 | Client portal | Self-service view for clients to track their own tickets (moved from Phase 3) |
 
 ---
 
@@ -99,4 +100,5 @@
 | 2 | Email notifications: new ticket | Notify team/admin when a high-priority ticket arrives |
 | 3 | Email notifications: overdue SLA | Alert agent + manager when SLA deadline is breached |
 | 4 | Email digest | Daily/weekly summary of open, overdue and resolved tickets for managers |
-| 5 | Email-in | Receive client replies by email and thread them back into the ticket conversation |
+| 5 | Email notifications: @mention | Notify agent by email when @mentioned in an internal note — complements the in-app notification center (3.6.1) |
+| 6 | Email-in | Receive client replies by email and thread them back into the ticket conversation |

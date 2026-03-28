@@ -14,7 +14,7 @@ from app.routers import (
     dashboard,
     ingest,
     messages,
-    notes,
+    notifications,
     sources,
     tags,
     tickets,
@@ -50,8 +50,8 @@ app.include_router(ingest.router)
 app.include_router(tickets.router)
 app.include_router(tags.router)
 app.include_router(users.router)
-app.include_router(notes.router)
 app.include_router(messages.router)
+app.include_router(notifications.router)
 app.include_router(canned_responses.router)
 app.include_router(attachments.router)
 app.include_router(dashboard.router)

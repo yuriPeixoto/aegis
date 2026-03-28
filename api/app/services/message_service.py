@@ -28,13 +28,22 @@ class MessageService:
         return result.scalar_one()
 
     async def create_outbound(
-        self, ticket: Ticket, body: str, agent_name: str
+        self,
+        ticket: Ticket,
+        body: str,
+        agent_name: str,
+        is_internal: bool = False,
+        author_user_id: int | None = None,
+        mentioned_user_ids: list[int] | None = None,
     ) -> TicketMessage:
         message = TicketMessage(
             ticket_id=ticket.id,
             direction="outbound",
             author_name=agent_name,
             body=body,
+            is_internal=is_internal,
+            author_user_id=author_user_id,
+            mentioned_user_ids=mentioned_user_ids or [],
         )
         self._db.add(message)
         await self._db.commit()
