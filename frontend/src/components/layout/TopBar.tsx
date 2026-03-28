@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { LogOut, User } from 'lucide-react'
 import { useMe, useLogout } from '../../hooks/useAuth'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { NotificationBell } from './NotificationBell'
 
 interface TopBarProps {
   title: string
@@ -18,6 +19,7 @@ export function TopBar({ title }: TopBarProps) {
 
       <div className="flex items-center gap-3">
         <LanguageSwitcher />
+        <NotificationBell />
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <User className="w-3.5 h-3.5" />
           <span className="font-mono">{user?.name ?? '...'}</span>
