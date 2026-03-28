@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bell, Lock, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   useNotifications,
   useUnreadCount,
@@ -8,10 +9,10 @@ import {
   useMarkAllRead,
 } from '../../hooks/useNotifications'
 
-function formatRelative(iso: string): string {
+function formatRelative(iso: string, justNow: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
-  if (mins < 1) return 'agora'
+  if (mins < 1) return justNow
   if (mins < 60) return `${mins}min`
   const hrs = Math.floor(mins / 60)
   if (hrs < 24) return `${hrs}h`
@@ -19,6 +20,7 @@ function formatRelative(iso: string): string {
 }
 
 export function NotificationBell() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -50,7 +52,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         className="relative p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors"
-        title="Notificações"
+        title={t('notifications.bell.title')}
       >
         <Bell className="w-4 h-4" />
         {count > 0 && (
@@ -64,14 +66,14 @@ export function NotificationBell() {
         <div className="absolute right-0 top-full mt-2 w-80 bg-brand-surface border border-brand-border rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-brand-border/50">
-            <span className="text-xs font-semibold text-slate-300">Notificações</span>
+            <span className="text-xs font-semibold text-slate-300">{t('notifications.bell.title')}</span>
             {count > 0 && (
               <button
                 onClick={() => markAllRead.mutate()}
                 className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-brand-accent transition-colors"
               >
                 <CheckCheck className="w-3 h-3" />
-                Marcar todas como lidas
+                {t('notifications.bell.markAllRead')}
               </button>
             )}
           </div>
@@ -80,7 +82,7 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-6 text-xs text-slate-600 text-center italic">
-                Nenhuma notificação
+                {t('notifications.bell.empty')}
               </p>
             ) : (
               notifications.map((notif) => {
@@ -104,7 +106,7 @@ export function NotificationBell() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-slate-200 leading-snug">
                         <span className="font-semibold">{notif.actor_name}</span>
-                        {' '}mencionou você em{' '}
+                        {' '}{t('notifications.bell.mentionedYou')}{' '}
                         <span className="font-mono text-amber-400">#{notif.ticket_external_id}</span>
                       </p>
                       <p className="text-[10px] text-slate-500 truncate mt-0.5">
@@ -115,7 +117,7 @@ export function NotificationBell() {
                     {/* Time + unread dot */}
                     <div className="shrink-0 flex flex-col items-end gap-1">
                       <span className="text-[10px] font-mono text-slate-600">
-                        {formatRelative(notif.created_at)}
+                        {formatRelative(notif.created_at, t('notifications.bell.justNow'))}
                       </span>
                       {unread && (
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
