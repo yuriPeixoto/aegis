@@ -22,6 +22,7 @@ _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "resolved":        {"open", "closed"},   # mantido por retrocompatibilidade
     "closed":          set(),
     "cancelled":       set(),
+    "merged":          set(),
 }
 
 
@@ -29,7 +30,7 @@ class TicketService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    _TERMINAL_STATUSES = ('resolved', 'closed', 'cancelled')
+    _TERMINAL_STATUSES = ('resolved', 'closed', 'cancelled', 'merged')
 
     async def list_tickets(
         self,
@@ -353,6 +354,103 @@ class TicketService:
             )
         )
         return result.scalar_one()
+
+    async def merge_ticket(
+        self,
+        source_ticket_id: int,
+        target_ticket_id: int,
+        merged_by_name: str,
+    ) -> tuple[Ticket, None] | tuple[None, str]:
+        """Merge source_ticket into target_ticket.
+
+        All messages are moved to the target. Source becomes status='merged'.
+        Returns (target_ticket, None) on success or (None, error_str) on failure.
+        """
+        if source_ticket_id == target_ticket_id:
+            return None, "cannot_merge_into_self"
+
+        source = await self.get_ticket(source_ticket_id)
+        if source is None:
+            return None, "source_not_found"
+        if source.status == "merged":
+            return None, "source_already_merged"
+
+        target = await self.get_ticket(target_ticket_id)
+        if target is None:
+            return None, "target_not_found"
+        if target.status == "merged":
+            return None, "target_already_merged"
+
+        now = datetime.now(UTC)
+
+        # Move all messages from source to target
+        await self._db.execute(
+            TicketMessage.__table__.update()
+            .where(TicketMessage.ticket_id == source_ticket_id)
+            .values(ticket_id=target_ticket_id)
+        )
+
+        # Auto-note on target explaining the merge
+        merge_note_target = TicketMessage(
+            ticket_id=target_ticket_id,
+            direction="outbound",
+            author_name=merged_by_name,
+            body=(
+                f"Ticket #{source.external_id} foi mesclado neste ticket por {merged_by_name}. "
+                f"O histórico de mensagens foi incorporado à conversa."
+            ),
+            is_internal=True,
+            mentioned_user_ids=[],
+            created_at=now,
+        )
+        self._db.add(merge_note_target)
+
+        # Auto-note on source (stays as its own record for audit trail)
+        merge_note_source = TicketMessage(
+            ticket_id=source_ticket_id,
+            direction="outbound",
+            author_name=merged_by_name,
+            body=f"Este ticket foi mesclado em #{target.external_id} por {merged_by_name}.",
+            is_internal=True,
+            mentioned_user_ids=[],
+            created_at=now,
+        )
+        self._db.add(merge_note_source)
+
+        # Events on both tickets
+        self._db.add(TicketEvent(
+            ticket_id=target_ticket_id,
+            event_type="ticket_merged_in",
+            payload={"merged_from": source.external_id, "by": merged_by_name},
+            occurred_at=now,
+        ))
+        self._db.add(TicketEvent(
+            ticket_id=source_ticket_id,
+            event_type="merged",
+            payload={"merged_into": target.external_id, "by": merged_by_name},
+            occurred_at=now,
+        ))
+
+        # Mark source as merged
+        source.status = "merged"
+        source.merged_into_ticket_id = target_ticket_id
+        source.merged_at = now
+        self._db.add(source)
+
+        await self._db.commit()
+
+        # Return target with fresh relationships
+        result = await self._db.execute(
+            select(Ticket)
+            .where(Ticket.id == target_ticket_id)
+            .options(
+                selectinload(Ticket.source),
+                selectinload(Ticket.events),
+                selectinload(Ticket.assignee),
+                selectinload(Ticket.tags),
+            )
+        )
+        return result.scalar_one(), None
 
     async def update_tags(self, ticket_id: int, tag_ids: list[int], changed_by: str) -> Ticket | None:
         ticket = await self.get_ticket(ticket_id)

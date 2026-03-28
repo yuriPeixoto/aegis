@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
-  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock
+  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock, GitMerge
 } from 'lucide-react'
 import { api } from '../lib/axios'
 import type { TicketMessage } from '../types/ticket'
@@ -30,6 +30,7 @@ import { PriorityBadge } from '../components/inbox/PriorityBadge'
 import { TypeBadge } from '../components/inbox/TypeBadge'
 import { SlaBadge } from '../components/inbox/SlaBadge'
 import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
+import { MergeTicketModal } from '../components/inbox/MergeTicketModal'
 import TagSelector from '../components/inbox/TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -232,6 +233,7 @@ export function TicketDetailPage() {
   const [replyBody, setReplyBody] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
   const [isInternal, setIsInternal] = useState(false)
+  const [showMergeModal, setShowMergeModal] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionAnchor, setMentionAnchor] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -326,6 +328,7 @@ export function TicketDetailPage() {
   }
 
   return (
+    <>
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 border-b border-brand-border bg-brand-dark">
@@ -362,6 +365,16 @@ export function TicketDetailPage() {
           <div className="px-6 py-3 border-b border-brand-border/50 shrink-0">
             <h1 className="text-base font-semibold text-white leading-snug">{ticket.subject}</h1>
           </div>
+
+          {/* Merged banner */}
+          {ticket.status === 'merged' && (
+            <div className="shrink-0 px-6 py-3 bg-slate-800/60 border-b border-slate-700/50 flex items-center gap-2">
+              <GitMerge className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-xs text-slate-400">
+                Este ticket foi mesclado em outro e está encerrado.
+              </span>
+            </div>
+          )}
 
           {/* Messages thread — scrollable */}
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-4">
@@ -579,6 +592,18 @@ export function TicketDetailPage() {
               </div>
             )}
 
+            {/* Merge button — only for non-terminal tickets */}
+            {ticket.status !== 'merged' && !['closed', 'cancelled'].includes(ticket.status) && (
+              <button
+                type="button"
+                onClick={() => setShowMergeModal(true)}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-brand-purple transition-colors"
+              >
+                <GitMerge className="w-3.5 h-3.5" />
+                Mesclar com outro ticket
+              </button>
+            )}
+
             {/* Assignee */}
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <UserCircle className="w-3.5 h-3.5 shrink-0" />
@@ -757,5 +782,17 @@ export function TicketDetailPage() {
         </div>
       </div>
     </div>
+
+    {showMergeModal && ticket && (
+      <MergeTicketModal
+        sourceTicket={ticket}
+        onClose={() => setShowMergeModal(false)}
+        onMerged={(targetId) => {
+          setShowMergeModal(false)
+          navigate(`/tickets/${targetId}`)
+        }}
+      />
+    )}
+    </>
   )
 }

@@ -50,6 +50,8 @@ class TicketResponse(BaseModel):
     last_inbound_at: datetime | None = None
     assigned_to: AssigneeResponse | None = None
     tags: list[TagResponse] = []
+    merged_into_ticket_id: int | None = None
+    merged_at: datetime | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -110,6 +112,10 @@ class BulkUpdateTicketsRequest(BaseModel):
 
 class TicketTagsUpdateRequest(BaseModel):
     tag_ids: list[int]
+
+
+class MergeTicketRequest(BaseModel):
+    target_ticket_id: int
 
 
 class TicketDetailResponse(TicketResponse):

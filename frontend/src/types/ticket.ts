@@ -11,6 +11,7 @@ export type TicketStatus =
   | 'RESOLVED'
   | 'CLOSED'
   | 'CANCELLED'
+  | 'MERGED'
 
 export interface TicketEvent {
   id: number
@@ -53,6 +54,8 @@ export interface Ticket {
   last_inbound_at: string | null
   assigned_to: Assignee | null
   tags: Tag[]
+  merged_into_ticket_id: number | null
+  merged_at: string | null
 }
 
 export interface TicketDetail extends Ticket {

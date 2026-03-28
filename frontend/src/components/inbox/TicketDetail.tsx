@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Clock, RefreshCw, ExternalLink, UserCircle } from 'lucide-react'
+import { X, Clock, RefreshCw, ExternalLink, UserCircle, GitMerge } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useTicket, useUpdateTicketStatus, useAssignTicket, useUsers } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
 import { ConversationPanel } from './ConversationPanel'
 import { SlaBadge } from './SlaBadge'
+import { MergeTicketModal } from './MergeTicketModal'
 import TagSelector from './TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -15,6 +18,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   resolved: ['open'],
   closed: [],
   cancelled: [],
+  merged: [],
 }
 
 const STATUS_ACTION_LABEL: Record<string, string> = {
@@ -76,12 +80,20 @@ function EventItem({
 export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
+  const navigate = useNavigate()
   const { data: ticket, isLoading } = useTicket(ticketId)
   const updateStatus = useUpdateTicketStatus(ticketId)
   const assignTicket = useAssignTicket(ticketId)
   const { data: users = [] } = useUsers()
+  const [showMergeModal, setShowMergeModal] = useState(false)
+
+  const isMergeable = ticket
+    && ticket.status !== 'merged'
+    && ticket.status !== 'closed'
+    && ticket.status !== 'cancelled'
 
   return (
+    <>
     <div className="flex flex-col h-full border-l border-brand-border bg-brand-dark">
       <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border shrink-0">
         <span className="text-xs font-mono text-slate-400">{t('inbox.detail.title')}</span>
@@ -142,8 +154,26 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
               </div>
             )}
 
+            {isMergeable && (
+              <button
+                type="button"
+                onClick={() => setShowMergeModal(true)}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-brand-purple transition-colors mb-2"
+              >
+                <GitMerge className="w-3.5 h-3.5" />
+                Mesclar com outro ticket
+              </button>
+            )}
+
+            {ticket.status === 'merged' && (
+              <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg">
+                <GitMerge className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-xs text-slate-400">Este ticket foi mesclado em outro.</span>
+              </div>
+            )}
+
             {ticket.description && (
-              <p className="text-sm text-slate-300 leading-relaxed bg-white/5 border border-white/10 rounded-lg p-3">
+              <p className="text-sm text-slate-300 leading-relaxed bg-white/5 border border-white/10 rounded-lg p-3 mt-3">
                 {ticket.description}
               </p>
             )}
@@ -218,5 +248,18 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
         </div>
       )}
     </div>
+
+    {showMergeModal && ticket && (
+      <MergeTicketModal
+        sourceTicket={ticket}
+        onClose={() => setShowMergeModal(false)}
+        onMerged={(targetId) => {
+          setShowMergeModal(false)
+          onClose()
+          navigate(`/tickets/${targetId}`)
+        }}
+      />
+    )}
+    </>
   )
 }

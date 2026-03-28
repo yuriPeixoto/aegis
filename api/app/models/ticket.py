@@ -65,6 +65,12 @@ class Ticket(Base):
     # When the ticket was moved to a terminal status (resolved, closed, etc.)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
+    # Merge — set when this ticket is absorbed into another
+    merged_into_ticket_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
+    )
+    merged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Aegis-managed timestamps
     first_ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
