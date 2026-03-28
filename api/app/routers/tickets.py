@@ -11,6 +11,7 @@ from app.schemas.ticket import (
     AssigneeResponse,
     AssignTicketRequest,
     InternalTicketCreate,
+    MergeTicketRequest,
     OverrideSlaRequest,
     TicketDetailResponse,
     TicketListResponse,
@@ -421,3 +422,35 @@ async def bulk_update_tickets(
                 )
 
     return updated_tickets
+
+
+@router.post("/{ticket_id}/merge", response_model=TicketDetailResponse)
+async def merge_ticket(
+    ticket_id: int,
+    body: MergeTicketRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> TicketDetailResponse:
+    """Merge ticket_id (duplicate/secondary) into body.target_ticket_id (primary).
+    All messages are moved to the target. Source becomes status='merged'. Irreversible.
+    """
+    ticket, error = await TicketService(db).merge_ticket(
+        source_ticket_id=ticket_id,
+        target_ticket_id=body.target_ticket_id,
+        merged_by_name=current_user.name,
+    )
+    if error == "cannot_merge_into_self":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail="Um ticket não pode ser mesclado nele mesmo.")
+    if error in ("source_not_found", "target_not_found"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket não encontrado.")
+    if error == "source_already_merged":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail="Este ticket já foi mesclado em outro.")
+    if error == "target_already_merged":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail="O ticket de destino já foi mesclado — escolha o ticket principal.")
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Merge failed.")
+
+    return _detail(ticket)

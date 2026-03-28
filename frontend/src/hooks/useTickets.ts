@@ -282,6 +282,20 @@ export interface InternalTicketPayload {
   meta?: Record<string, any>
 }
 
+export function useMergeTicket(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, { target_ticket_id: number }>({
+    mutationFn: async (body) => {
+      const { data } = await api.post<TicketDetail>(`/tickets/${ticketId}/merge`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+    },
+  })
+}
+
 export function useCreateInternalTicket() {
   const queryClient = useQueryClient()
   return useMutation<TicketDetail, Error, InternalTicketPayload>({
