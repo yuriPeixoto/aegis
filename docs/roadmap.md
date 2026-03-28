@@ -61,6 +61,7 @@
 | 8 | Escalation rules | Auto-escalate overdue or high-priority tickets to senior agent | ✅ | ✅ |
 | 9 | Custom ticket view / saved filters | Save a filter set as a named view (e.g. "Urgent unassigned") | ✅ | ✅ |
 | 10 | CSAT (satisfaction survey) | Short feedback request sent to client on ticket close — flag per source, sampling %, bidirectional webhook flow with gestão frota | ✅ | ✅ |
+| 11 | Browser notifications for urgent tickets ⚠️ | OS-level balloon + tab badge + optional sound when a high/urgent ticket arrives — admins notified even when Aegis is not the active tab. See [ADR-007](adr/007_browser_notifications.md) | debt | |
 
 ---
 
