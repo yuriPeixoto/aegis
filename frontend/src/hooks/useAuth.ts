@@ -8,6 +8,7 @@ export interface User {
   name: string
   role: string
   is_active: boolean
+  is_senior: boolean
   must_change_password: boolean
   created_at: string
 }

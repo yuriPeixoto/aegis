@@ -12,6 +12,7 @@ from app.routers import (
     auth,
     canned_responses,
     dashboard,
+    escalation,
     ingest,
     messages,
     notifications,
@@ -55,6 +56,7 @@ app.include_router(notifications.router)
 app.include_router(canned_responses.router)
 app.include_router(attachments.router)
 app.include_router(dashboard.router)
+app.include_router(escalation.router)
 app.include_router(settings_router.router)
 
 

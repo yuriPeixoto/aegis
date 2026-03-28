@@ -245,7 +245,8 @@
       "sla": "SLA",
       "autoClose": "Auto-close",
       "tags": "Tags",
-      "cannedResponses": "Respostas Prontas"
+      "cannedResponses": "Respostas Prontas",
+      "escalation": "Escalação"
     },
     "users": {
       "title": "Usuários",
@@ -255,7 +256,10 @@
       "colName": "Nome",
       "colEmail": "E-mail",
       "colRole": "Perfil",
+      "colSenior": "Nível",
       "colStatus": "Status",
+      "senior": "Sênior",
+      "regular": "Regular",
       "you": "você",
       "active": "Ativo",
       "inactive": "Inativo",
