@@ -873,11 +873,16 @@ function EditSourceModal({
   const regenerateKey = useRegenerateSourceKey(source.id)
   const [name, setName] = useState(source.name)
   const [webhookUrl, setWebhookUrl] = useState(source.webhook_url ?? '')
+  const [csatEnabled, setCsatEnabled] = useState(source.csat_enabled)
+  const [csatSamplingPct, setCsatSamplingPct] = useState(source.csat_sampling_pct)
   const [confirmRegen, setConfirmRegen] = useState(false)
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    updateSource.mutate({ name, webhook_url: webhookUrl }, { onSuccess: onClose })
+    updateSource.mutate(
+      { name, webhook_url: webhookUrl, csat_enabled: csatEnabled, csat_sampling_pct: csatSamplingPct },
+      { onSuccess: onClose },
+    )
   }
 
   const handleRegen = () => {
@@ -906,6 +911,41 @@ function EditSourceModal({
           />
           <p className="text-xs text-slate-600 mt-1">{t('settings.sources.webhookUrlHint')}</p>
         </Field>
+
+        {/* CSAT */}
+        <div className="border border-slate-700 rounded-lg p-4 space-y-3">
+          <p className="text-xs font-semibold text-slate-300">{t('settings.sources.csatTitle')}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">{t('settings.sources.csatEnable')}</span>
+            <button
+              type="button"
+              onClick={() => setCsatEnabled((v) => !v)}
+              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${csatEnabled ? 'bg-purple-600' : 'bg-slate-600'}`}
+            >
+              <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${csatEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+          {csatEnabled && (
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-slate-400 whitespace-nowrap">{t('settings.sources.csatSampling')}</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={csatSamplingPct}
+                onChange={(e) => setCsatSamplingPct(Math.min(100, Math.max(1, Number(e.target.value))))}
+                className={`${inputCls} w-20 text-center`}
+              />
+              <span className="text-xs text-slate-400">{t('settings.sources.csatSamplingHint')}</span>
+            </div>
+          )}
+          <p className="text-xs text-slate-500">
+            {t('settings.sources.csatDescription', {
+              req: 'csat_request',
+              sub: 'csat_submitted',
+            })}
+          </p>
+        </div>
 
         {/* Regenerate key area */}
         <div className="border border-amber-500/20 rounded-lg p-4 bg-amber-950/10 space-y-2">
@@ -1503,21 +1543,8 @@ function TagsSection() {
 // Escalation Section
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TRIGGER_LABELS: Record<string, string> = {
-  sla_at_risk:     'SLA em risco',
-  sla_breach:      'SLA violado',
-  no_update:       'Sem atualização',
-  unassigned_time: 'Sem responsável',
-}
-
-const ACTION_LABELS: Record<string, string> = {
-  reassign_to_user:    'Reatribuir para usuário',
-  notify_admins:       'Notificar admins',
-  increase_priority:   'Aumentar prioridade',
-  add_tag:             'Adicionar tag',
-  notify_senior_agents: 'Notificar agentes sênior',
-}
-
+const TRIGGER_KEYS = ['sla_at_risk', 'sla_breach', 'no_update', 'unassigned_time'] as const
+const ACTION_KEYS = ['reassign_to_user', 'notify_admins', 'increase_priority', 'add_tag', 'notify_senior_agents'] as const
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
 const STATUS_OPTIONS = ['open', 'in_progress', 'waiting_client']
 
@@ -1554,7 +1581,7 @@ function EscalationSection() {
     runEscalation.mutate(undefined, {
       onSuccess: (result) => {
         setRunResult(
-          `${result.rules_evaluated} regras avaliadas — ${result.tickets_escalated} tickets escalados.`
+          t('settings.escalation.runResult', { rules: result.rules_evaluated, tickets: result.tickets_escalated })
         )
         setTimeout(() => setRunResult(null), 6000)
       },
@@ -1565,9 +1592,9 @@ function EscalationSection() {
     <section className="max-w-3xl pb-10">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-200">Regras de escalação</h2>
+          <h2 className="text-base font-semibold text-slate-200">{t('settings.escalation.title')}</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Defina condições para escalação automática de tickets. Execute manualmente ou via cron:
+            {t('settings.escalation.subtitle')}
             {' '}<code className="font-mono bg-white/5 px-1.5 py-0.5 rounded text-xs text-slate-300">POST /v1/escalation/run</code>
           </p>
         </div>
@@ -1581,14 +1608,14 @@ function EscalationSection() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-amber-700/50 text-amber-400 hover:bg-amber-950/30 disabled:opacity-50 transition-colors"
           >
             <Play className="w-3 h-3" />
-            {runEscalation.isPending ? 'Executando...' : 'Executar agora'}
+            {runEscalation.isPending ? t('settings.escalation.running') : t('settings.escalation.runNow')}
           </button>
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            Nova regra
+            {t('settings.escalation.newRule')}
           </button>
         </div>
       </div>
@@ -1597,32 +1624,32 @@ function EscalationSection() {
         <table className="w-full text-left text-sm">
           <thead className="text-[10px] uppercase tracking-wider text-slate-500 font-bold border-b border-brand-border bg-white/2">
             <tr>
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">Gatilho</th>
-              <th className="px-4 py-3">Ação</th>
-              <th className="px-4 py-3 text-center">Ativo</th>
+              <th className="px-4 py-3">{t('settings.escalation.colName')}</th>
+              <th className="px-4 py-3">{t('settings.escalation.colTrigger')}</th>
+              <th className="px-4 py-3">{t('settings.escalation.colAction')}</th>
+              <th className="px-4 py-3 text-center">{t('settings.escalation.colActive')}</th>
               <th className="px-4 py-3 w-20 text-right"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-border">
             {isLoading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 font-mono animate-pulse">Carregando...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 font-mono animate-pulse">{t('settings.escalation.loading')}</td></tr>
             ) : rules.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">Nenhuma regra configurada.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">{t('settings.escalation.empty')}</td></tr>
             ) : rules.map((rule) => (
               <tr key={rule.id} className="hover:bg-white/2 transition-colors">
                 <td className="px-4 py-3 font-medium text-slate-200">{rule.name}</td>
                 <td className="px-4 py-3 text-slate-400 text-xs">
-                  {TRIGGER_LABELS[rule.trigger_type] ?? rule.trigger_type}
+                  {t(`settings.escalation.trigger.${rule.trigger_type}`, { defaultValue: rule.trigger_type })}
                   <span className="text-slate-600 ml-1">({rule.trigger_hours}h)</span>
                 </td>
                 <td className="px-4 py-3 text-slate-400 text-xs">
-                  {ACTION_LABELS[rule.action_type] ?? rule.action_type}
+                  {t(`settings.escalation.action.${rule.action_type}`, { defaultValue: rule.action_type })}
                   {rule.action_user_name && <span className="text-slate-500 ml-1">→ {rule.action_user_name}</span>}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span className={`text-xs font-medium ${rule.is_active ? 'text-emerald-400' : 'text-slate-600'}`}>
-                    {rule.is_active ? 'Sim' : 'Não'}
+                    {rule.is_active ? t('common.yes') : t('common.no')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -1673,6 +1700,7 @@ function EscalationRuleModal({
   isPending: boolean
   editingId: number | null
 }) {
+  const { t } = useTranslation()
   const updateRule = useUpdateEscalationRule(editingId ?? 0)
 
   const [form, setForm] = useState<EscalationRuleCreate>(
@@ -1726,7 +1754,7 @@ function EscalationRuleModal({
       <div className="bg-brand-surface border border-brand-border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <header className="px-6 py-4 border-b border-brand-border flex items-center justify-between shrink-0">
           <h3 className="text-base font-semibold text-white">
-            {editing ? 'Editar regra de escalação' : 'Nova regra de escalação'}
+            {editing ? t('settings.escalation.editTitle') : t('settings.escalation.createTitle')}
           </h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-200 transition-colors">
             <X className="w-4 h-4" />
@@ -1736,32 +1764,32 @@ function EscalationRuleModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
           {/* Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome da regra</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings.escalation.fieldName')}</label>
             <input
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className={inputCls}
-              placeholder="Ex.: Escalar SLA violado urgente"
+              placeholder={t('settings.escalation.namePlaceholder')}
             />
           </div>
 
           {/* Trigger */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Gatilho</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings.escalation.fieldTrigger')}</label>
               <select
                 value={form.trigger_type}
                 onChange={(e) => setForm({ ...form, trigger_type: e.target.value })}
                 className={inputCls}
               >
-                {Object.entries(TRIGGER_LABELS).map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
+                {TRIGGER_KEYS.map((v) => (
+                  <option key={v} value={v}>{t(`settings.escalation.trigger.${v}`)}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Limiar (horas)</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings.escalation.fieldThreshold')}</label>
               <input
                 type="number"
                 min={0.5}
@@ -1776,10 +1804,10 @@ function EscalationRuleModal({
           {/* Conditions */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Condições <span className="normal-case font-normal text-slate-600">(vazio = todos)</span>
+              {t('settings.escalation.fieldConditions')} <span className="normal-case font-normal text-slate-600">{t('settings.escalation.conditionsHint')}</span>
             </label>
             <div>
-              <p className="text-xs text-slate-500 mb-1.5">Prioridades</p>
+              <p className="text-xs text-slate-500 mb-1.5">{t('settings.escalation.priorities')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {PRIORITY_OPTIONS.map((p) => (
                   <button
@@ -1798,7 +1826,7 @@ function EscalationRuleModal({
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1.5">Status</p>
+              <p className="text-xs text-slate-500 mb-1.5">{t('settings.escalation.statuses')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {STATUS_OPTIONS.map((s) => (
                   <button
@@ -1820,14 +1848,14 @@ function EscalationRuleModal({
 
           {/* Action */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ação</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings.escalation.fieldAction')}</label>
             <select
               value={form.action_type}
               onChange={(e) => setForm({ ...form, action_type: e.target.value, action_user_id: null, action_tag_id: null })}
               className={inputCls}
             >
-              {Object.entries(ACTION_LABELS).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
+              {ACTION_KEYS.map((v) => (
+                <option key={v} value={v}>{t(`settings.escalation.action.${v}`)}</option>
               ))}
             </select>
             {form.action_type === 'reassign_to_user' && (
@@ -1837,7 +1865,7 @@ function EscalationRuleModal({
                 onChange={(e) => setForm({ ...form, action_user_id: Number(e.target.value) || null })}
                 className={inputCls}
               >
-                <option value="">Selecionar agente...</option>
+                <option value="">{t('settings.escalation.selectAgent')}</option>
                 {agents.map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}
@@ -1850,7 +1878,7 @@ function EscalationRuleModal({
                 onChange={(e) => setForm({ ...form, action_tag_id: Number(e.target.value) || null })}
                 className={inputCls}
               >
-                <option value="">Selecionar tag...</option>
+                <option value="">{t('settings.escalation.selectTag')}</option>
                 {tags.map((tg) => (
                   <option key={tg.id} value={tg.id}>{tg.name}</option>
                 ))}
@@ -1861,7 +1889,7 @@ function EscalationRuleModal({
           {/* Cooldown + Active */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cooldown (horas)</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('settings.escalation.fieldCooldown')}</label>
               <input
                 type="number"
                 min={1}
@@ -1879,21 +1907,21 @@ function EscalationRuleModal({
                   onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
                   className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-accent focus:ring-brand-accent"
                 />
-                <span className="text-sm text-slate-300">Regra ativa</span>
+                <span className="text-sm text-slate-300">{t('settings.escalation.isActive')}</span>
               </label>
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors">
-              Cancelar
+              {t('settings.escalation.cancel')}
             </button>
             <button
               type="submit"
               disabled={isPending || updateRule.isPending}
               className="px-4 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
             >
-              {editing ? 'Salvar alterações' : 'Criar regra'}
+              {editing ? t('settings.escalation.save') : t('settings.escalation.create')}
             </button>
           </div>
         </form>

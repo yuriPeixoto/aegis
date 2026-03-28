@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useCreateSavedView, type ViewFilters } from '../../hooks/useSavedViews'
 import { useMe } from '../../hooks/useAuth'
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SaveViewModal({ filters, onClose }: Props) {
+  const { t } = useTranslation()
   const { data: me } = useMe()
   const create = useCreateSavedView()
   const [name, setName] = useState('')
@@ -29,7 +31,7 @@ export function SaveViewModal({ filters, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-brand-surface border border-brand-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
         <header className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Salvar vista</h3>
+          <h3 className="text-sm font-semibold text-white">{t('inbox.views.modalTitle')}</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-200 transition-colors">
             <X className="w-4 h-4" />
           </button>
@@ -38,7 +40,7 @@ export function SaveViewModal({ filters, onClose }: Props) {
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Icon picker */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ícone</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('inbox.views.iconLabel')}</label>
             <div className="flex flex-wrap gap-2">
               {ICON_OPTIONS.map((opt) => (
                 <button
@@ -59,13 +61,13 @@ export function SaveViewModal({ filters, onClose }: Props) {
 
           {/* Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('inbox.views.nameLabel')}</label>
             <input
               required
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex.: Urgentes sem dono"
+              placeholder={t('inbox.views.namePlaceholder')}
               className="w-full bg-black/20 border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent transition-colors"
             />
           </div>
@@ -79,7 +81,7 @@ export function SaveViewModal({ filters, onClose }: Props) {
                 onChange={(e) => setIsShared(e.target.checked)}
                 className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-brand-accent focus:ring-brand-accent"
               />
-              <span className="text-sm text-slate-300">Compartilhar com a equipe</span>
+              <span className="text-sm text-slate-300">{t('inbox.views.share')}</span>
             </label>
           )}
 
@@ -89,14 +91,14 @@ export function SaveViewModal({ filters, onClose }: Props) {
               onClick={onClose}
               className="px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
             >
-              Cancelar
+              {t('inbox.views.cancel')}
             </button>
             <button
               type="submit"
               disabled={create.isPending || !name.trim()}
               className="px-4 py-1.5 text-sm rounded-md bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-50 transition-colors"
             >
-              {create.isPending ? 'Salvando...' : 'Salvar vista'}
+              {create.isPending ? t('inbox.views.saving') : t('inbox.views.submit')}
             </button>
           </div>
         </form>

@@ -80,7 +80,7 @@ export function Sidebar() {
         {views.length > 0 && (
           <div className="pt-4 mt-2">
             <p className="text-[10px] uppercase tracking-widest text-slate-600 font-bold px-3 mb-1.5">
-              Vistas
+              {t('inbox.views.section')}
             </p>
             <div className="space-y-0.5">
               {views.map((view) => {
@@ -108,7 +108,7 @@ export function Sidebar() {
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteView.mutate(view.id) }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-red-400 transition-colors p-0.5"
-                        title="Remover vista"
+                        title={t('inbox.views.deleteTitle')}
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>

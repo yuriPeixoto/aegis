@@ -52,6 +52,10 @@ class TicketResponse(BaseModel):
     tags: list[TagResponse] = []
     merged_into_ticket_id: int | None = None
     merged_at: datetime | None = None
+    csat_rating: int | None = None
+    csat_comment: str | None = None
+    csat_submitted_at: datetime | None = None
+    csat_requested_at: datetime | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
