@@ -13,6 +13,7 @@ const STYLE: Record<string, string> = {
   RESOLVED:       'bg-green-500/20 text-green-300 border-green-500/30',
   CLOSED:         'bg-slate-500/20 text-slate-400 border-slate-500/30',
   CANCELLED:      'bg-red-500/10 text-red-400 border-red-500/20',
+  MERGED:         'bg-slate-500/10 text-slate-500 border-slate-500/20',
 }
 
 export function StatusBadge({ status }: { status: string }) {
