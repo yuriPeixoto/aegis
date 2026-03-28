@@ -1,7 +1,7 @@
 # ADR-007 — Notificações em tempo real para tickets urgentes
 
 **Data:** 2026-03-28
-**Status:** Pendente (débito técnico — Phase 3)
+**Status:** Implementado
 
 ---
 

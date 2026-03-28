@@ -267,7 +267,8 @@
       "autoClose": "Auto-close",
       "tags": "Tags",
       "cannedResponses": "Respostas Prontas",
-      "escalation": "Escalação"
+      "escalation": "Escalação",
+    "notifications": "Notificações"
     },
     "users": {
       "title": "Usuários",
@@ -429,6 +430,20 @@
         "saved": "Configurações salvas ✓"
       }
     },
+    "notifications": {
+      "title": "Preferências de notificação",
+      "subtitle": "Controle como o Aegis chama sua atenção quando chegam tickets de alta prioridade.",
+      "osLabel": "Notificação do sistema operacional",
+      "osHint": "Balão do Windows/Mac mesmo com o Aegis minimizado. Clicar na notificação abre o ticket.",
+      "badgeLabel": "Badge no título da aba",
+      "badgeHint": "Mostra (N) na aba do browser quando há tickets urgentes/high não vistos.",
+      "soundLabel": "Som",
+      "soundHint": "Toca um som curto ao receber novo ticket urgente/high. Requer que a aba esteja em foco.",
+      "requestPermission": "Pedir permissão ao browser",
+      "permissionGranted": "Permissão concedida",
+      "permissionDenied": "Permissão negada — desbloqueie nas configurações do browser.",
+      "permissionPending": "Permissão pendente"
+    },
     "escalation": {
       "title": "Regras de escalação",
       "subtitle": "Defina condições para escalação automática de tickets. Execute manualmente ou via cron:",
@@ -495,6 +510,17 @@
       "deleted": "Tag excluída.",
       "error": "Erro ao salvar tag.",
       "errorDelete": "Erro ao excluir tag."
+    }
+  },
+  "notifications": {
+    "newUrgentTicket": "Novo ticket {{priority}} — atenção!",
+    "newMessage": "Nova mensagem — {{source}}",
+    "bell": {
+      "title": "Notificações",
+      "markAllRead": "Marcar todas como lidas",
+      "empty": "Nenhuma notificação",
+      "mentionedYou": "mencionou você em",
+      "justNow": "agora"
     }
   }
 }
