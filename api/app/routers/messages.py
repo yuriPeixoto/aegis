@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from app.core.dependencies import DbSession
 from app.models.ticket_message import TicketMessage
 from app.services.attachment_service import AttachmentService
 from app.services.message_service import MessageService
+from app.services.notification_service import NotificationService
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
 
@@ -27,11 +29,19 @@ class AttachmentInfo(BaseModel):
     download_url: str
 
 
+class MessageAuthor(BaseModel):
+    id: int
+    name: str
+
+
 class MessageResponse(BaseModel):
     id: int
     direction: str
     author_name: str
+    author_user_id: int | None
     body: str
+    is_internal: bool
+    mentioned_user_ids: list[int]
     created_at: datetime
     attachments: list[AttachmentInfo] = []
 
@@ -43,7 +53,10 @@ def _to_response(m: TicketMessage) -> MessageResponse:
         id=m.id,
         direction=m.direction,
         author_name=m.author_name,
+        author_user_id=m.author_user_id,
         body=m.body,
+        is_internal=m.is_internal,
+        mentioned_user_ids=m.mentioned_user_ids or [],
         created_at=m.created_at,
         attachments=[
             AttachmentInfo(
@@ -75,13 +88,27 @@ async def send_message(
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
     body: str = Form(...),
+    is_internal: bool = Form(False),
+    mentioned_user_ids: str = Form("[]"),
     file: UploadFile | None = FastAPIFile(None),
 ) -> MessageResponse:
     ticket = await TicketService(db).get_ticket(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
-    message = await MessageService(db).create_outbound(ticket, body, current_user.name)
+    try:
+        parsed_mentions: list[int] = json.loads(mentioned_user_ids)
+    except (json.JSONDecodeError, ValueError):
+        parsed_mentions = []
+
+    message = await MessageService(db).create_outbound(
+        ticket,
+        body,
+        current_user.name,
+        is_internal=is_internal,
+        author_user_id=current_user.id,
+        mentioned_user_ids=parsed_mentions,
+    )
 
     # Handle optional attachment
     webhook_attachments: list[dict] = []
@@ -107,7 +134,17 @@ async def send_message(
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
-    if ticket.source and ticket.source.webhook_url:
+    # Create mention notifications for internal notes
+    if is_internal and parsed_mentions:
+        await NotificationService(db).create_mention_notifications(
+            message=message,
+            ticket=ticket,
+            actor_name=current_user.name,
+            mentioned_user_ids=parsed_mentions,
+        )
+
+    # Internal notes are never pushed to source systems
+    if not is_internal and ticket.source and ticket.source.webhook_url:
         webhook_payload: dict = {
             "external_id": ticket.external_id,
             "body": body,

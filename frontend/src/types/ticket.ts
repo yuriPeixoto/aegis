@@ -66,24 +66,14 @@ export interface TicketListResponse {
   offset: number
 }
 
-export interface NoteAuthor {
-  id: number
-  name: string
-}
-
-export interface TicketNote {
-  id: number
-  ticket_id: number
-  body: string
-  author: NoteAuthor | null
-  created_at: string
-}
-
 export interface TicketMessage {
   id: number
   direction: 'inbound' | 'outbound'
   author_name: string
+  author_user_id: number | null
   body: string
+  is_internal: boolean
+  mentioned_user_ids: number[]
   created_at: string
   attachments?: {
     id: number

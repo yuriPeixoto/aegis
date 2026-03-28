@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
-  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil
+  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock
 } from 'lucide-react'
 import { api } from '../lib/axios'
 import type { TicketMessage } from '../types/ticket'
@@ -24,11 +24,11 @@ import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 import { useCannedResponses, useApplyCannedResponse } from '../hooks/useCannedResponses'
 import { toast } from 'sonner'
 import { markTicketAsViewed } from '../hooks/useInboundNotifications'
+import { useMarkTicketRead } from '../hooks/useNotifications'
 import { StatusBadge } from '../components/inbox/StatusBadge'
 import { PriorityBadge } from '../components/inbox/PriorityBadge'
 import { TypeBadge } from '../components/inbox/TypeBadge'
 import { SlaBadge } from '../components/inbox/SlaBadge'
-import { NotesPanel } from '../components/inbox/NotesPanel'
 import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
 import TagSelector from '../components/inbox/TagSelector'
 
@@ -231,6 +231,9 @@ export function TicketDetailPage() {
 
   const [replyBody, setReplyBody] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
+  const [isInternal, setIsInternal] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionAnchor, setMentionAnchor] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -243,26 +246,69 @@ export function TicketDetailPage() {
     replyRef.current?.focus()
   }, { enabled: !!ticket })
 
+  const markTicketRead = useMarkTicketRead()
+
   // Mark ticket as viewed so the unread dot clears and notifications stop for this ticket
   useEffect(() => {
     markTicketAsViewed(ticketId)
+    markTicketRead.mutate(ticketId)
   }, [ticketId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
+  const extractMentions = useCallback((text: string): number[] => {
+    return users.filter((u) => text.includes(`@${u.name}`)).map((u) => u.id)
+  }, [users])
+
   const handleSend = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = replyBody.trim()
     if (!trimmed) return
     sendMessage(
-      { body: trimmed, file: replyFile },
+      {
+        body: trimmed,
+        file: replyFile,
+        is_internal: isInternal,
+        mentioned_user_ids: isInternal ? extractMentions(trimmed) : [],
+      },
       { onSuccess: () => { setReplyBody(''); setReplyFile(null) } },
     )
-  }, [replyBody, replyFile, sendMessage])
+  }, [replyBody, replyFile, isInternal, extractMentions, sendMessage])
+
+  const handleReplyChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    setReplyBody(value)
+    if (!isInternal) { setMentionQuery(null); return }
+    const cursor = e.target.selectionStart ?? value.length
+    const match = value.slice(0, cursor).match(/@(\w*)$/)
+    if (match) {
+      setMentionQuery(match[1].toLowerCase())
+      setMentionAnchor(cursor - match[0].length)
+    } else {
+      setMentionQuery(null)
+    }
+  }, [isInternal])
+
+  const filteredMentionUsers = mentionQuery !== null
+    ? users.filter((u) => u.name.toLowerCase().includes(mentionQuery!))
+    : []
+
+  const insertMention = useCallback((user: { id: number; name: string }) => {
+    const cursor = replyRef.current?.selectionStart ?? replyBody.length
+    const before = replyBody.slice(0, mentionAnchor)
+    const after = replyBody.slice(cursor)
+    setReplyBody(`${before}@${user.name} ${after}`)
+    setMentionQuery(null)
+    replyRef.current?.focus()
+  }, [replyBody, mentionAnchor])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (mentionQuery !== null && filteredMentionUsers.length > 0) {
+      if (e.key === 'Enter') { e.preventDefault(); insertMention(filteredMentionUsers[0]); return }
+      if (e.key === 'Escape') { e.preventDefault(); setMentionQuery(null); return }
+    }
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       handleSend(e as unknown as React.FormEvent)
@@ -324,6 +370,33 @@ export function TicketDetailPage() {
             ) : (
               messages.map((msg) => {
                 const isOutbound = msg.direction === 'outbound'
+                if (msg.is_internal) {
+                  return (
+                    <div key={msg.id} className="flex flex-col gap-1">
+                      <div className="rounded-xl px-4 py-2.5 text-sm leading-relaxed bg-amber-950/40 border border-amber-700/40 text-amber-100">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">
+                            {t('inbox.detail.internalNote')}
+                          </span>
+                        </div>
+                        <span className="whitespace-pre-wrap break-words">
+                          {msg.body.split(/(@\S+)/g).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="font-semibold text-amber-300">{part}</span>
+                              : part
+                          )}
+                        </span>
+                        <MessageAttachments attachments={msg.attachments} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-medium text-amber-600">{msg.author_name}</span>
+                        <span className="text-[10px] text-slate-600">·</span>
+                        <span className="text-[10px] font-mono text-slate-500">{formatTime(msg.created_at, locale)}</span>
+                      </div>
+                    </div>
+                  )
+                }
                 return (
                   <div
                     key={msg.id}
@@ -381,17 +454,65 @@ export function TicketDetailPage() {
             </div>
 
             <form onSubmit={handleSend}>
-              <div className="flex gap-3 items-end">
-              <textarea
-                ref={replyRef}
-                value={replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('inbox.detail.replyPlaceholder')}
-                rows={3}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:border-brand-accent"
-              />
-              <div className="flex flex-col gap-2 shrink-0">
+              {/* Mode toggle */}
+              <div className="flex gap-1 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsInternal(false)}
+                  className={`text-[10px] font-semibold px-2.5 py-1 rounded transition-colors ${
+                    !isInternal
+                      ? 'bg-brand-accent/20 border border-brand-accent/40 text-brand-accent'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {t('inbox.detail.replyPublic')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsInternal(true)}
+                  className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded transition-colors ${
+                    isInternal
+                      ? 'bg-amber-950/60 border border-amber-700/50 text-amber-400'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Lock className="w-2.5 h-2.5" />
+                  {t('inbox.detail.internalNote')}
+                </button>
+              </div>
+
+              <div className="flex gap-3 items-stretch">
+              <div className="relative flex-1">
+                <textarea
+                  ref={replyRef}
+                  value={replyBody}
+                  onChange={handleReplyChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isInternal ? t('inbox.detail.internalNotePlaceholder') : t('inbox.detail.replyPlaceholder')}
+                  rows={3}
+                  className={`h-full w-full rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none transition-colors ${
+                    isInternal
+                      ? 'bg-amber-950/30 border border-amber-700/40 focus:border-amber-600'
+                      : 'bg-slate-800 border border-slate-700 focus:border-brand-accent'
+                  }`}
+                />
+                {/* @mention dropdown */}
+                {mentionQuery !== null && filteredMentionUsers.length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-1 w-48 bg-brand-surface border border-brand-border rounded-lg shadow-xl z-50 overflow-hidden">
+                    {filteredMentionUsers.slice(0, 6).map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); insertMention(user) }}
+                        className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-amber-400 font-semibold">@</span>{user.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 shrink-0 justify-end">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -409,7 +530,9 @@ export function TicketDetailPage() {
                 <button
                   type="submit"
                   disabled={sendPending || !replyBody.trim()}
-                  className="p-2.5 rounded-lg bg-brand-accent text-white hover:bg-brand-accent/90 disabled:opacity-40 transition-colors"
+                  className={`p-2.5 rounded-lg text-white disabled:opacity-40 transition-colors ${
+                    isInternal ? 'bg-amber-700 hover:bg-amber-600' : 'bg-brand-accent hover:bg-brand-accent/90'
+                  }`}
                   title={t('inbox.detail.send')}
                 >
                   <Send className="w-4 h-4" />
@@ -429,7 +552,9 @@ export function TicketDetailPage() {
                 </button>
               </div>
             )}
-            <p className="text-[10px] text-slate-600 mt-1.5">{t('inbox.detail.replyHint')}</p>
+            <p className="text-[10px] text-slate-600 mt-1.5">
+              {isInternal ? t('inbox.detail.internalNoteHint') : t('inbox.detail.replyHint')}
+            </p>
             </form>
           </div>
         </div>
@@ -606,11 +731,6 @@ export function TicketDetailPage() {
           {/* Attachments */}
           <div className="border-b border-brand-border/50">
             <AttachmentsPanel ticketId={ticket.id} />
-          </div>
-
-          {/* Notes */}
-          <div className="border-b border-brand-border/50">
-            <NotesPanel ticketId={ticket.id} locale={locale} />
           </div>
 
           {/* Event history */}
