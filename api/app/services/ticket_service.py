@@ -304,7 +304,23 @@ class TicketService:
     ) -> Ticket:
         # Find the Aegis Internal source
         source_result = await self._db.execute(select(Source).where(Source.slug == "aegis"))
-        source = source_result.scalar_one()
+        source = source_result.scalar_one_or_none()
+
+        if source is None:
+            # Fallback to create the source if it doesn't exist, to prevent 500 errors
+            from app.core.security import generate_api_key, hash_api_key
+            import secrets
+            plain_key = generate_api_key()
+            webhook_secret = secrets.token_hex(32)
+            source = Source(
+                name="Aegis Internal",
+                slug="aegis",
+                api_key_hash=hash_api_key(plain_key),
+                webhook_secret=webhook_secret,
+                is_active=True
+            )
+            self._db.add(source)
+            await self._db.flush()
 
         # Generate external_id: AEGIS-<timestamp>
         now = datetime.now(UTC)

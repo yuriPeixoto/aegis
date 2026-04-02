@@ -6,8 +6,7 @@ export type TicketStatus =
   | 'WAITING_CLIENT'
   | 'WAITING_DEV'
   | 'IN_DEV'
-  | 'WAITING_TEST'
-  | 'IN_TEST'
+  | 'PENDING_CLOSURE'
   | 'RESOLVED'
   | 'CLOSED'
   | 'CANCELLED'
@@ -95,6 +94,19 @@ export interface TicketAttachment {
   size_bytes: number
   created_at: string
   download_url: string
+}
+
+export interface NoteAuthor {
+  id: number
+  name: string
+}
+
+export interface Note {
+  id: number
+  ticket_id: number
+  body: string
+  author: NoteAuthor | null
+  created_at: string
 }
 
 export interface TicketFilters {

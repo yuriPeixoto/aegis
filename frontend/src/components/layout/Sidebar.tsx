@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2 } from 'lucide-react'

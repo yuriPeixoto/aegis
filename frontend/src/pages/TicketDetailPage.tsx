@@ -16,8 +16,6 @@ import {
   useMessages,
   useSendMessage,
   useOverrideSla,
-  useTags,
-  useUpdateTicketTags,
 } from '../hooks/useTickets'
 import { useMe } from '../hooks/useAuth'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'

@@ -7,6 +7,7 @@ import type {
   TicketMessage,
   TicketAttachment,
   Tag,
+  Note,
 } from '../types/ticket'
 
 export function useTickets(filters: TicketFilters = {}) {
@@ -292,6 +293,29 @@ export function useMergeTicket(ticketId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+    },
+  })
+}
+
+export function useNotes(ticketId: number) {
+  return useQuery<Note[]>({
+    queryKey: ['notes', ticketId],
+    queryFn: async () => {
+      const { data } = await api.get<Note[]>(`/tickets/${ticketId}/notes`)
+      return data
+    },
+  })
+}
+
+export function useCreateNote(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<Note, Error, { body: string }>({
+    mutationFn: async (payload) => {
+      const { data } = await api.post<Note>(`/tickets/${ticketId}/notes`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', ticketId] })
     },
   })
 }

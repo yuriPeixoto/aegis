@@ -17,6 +17,7 @@ class TicketIngestPayload(BaseModel):
     source_metadata: dict | None = None
     source_created_at: datetime | None = None
     source_updated_at: datetime | None = None
+    assigned_to_user_id: int | None = None
 
 
 class TicketEventPayload(BaseModel):

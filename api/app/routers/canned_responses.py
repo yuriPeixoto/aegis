@@ -131,6 +131,7 @@ async def apply_canned_response(
                     "status": new_status,
                     "changed_by": current_user.name,
                 },
+                webhook_url_internal=ticket.source.webhook_url_internal,
             )
 
     # 3. Send the message (reply)
@@ -149,6 +150,7 @@ async def apply_canned_response(
                 "agent_name": current_user.name,
                 "attachments": [],
             },
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     # Reload message with attachments (if any, though apply-canned doesn't support them yet)

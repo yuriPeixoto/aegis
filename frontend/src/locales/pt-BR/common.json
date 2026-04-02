@@ -151,7 +151,7 @@
     "action": {
       "startProgress": "Iniciar Atendimento",
       "waitClient": "Aguardar Cliente",
-      "pendingClosure": "Aguardar Validação",
+      "pendingClosure": "Ag. Validação",
       "resolve": "Resolver",
       "cancel": "Cancelar",
       "reopen": "Reabrir",
@@ -160,11 +160,9 @@
     "OPEN": "Aberto",
     "IN_PROGRESS": "Em Atendimento",
     "WAITING_CLIENT": "Aguardando Cliente",
-    "PENDING_CLOSURE": "Aguardando Validação",
+    "PENDING_CLOSURE": "Ag. Validação",
     "WAITING_DEV": "Ag. Desenvolvimento",
     "IN_DEV": "Em Desenvolvimento",
-    "WAITING_TEST": "Ag. Teste",
-    "IN_TEST": "Em Teste",
     "RESOLVED": "Resolvido",
     "CLOSED": "Fechado",
     "CANCELLED": "Cancelado"
