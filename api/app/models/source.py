@@ -22,6 +22,7 @@ class Source(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     sla_hours: Mapped[int | None] = mapped_column(nullable=True)
     webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    webhook_url_internal: Mapped[str | None] = mapped_column(String(500), nullable=True)
     webhook_secret: Mapped[str | None] = mapped_column(String(100), nullable=True)
     csat_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     csat_sampling_pct: Mapped[int] = mapped_column(default=100, nullable=False)

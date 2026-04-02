@@ -40,6 +40,8 @@ class SourceService:
             source.is_active = data.is_active
         if data.webhook_url is not None:
             source.webhook_url = data.webhook_url or None  # empty string → NULL
+        if data.webhook_url_internal is not None:
+            source.webhook_url_internal = data.webhook_url_internal or None  # empty string → NULL
         await self._db.commit()
         await self._db.refresh(source)
         return source

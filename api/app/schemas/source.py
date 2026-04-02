@@ -16,6 +16,7 @@ class SourceResponse(BaseModel):
     slug: str
     is_active: bool
     webhook_url: str | None = None
+    webhook_url_internal: str | None = None
     csat_enabled: bool = False
     csat_sampling_pct: int = 100
     created_at: datetime
@@ -34,6 +35,7 @@ class SourceUpdate(BaseModel):
     name: str | None = Field(None, min_length=2, max_length=255)
     is_active: bool | None = None
     webhook_url: str | None = Field(None, max_length=500)
+    webhook_url_internal: str | None = Field(None, max_length=500)
     csat_enabled: bool | None = None
     csat_sampling_pct: int | None = Field(None, ge=1, le=100)
 

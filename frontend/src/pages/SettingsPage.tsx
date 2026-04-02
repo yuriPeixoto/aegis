@@ -9,11 +9,11 @@ import { useAllUsers, useCreateUser, useUpdateUser } from '../hooks/useUsers'
 import { useSlaSettings, useUpdateBusinessHours, useUpdateSlaPolicy, useCreateHoliday, useDeleteHoliday } from '../hooks/useSlaSettings'
 import { useAutoCloseSettings, useUpdateAutoCloseSettings } from '../hooks/useAutoCloseSettings'
 import { useCannedResponses, useCreateCannedResponse, useUpdateCannedResponse, useDeleteCannedResponse } from '../hooks/useCannedResponses'
-import { useTags, type TagCreate, type TagUpdate } from '../hooks/useTags'
+import { useTags, type TagCreate } from '../hooks/useTags'
 import { useEscalationRules, useCreateEscalationRule, useUpdateEscalationRule, useDeleteEscalationRule, useRunEscalation, type EscalationRule, type EscalationRuleCreate } from '../hooks/useEscalation'
 import { getNotifPrefs, setNotifPref } from '../hooks/useInboundNotifications'
 import type { User } from '../hooks/useAuth'
-import type { CannedResponse, CannedResponseActions } from '../hooks/useCannedResponses'
+import type { CannedResponse } from '../hooks/useCannedResponses'
 import type { Tag } from '../types/ticket'
 
 const TABS = [
@@ -1333,7 +1333,7 @@ function ApiKeyAlert({ api_key, webhook_secret, onClose }: { api_key: string; we
 
 const inputCls = 'w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-accent'
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Modal({ title, onClose: _onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-md p-6">
