@@ -157,6 +157,7 @@ async def send_message(
             webhook_secret=ticket.source.webhook_secret,
             event_type="agent_reply",
             payload=webhook_payload,
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     # Reload message with attachment relationship populated

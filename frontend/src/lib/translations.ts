@@ -8,8 +8,8 @@ const TRANSLATIONS: Record<string, Translations> = {
   en: {
     status: {
       OPEN: 'Open', IN_PROGRESS: 'In Progress', WAITING_CLIENT: 'Awaiting Client',
-      WAITING_DEV: 'Awaiting Dev', IN_DEV: 'In Development', WAITING_TEST: 'Awaiting Test',
-      IN_TEST: 'In Testing', PENDING_CLOSURE: 'Pending Closure',
+      WAITING_DEV: 'Awaiting Dev', IN_DEV: 'In Development',
+      PENDING_CLOSURE: 'Awaiting Customer Validation',
       RESOLVED: 'Resolved', CLOSED: 'Closed', CANCELLED: 'Cancelled', MERGED: 'Merged',
     },
     priority: { URGENT: 'Urgent', HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' },
@@ -18,8 +18,8 @@ const TRANSLATIONS: Record<string, Translations> = {
   'pt-BR': {
     status: {
       OPEN: 'Aberto', IN_PROGRESS: 'Em Atendimento', WAITING_CLIENT: 'Ag. Cliente',
-      WAITING_DEV: 'Ag. Desenvolvimento', IN_DEV: 'Em Desenvolvimento', WAITING_TEST: 'Ag. Teste',
-      IN_TEST: 'Em Teste', PENDING_CLOSURE: 'Ag. Validação',
+      WAITING_DEV: 'Ag. Desenvolvimento', IN_DEV: 'Em Desenvolvimento',
+      PENDING_CLOSURE: 'Ag. Validação',
       RESOLVED: 'Resolvido', CLOSED: 'Fechado', CANCELLED: 'Cancelado', MERGED: 'Mesclado',
     },
     priority: { URGENT: 'Urgente', HIGH: 'Alto', MEDIUM: 'Médio', LOW: 'Baixo' },

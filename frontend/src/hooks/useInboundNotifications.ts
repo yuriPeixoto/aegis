@@ -142,7 +142,7 @@ export function useInboundNotifications() {
       if (knownIdsRef.current!.has(ticket.id)) return
       if (ticket.priority !== 'high' && ticket.priority !== 'urgent') return
       // Agents only see tickets assigned to them
-      if (!isAdmin && ticket.assigned_to_user_id !== me.id) return
+      if (!isAdmin && ticket.assigned_to?.id !== me.id) return
 
       fireOsNotif(
         t('notifications.newUrgentTicket', {
@@ -164,7 +164,7 @@ export function useInboundNotifications() {
     // ── 2. New client messages on existing tickets ────────────────────────────
     data.items.forEach((ticket) => {
       if (!ticket.last_inbound_at) return
-      if (!isAdmin && ticket.assigned_to_user_id !== me.id) return
+      if (!isAdmin && ticket.assigned_to?.id !== me.id) return
 
       const prev = prevInboundRef.current![ticket.id]
       if (prev === ticket.last_inbound_at) return

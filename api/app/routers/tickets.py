@@ -195,6 +195,7 @@ async def update_ticket_status(
                 "status": body.status,
                 "changed_by": current_user.name,
             },
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     # CSAT request: send when ticket is resolved/closed and source has CSAT enabled
@@ -221,6 +222,7 @@ async def update_ticket_status(
                 "external_id": ticket.external_id,
                 "ticket_id": ticket.id,
             },
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     return _detail(ticket)
@@ -249,6 +251,7 @@ async def assign_ticket(
                 "external_id": ticket.external_id,
                 "assigned_to_name": agent_name,
             },
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     return _detail(ticket)
@@ -319,6 +322,7 @@ async def override_sla(
                 "changed_by": admin.name,
                 **({"reason": body.reason} if body.reason else {}),
             },
+            webhook_url_internal=ticket.source.webhook_url_internal,
         )
 
     ticket = await svc.get_ticket(ticket_id)
@@ -428,6 +432,7 @@ async def bulk_update_tickets(
                         "changed_by": current_user.name,
                         **({"comment": body.comment} if body.comment else {}),
                     },
+                    webhook_url_internal=ticket.source.webhook_url_internal,
                 )
             if body.priority:
                 background_tasks.add_task(
@@ -440,6 +445,7 @@ async def bulk_update_tickets(
                         "priority": body.priority,
                         "changed_by": current_user.name,
                     },
+                    webhook_url_internal=ticket.source.webhook_url_internal,
                 )
             if body.assigned_to_user_id is not None:
                 agent_name = ticket.assignee.name if ticket.assignee else "Unassigned"
@@ -452,6 +458,7 @@ async def bulk_update_tickets(
                         "external_id": ticket.external_id,
                         "assigned_to_name": agent_name,
                     },
+                    webhook_url_internal=ticket.source.webhook_url_internal,
                 )
 
     return updated_tickets

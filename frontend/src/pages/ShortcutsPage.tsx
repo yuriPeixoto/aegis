@@ -35,7 +35,7 @@ export function ShortcutsPage() {
       ],
     },
     {
-      title: t('inbox.bulk.selected', { count: '' }).trim(),
+      title: t('inbox.bulk.selected', { count: 0 }).trim(),
       shortcuts: [
         { keys: ['A'], description: t('nav.shortcutAssign') },
         { keys: ['S'], description: t('nav.shortcutBulkStatus') },

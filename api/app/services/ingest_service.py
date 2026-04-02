@@ -64,6 +64,7 @@ class IngestService:
                 source_created_at=data.source_created_at,
                 source_updated_at=data.source_updated_at,
                 sla_due_at=sla_due_at,
+                assigned_to_user_id=data.assigned_to_user_id,
             )
             self._db.add(ticket)
             await self._db.flush()  # get the id without committing

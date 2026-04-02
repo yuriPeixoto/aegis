@@ -151,7 +151,7 @@
     "action": {
       "startProgress": "Start Progress",
       "waitClient": "Await Client",
-      "pendingClosure": "Pending Closure",
+      "pendingClosure": "Awaiting Customer Validation",
       "resolve": "Resolve",
       "cancel": "Cancel",
       "reopen": "Reopen",
@@ -160,11 +160,9 @@
     "OPEN": "Open",
     "IN_PROGRESS": "In Progress",
     "WAITING_CLIENT": "Awaiting Client",
-    "PENDING_CLOSURE": "Pending Closure",
+    "PENDING_CLOSURE": "Awaiting Customer Validation",
     "WAITING_DEV": "Awaiting Dev",
     "IN_DEV": "In Development",
-    "WAITING_TEST": "Awaiting Test",
-    "IN_TEST": "In Testing",
     "RESOLVED": "Resolved",
     "CLOSED": "Closed",
     "CANCELLED": "Cancelled"
