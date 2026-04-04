@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.routers import (
+    analytics,
     attachments,
     auth,
     canned_responses,
@@ -50,6 +51,7 @@ app = FastAPI(
 
 
 app.include_router(auth.router)
+app.include_router(analytics.router)
 app.include_router(sources.router)
 app.include_router(ingest.router)
 app.include_router(tickets.router)
