@@ -73,7 +73,7 @@
 
 | # | Feature | Description | Priority | Status | i18n |
 |---|---------|-------------|----------|--------|------|
-| 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time. See [ADR-008](adr/008_analytics_ml_extension_points.md) for ML extension points. | High | ✅ | |
+| 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time. See [ADR-008](adr/008_analytics_ml_extension_points.md) for ML extension points. | High | ✅ | — |
 | 2 | Date range picker | Filter all dashboard metrics by configurable date range — reusable component for all analytics screens | High | | |
 | 3 | Agent Profile Page | Dedicated per-agent page: KPI strip (total, open, resolved, MTTR, SLA rate, avg CSAT), volume trend chart, workload by priority/type charts, full ticket history with filters. Admins select any agent; agents see their own. Linked from Team Monitor and User Management. | High | | |
 | 4 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High | | |
