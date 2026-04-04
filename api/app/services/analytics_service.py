@@ -84,21 +84,25 @@ class AnalyticsService:
         )
         total_period: int = r.scalar_one()
 
+        # Tickets do período que ainda estão ativos
         r = await self._db.execute(
             select(func.count()).where(
                 _src,
                 Ticket.assigned_to_user_id == user_id,
+                Ticket.first_ingested_at.between(start, end),
                 ~Ticket.status.in_(_TERMINAL),
             )
         )
         currently_open: int = r.scalar_one()
 
+        # Tickets do período em status terminal (resolved + closed + cancelled + pending_closure)
+        # Garante: total_period == currently_open + resolved_period
         r = await self._db.execute(
             select(func.count()).where(
                 _src,
                 Ticket.assigned_to_user_id == user_id,
-                Ticket.status.in_(_RESOLVED),
-                func.coalesce(Ticket.resolved_at, Ticket.last_synced_at).between(start, end),
+                Ticket.first_ingested_at.between(start, end),
+                Ticket.status.in_(_TERMINAL),
             )
         )
         resolved_period: int = r.scalar_one()

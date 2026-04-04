@@ -89,7 +89,7 @@ export function DateRangePicker({ from, to, onChange }: Props) {
             value={from}
             max={to}
             onChange={(e) => applyCustom(e.target.value, to)}
-            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]"
           />
           <span className="text-xs text-slate-600">→</span>
           <input
@@ -98,7 +98,7 @@ export function DateRangePicker({ from, to, onChange }: Props) {
             min={from}
             max={today()}
             onChange={(e) => applyCustom(from, e.target.value)}
-            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]"
           />
         </div>
       )}
