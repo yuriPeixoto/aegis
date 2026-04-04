@@ -37,6 +37,13 @@
     "signOut": "Sign out",
     "myProfile": "My Profile"
   },
+  "dateRange": {
+    "today": "Today",
+    "7d": "7 days",
+    "30d": "30 days",
+    "90d": "90 days",
+    "custom": "Custom"
+  },
   "profile": {
     "title": "My Profile",
     "changeAvatar": "Change photo",

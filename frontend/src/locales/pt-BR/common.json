@@ -27,6 +27,13 @@
     "signOut": "Sair",
     "myProfile": "Meu Perfil"
   },
+  "dateRange": {
+    "today": "Hoje",
+    "7d": "7 dias",
+    "30d": "30 dias",
+    "90d": "90 dias",
+    "custom": "Personalizado"
+  },
   "profile": {
     "title": "Meu Perfil",
     "changeAvatar": "Alterar foto",
