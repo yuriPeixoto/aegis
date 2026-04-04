@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.models.user import User
 
@@ -56,6 +59,30 @@ class UserService:
             user.is_active = is_active
         if is_senior is not None:
             user.is_senior = is_senior
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def update_profile(
+        self,
+        user_id: int,
+        name: str | None = None,
+        email: str | None = None,
+        avatar_filename: str | None = None,
+    ) -> User | None:
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+        if name is not None:
+            user.name = name
+        if email is not None:
+            user.email = email
+        if avatar_filename is not None:
+            # Delete old avatar file if present
+            if user.avatar:
+                old_path = Path(settings.upload_dir) / "avatars" / user.avatar
+                old_path.unlink(missing_ok=True)
+            user.avatar = avatar_filename
         await self._db.commit()
         await self._db.refresh(user)
         return user
