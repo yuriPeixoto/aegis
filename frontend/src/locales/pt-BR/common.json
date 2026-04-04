@@ -24,7 +24,19 @@
     "shortcutBulkPriority": "Mudar prioridade (em lote)"
   },
   "topbar": {
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "myProfile": "Meu Perfil"
+  },
+  "profile": {
+    "title": "Meu Perfil",
+    "changeAvatar": "Alterar foto",
+    "saved": "Salvo ✓",
+    "errorGeneric": "Algo deu errado. Tente novamente.",
+    "passwordTooShort": "A senha deve ter pelo menos 8 caracteres.",
+    "changePasswordTitle": "Alterar Senha",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar nova senha",
+    "changePasswordSave": "Alterar senha"
   },
   "common": {
     "clear": "Limpar",

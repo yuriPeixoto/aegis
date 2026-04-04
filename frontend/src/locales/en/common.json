@@ -34,7 +34,19 @@
     "loading": "Loading..."
   },
   "topbar": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "myProfile": "My Profile"
+  },
+  "profile": {
+    "title": "My Profile",
+    "changeAvatar": "Change photo",
+    "saved": "Saved ✓",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "changePasswordTitle": "Change Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePasswordSave": "Change password"
   },
   "login": {
     "subtitle": "Centralized Support Hub",

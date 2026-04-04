@@ -10,6 +10,7 @@ export interface User {
   is_active: boolean
   is_senior: boolean
   must_change_password: boolean
+  avatar: string | null
   created_at: string
 }
 
@@ -52,6 +53,21 @@ export function useLogin() {
       } else {
         navigate('/')
       }
+    },
+  })
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const { data } = await api.patch<User>('/auth/me', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['me'] })
     },
   })
 }
