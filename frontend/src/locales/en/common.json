@@ -37,6 +37,32 @@
     "signOut": "Sign out",
     "myProfile": "My Profile"
   },
+  "agentProfile": {
+    "title": "Agent Profile",
+    "memberSince": "Member since",
+    "volumeTrend": "Ticket Volume",
+    "byPriority": "Workload by Priority",
+    "byType": "Distribution by Type",
+    "ticketHistory": "Ticket History",
+    "ticketsAll": "All",
+    "ticketsActive": "Active",
+    "subject": "Subject",
+    "status": "Status",
+    "priority": "Priority",
+    "client": "Client",
+    "date": "Date",
+    "tickets": "tickets",
+    "noData": "No data for this period.",
+    "kpi": {
+      "totalPeriod": "In period",
+      "open": "Open",
+      "resolved": "Resolved",
+      "mttr": "Avg time",
+      "slaRate": "SLA rate",
+      "slaTarget": "Target: 80%",
+      "csat": "Avg CSAT"
+    }
+  },
   "dateRange": {
     "today": "Today",
     "7d": "7 days",
@@ -203,7 +229,8 @@
       "title": "Dashboard",
       "overview": "Overview",
       "monitor": "Team Monitor",
-      "reports": "Reports"
+      "reports": "Reports",
+      "agents": "Agents"
     },
     "reports": {
       "soon": "Coming soon",
@@ -234,6 +261,7 @@
       "title": "Agent Workload",
       "subtitle": "Active tickets · Overdue · Resolved (30d)",
       "empty": "No agents found.",
+      "viewProfile": "View profile",
       "colAgent": "Agent",
       "colOpen": "Active",
       "colOverdue": "Overdue",

@@ -27,6 +27,32 @@
     "signOut": "Sair",
     "myProfile": "Meu Perfil"
   },
+  "agentProfile": {
+    "title": "Perfil do Agente",
+    "memberSince": "Membro desde",
+    "volumeTrend": "Volume de Chamados",
+    "byPriority": "Carga por Prioridade",
+    "byType": "Distribuição por Tipo",
+    "ticketHistory": "Histórico de Chamados",
+    "ticketsAll": "Todos",
+    "ticketsActive": "Em aberto",
+    "subject": "Assunto",
+    "status": "Status",
+    "priority": "Prioridade",
+    "client": "Cliente",
+    "date": "Data",
+    "tickets": "chamados",
+    "noData": "Nenhum dado no período.",
+    "kpi": {
+      "totalPeriod": "No período",
+      "open": "Em aberto",
+      "resolved": "Resolvidos",
+      "mttr": "Tempo Médio",
+      "slaRate": "Taxa de SLA",
+      "slaTarget": "Meta: 80%",
+      "csat": "CSAT Médio"
+    }
+  },
   "dateRange": {
     "today": "Hoje",
     "7d": "7 dias",
@@ -203,7 +229,8 @@
       "title": "Dashboard",
       "overview": "Visão Geral",
       "monitor": "Monitor de Equipe",
-      "reports": "Relatórios"
+      "reports": "Relatórios",
+      "agents": "Agentes"
     },
     "reports": {
       "soon": "Em breve",
@@ -234,6 +261,7 @@
       "title": "Carga por Atendente",
       "subtitle": "Chamados ativos · Atrasados · Resolvidos (30d)",
       "empty": "Nenhum atendente encontrado.",
+      "viewProfile": "Ver perfil",
       "colAgent": "Atendente",
       "colOpen": "Ativos",
       "colOverdue": "Atrasados",

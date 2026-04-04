@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LogOut, UserCircle } from 'lucide-react'
+import { LogOut, UserCircle, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useMe, useLogout } from '../../hooks/useAuth'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -8,10 +8,10 @@ import { NotificationBell } from './NotificationBell'
 import { Avatar } from '../common/Avatar'
 
 interface TopBarProps {
-  title: string
+  breadcrumbs: string[]
 }
 
-export function TopBar({ title }: TopBarProps) {
+export function TopBar({ breadcrumbs }: TopBarProps) {
   const { t } = useTranslation()
   const { data: user } = useMe()
   const logout = useLogout()
@@ -32,9 +32,23 @@ export function TopBar({ title }: TopBarProps) {
 
   return (
     <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-brand-border bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-10">
-      <h1 className="text-sm font-semibold text-slate-200 tracking-wide">{title}</h1>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 min-w-0">
+        {breadcrumbs.map((crumb, i) => (
+          <span key={i} className="flex items-center gap-1.5 min-w-0">
+            {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />}
+            <span
+              className={`text-sm font-semibold tracking-wide truncate ${
+                i < breadcrumbs.length - 1 ? 'text-slate-500' : 'text-slate-200'
+              }`}
+            >
+              {crumb}
+            </span>
+          </span>
+        ))}
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         <LanguageSwitcher />
         <NotificationBell />
 
