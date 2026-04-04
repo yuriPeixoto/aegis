@@ -7,6 +7,7 @@ import { SettingsPage } from '../pages/SettingsPage'
 import { ChangePasswordPage } from '../pages/ChangePasswordPage'
 import { TicketDetailPage } from '../pages/TicketDetailPage'
 import { ShortcutsPage } from '../pages/ShortcutsPage'
+import { ProfilePage } from '../pages/ProfilePage'
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         path: '/shortcuts',
         element: <ShortcutsPage />,
+      },
+      {
+        path: '/profile',
+        element: <ProfilePage />,
       },
     ],
   },

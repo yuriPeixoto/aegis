@@ -67,17 +67,19 @@
 
 ## Phase 4 — Analytics & Reporting
 > Goal: visibility into support patterns and team performance.
+> Items ordered by execution sequence: API foundation first, high-urgency agent view early, exports deferred until data model is stable.
 
 | # | Feature | Description | Priority | Status | i18n |
 |---|---------|-------------|----------|--------|------|
 | 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time | High | | |
-| 2 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High | | |
-| 3 | Date range picker | Filter all dashboard metrics by configurable date range | High | | |
-| 4 | CSV export | Export filtered ticket list or report summary to CSV | Medium | | |
-| 5 | PDF report | Executive summary with charts (ReportLab / WeasyPrint) | Medium | | |
-| 6 | CSAT analytics | Average rating per source/period, response rate, rating distribution histogram, worst-rated tickets list | High | | |
-| 7 | Automatic insights *(ML)* | Detect anomalies in volume/type/SLA — surface "Type X up 40% this month at Client Y" without manual querying | Medium | | |
-| 8 | SLA breach predictor *(ML)* | Flag tickets statistically likely to breach SLA before they do, based on ticket type, priority and historical resolution times — feeds a "at-risk" widget on the dashboard | Medium | | |
+| 2 | Date range picker | Filter all dashboard metrics by configurable date range — reusable component for all analytics screens | High | | |
+| 3 | Agent Profile Page | Dedicated per-agent page: KPI strip (total, open, resolved, MTTR, SLA rate, avg CSAT), volume trend chart, workload by priority/type charts, full ticket history with filters. Admins select any agent; agents see their own. Linked from Team Monitor and User Management. | High | | |
+| 4 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High | | |
+| 5 | CSAT analytics | Average rating per source/period, response rate, rating distribution histogram, worst-rated tickets list | High | | |
+| 6 | Automatic insights *(ML)* | Detect anomalies in volume/type/SLA — surface "Type X up 40% this month at Client Y" without manual querying | Medium | | |
+| 7 | SLA breach predictor *(ML)* | Flag tickets statistically likely to breach SLA before they do, based on ticket type, priority and historical resolution times — feeds a "at-risk" widget on the dashboard | Medium | | |
+| 8 | CSV export | Export filtered ticket list or report summary to CSV | Medium | | |
+| 9 | PDF report | Executive summary with charts (ReportLab / WeasyPrint) | Medium | | |
 
 ---
 

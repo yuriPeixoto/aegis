@@ -24,6 +24,7 @@ class UserResponse(BaseModel):
     is_active: bool
     is_senior: bool
     must_change_password: bool
+    avatar: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

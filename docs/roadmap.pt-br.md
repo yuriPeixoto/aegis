@@ -44,8 +44,9 @@
 
 ---
 
-## Fase 3 — Central de Suporte Completa
+## Fase 3 — Central de Suporte Completa ✅
 > Objetivo: Aegis se torna uma central de suporte completa — à altura do Zendesk/Freshdesk, adaptada a este ecossistema.
+> **Concluída em:** 28/03/2026
 
 | # | Funcionalidade | Descrição | Status |
 |---|----------------|-----------|--------|
@@ -53,40 +54,46 @@
 | 2 | Fechamento automático | Fechar automaticamente chamados inativos além de um prazo configurável | ✅ |
 | 3 | Operações em lote | Atribuir, fechar e alterar prioridade em massa direto da inbox | ✅ |
 | 4 | Respostas prontas | Templates de resposta pré-escritos para problemas recorrentes | ✅ |
-| 5 | Etiquetas de chamado | Rótulos livres para classificação e filtragem | Média |
-| 6 | Notas internas na conversa | Notas visíveis apenas para o time, intercaladas na visualização da conversa | Média |
-| 7 | Mesclagem de chamados | Mesclar chamados duplicados do mesmo cliente | Média |
-| 8 | Regras de escalonamento | Escalonar automaticamente chamados vencidos ou de alta prioridade para agente sênior | Média |
-| 9 | Visões customizadas / filtros salvos | Salvar um conjunto de filtros como uma visão nomeada (ex.: "Urgentes sem atribuição") | Média |
-| 10 | CSAT (pesquisa de satisfação) | Breve pedido de feedback enviado ao cliente ao fechar o chamado | Baixa |
-| 11 | Portal do cliente | Área de autoatendimento para clientes acompanharem seus próprios chamados | Baixa |
+| 5 | Etiquetas de chamado | Rótulos livres para classificação e filtragem | ✅ |
+| 6 | Notas internas na conversa | Notas visíveis apenas para o time, intercaladas na linha do tempo — com @menção de agentes | ✅ |
+| 6.1 | Central de @menções | Ícone de sino no cabeçalho com badge de não lidas; dropdown com "X mencionou você em #ID"; clique navega ao chamado e marca como lida; marcação automática ao abrir o chamado | ✅ |
+| 7 | Mesclagem de chamados | Mesclar chamados duplicados — mensagens consolidadas, origem fica com status=merged, irreversível | ✅ |
+| 8 | Regras de escalonamento | Escalonar automaticamente chamados vencidos ou de alta prioridade para agente sênior | ✅ |
+| 9 | Visões customizadas / filtros salvos | Salvar um conjunto de filtros como uma visão nomeada (ex.: "Urgentes sem atribuição") | ✅ |
+| 10 | CSAT (pesquisa de satisfação) | Breve pedido de feedback enviado ao cliente ao fechar o chamado — flag por fonte, % de amostragem, fluxo bidirecional via webhook com o gestão frota | ✅ |
+| 11 | Notificações browser para chamados urgentes | Balão do SO + badge na aba + som opcional quando um chamado high/urgent chega — admins notificados mesmo quando o Aegis não está em foco. Preferências por usuário nas Configurações. Ver [ADR-007](adr/007_browser_notifications.md) | ✅ |
 
 ---
 
 ## Fase 4 — Analytics e Relatórios
 > Objetivo: visibilidade sobre os padrões de suporte e a performance do time.
+> Itens ordenados por sequência de execução: API como fundação primeiro, visão de agente (alta urgência dos admins) logo em seguida, exports adiados até o modelo de dados estar estável.
 
-| # | Funcionalidade | Descrição | Prioridade |
-|---|----------------|-----------|------------|
-| 1 | API de analytics | MTTR por fonte/tipo/prioridade, tendências de volume, conformidade de SLA ao longo do tempo | Alta |
-| 2 | Dashboard de relatórios | Gráficos (Recharts): volume de chamados, tempo de resolução, taxa de SLA, breakdown por agente | Alta |
-| 3 | Seletor de período | Filtrar todas as métricas do dashboard por intervalo de datas configurável | Alta |
-| 4 | Exportação CSV | Exportar lista filtrada de chamados ou resumo de relatório para CSV | Média |
-| 5 | Relatório em PDF | Resumo executivo com gráficos (ReportLab / WeasyPrint) | Média |
-| 6 | Insights automáticos | "Tipo X aumentou 40% este mês no Cliente Y" — detectar anomalias automaticamente | Baixa |
+| # | Funcionalidade | Descrição | Prioridade | Status |
+|---|----------------|-----------|------------|--------|
+| 1 | API de analytics | MTTR por fonte/tipo/prioridade, tendências de volume, conformidade de SLA ao longo do tempo | Alta | |
+| 2 | Seletor de período | Filtrar todas as métricas do dashboard por intervalo de datas configurável — componente reutilizável em todas as telas de analytics | Alta | |
+| 3 | Página de Perfil do Agente | Página dedicada por agente: KPIs (total, abertos, resolvidos, MTTR, taxa de SLA, CSAT médio), gráfico de volume temporal, gráficos de carga por prioridade e tipo, histórico completo de chamados com filtros. Admins selecionam qualquer agente; agentes veem o próprio. Linkada no Monitor de Equipe e na Gestão de Usuários. | Alta | |
+| 4 | Dashboard de relatórios | Gráficos (Recharts): volume de chamados, tempo de resolução, taxa de SLA, breakdown por agente | Alta | |
+| 5 | Analytics de CSAT | Nota média por fonte/período, taxa de resposta, histograma de distribuição, lista de chamados com pior avaliação | Alta | |
+| 6 | Insights automáticos *(ML)* | Detectar anomalias em volume/tipo/SLA — "Tipo X aumentou 40% este mês no Cliente Y" sem consultas manuais | Média | |
+| 7 | Preditor de breach de SLA *(ML)* | Sinalizar chamados com alta probabilidade de violar o SLA antes que isso ocorra, com base em tipo, prioridade e histórico de resolução — alimenta um widget "em risco" no dashboard | Média | |
+| 8 | Exportação CSV | Exportar lista filtrada de chamados ou resumo de relatório para CSV | Média | |
+| 9 | Relatório em PDF | Resumo executivo com gráficos (ReportLab / WeasyPrint) | Média | |
 
 ---
 
 ## Fase 5 — Integração com o Ecossistema
 > Objetivo: conectar o Aegis ao restante do ecossistema interno.
 
-| # | Funcionalidade | Descrição |
-|---|----------------|-----------|
-| 1 | Integração Maestro | Receber webhooks de anomalia como chamados de incidente automáticos |
-| 2 | Integração Orquestra | Decisões de governança geram chamados rastreáveis no Aegis |
-| 3 | Webhook de saída genérico | Webhooks de saída configuráveis por tipo de evento para qualquer fonte |
-| 4 | Importação histórica | Ingestão em lote do histórico de chamados existente no gestão frota |
-| 5 | API de log de auditoria | Trilha completa e imutável de eventos consultável externamente para fins de conformidade |
+| # | Funcionalidade | Descrição | Prioridade |
+|---|----------------|-----------|------------|
+| 1 | Integração Maestro | Receber webhooks de anomalia como chamados de incidente automáticos | Alta |
+| 2 | Integração Orquestra | Decisões de governança geram chamados rastreáveis no Aegis | Média |
+| 3 | Webhook de saída genérico | Webhooks de saída configuráveis por tipo de evento para qualquer fonte | Média |
+| 4 | Importação histórica | Ingestão em lote do histórico de chamados existente no gestão frota | Alta |
+| 5 | API de log de auditoria | Trilha completa e imutável de eventos consultável externamente para fins de conformidade | Média |
+| 6 | Portal do cliente | Área de autoatendimento para clientes acompanharem seus próprios chamados (movido da Fase 3) | Baixa |
 
 ---
 
@@ -99,19 +106,22 @@
 | 2 | Notificação por e-mail: novo chamado | Notificar time/admin quando um chamado de alta prioridade chegar |
 | 3 | Notificação por e-mail: SLA vencido | Alertar agente e gestor quando o prazo de SLA for ultrapassado |
 | 4 | Digest por e-mail | Resumo diário/semanal de chamados abertos, vencidos e resolvidos para gestores |
-| 5 | E-mail de entrada | Receber respostas do cliente por e-mail e encadeá-las de volta na conversa do chamado |
+| 5 | Notificação por e-mail: @menção | Notificar o agente por e-mail quando @mencionado em uma nota interna — complementa a central de notificações in-app (3.6.1) |
+| 6 | E-mail de entrada | Receber respostas do cliente por e-mail e encadeá-las de volta na conversa do chamado |
 
 ---
 
-## Fase 7 — Suporte Interno (Aegis-on-Aegis) ✅
-> Objetivo: transformar o Aegis em sua própria ferramenta de melhoria e feedback.
+## Fase 7 — Inteligência (ML/IA)
+> Objetivo: evoluir de fluxos reativos baseados em regras para assistência proativa e orientada a dados — sem substituir a lógica explicável onde auditabilidade é essencial.
+>
+> **Pré-requisito:** os dados de analytics da Fase 4 devem existir e ser suficientemente ricos (mínimo ~6 meses de histórico em produção) antes que o treinamento seja viável.
 
-| # | Funcionalidade | Descrição | Status |
-|---|----------------|-----------|--------|
-| 1 | Documentar proposta | Analisar ferramentas e definir estrutura de tickets internos | ✅ |
-| 2 | Source 'Aegis' | Criar e garantir a fonte de dados interna no banco | ✅ |
-| 3 | Endpoint de criação | API para usuários autenticados criarem chamados sem chave externa | ✅ |
-| 4 | UI de criação | Modal e botão flutuante para feedback rápido dentro da ferramenta | ✅ |
-| 5 | Notificação interna | Notificar admins sobre novos feedbacks de agentes | ⏳ |
-
----
+| # | Funcionalidade | Descrição | Prioridade |
+|---|----------------|-----------|------------|
+| 1 | Sugestão automática de prioridade | Na ingestão do chamado, sugerir prioridade com base no texto do título/descrição e padrões históricos da fonte — agente pode aceitar ou substituir | Alta |
+| 2 | Categorização automática (tipo) | Classificar o `type` do chamado (bug / melhoria / dúvida / suporte) automaticamente a partir do texto livre usando um classificador ajustado — reduz triagem manual | Alta |
+| 3 | Escalonamento proativo de SLA | Estender o motor de escalonamento baseado em regras (3.8) com um sinal de ML: escalonar chamados com previsão de breach mesmo sem regra determinística disparada | Média |
+| 4 | Preditor de nota CSAT | Prever a nota de satisfação esperada antes do envio da pesquisa, com base em tempo de resolução, número de respostas, agente e tipo — destaca clientes possivelmente insatisfeitos para follow-up proativo | Média |
+| 5 | Balanceador de carga do agente | Sugerir o atribuído ideal para novos chamados com base na fila atual, velocidade histórica de resolução por tipo e disponibilidade do agente | Média |
+| 6 | Análise de sentimento nas respostas | Detectar frustração ou urgência nas mensagens do cliente e sinalizar o chamado visualmente — complementa o CSAT ao identificar clientes insatisfeitos antes do fechamento | Baixa |
+| 7 | Detecção de duplicatas | Sugerir automaticamente a mesclagem de novos chamados semanticamente similares a chamados abertos — estende a funcionalidade de mesclagem manual (3.7) | Baixa |

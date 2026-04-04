@@ -9,6 +9,7 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/': 'nav.inbox',
   '/dashboard': 'nav.dashboard',
   '/settings': 'nav.settings',
+  '/profile': 'profile.title',
 }
 
 export function AppShell() {
