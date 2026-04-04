@@ -68,16 +68,18 @@
 ## Fase 4 — Analytics e Relatórios
 > Objetivo: visibilidade sobre os padrões de suporte e a performance do time.
 > Itens ordenados por sequência de execução: API como fundação primeiro, visão de agente (alta urgência dos admins) logo em seguida, exports adiados até o modelo de dados estar estável.
+>
+> **Pontos de extensão para ML:** a API de analytics (4.1) foi projetada com ganchos explícitos para os itens ML abaixo (4.6, 4.7) e para a Phase 7. Antes de implementar qualquer feature ML, leia o [ADR-008](adr/008_analytics_ml_extension_points.md) — ele documenta os contratos de `features{}`, `insights[]`, `meta{}` e `granularity`, e lista exatamente quais endpoints adicionar em `/v1/analytics/` sem tocar nos existentes.
 
 | # | Funcionalidade | Descrição | Prioridade | Status |
 |---|----------------|-----------|------------|--------|
-| 1 | API de analytics | MTTR por fonte/tipo/prioridade, tendências de volume, conformidade de SLA ao longo do tempo | Alta | |
+| 1 | API de analytics | MTTR por fonte/tipo/prioridade, tendências de volume, conformidade de SLA ao longo do tempo. Ver [ADR-008](adr/008_analytics_ml_extension_points.md) para pontos de extensão ML. | Alta | ✅ |
 | 2 | Seletor de período | Filtrar todas as métricas do dashboard por intervalo de datas configurável — componente reutilizável em todas as telas de analytics | Alta | |
 | 3 | Página de Perfil do Agente | Página dedicada por agente: KPIs (total, abertos, resolvidos, MTTR, taxa de SLA, CSAT médio), gráfico de volume temporal, gráficos de carga por prioridade e tipo, histórico completo de chamados com filtros. Admins selecionam qualquer agente; agentes veem o próprio. Linkada no Monitor de Equipe e na Gestão de Usuários. | Alta | |
 | 4 | Dashboard de relatórios | Gráficos (Recharts): volume de chamados, tempo de resolução, taxa de SLA, breakdown por agente | Alta | |
 | 5 | Analytics de CSAT | Nota média por fonte/período, taxa de resposta, histograma de distribuição, lista de chamados com pior avaliação | Alta | |
-| 6 | Insights automáticos *(ML)* | Detectar anomalias em volume/tipo/SLA — "Tipo X aumentou 40% este mês no Cliente Y" sem consultas manuais | Média | |
-| 7 | Preditor de breach de SLA *(ML)* | Sinalizar chamados com alta probabilidade de violar o SLA antes que isso ocorra, com base em tipo, prioridade e histórico de resolução — alimenta um widget "em risco" no dashboard | Média | |
+| 6 | Insights automáticos *(ML)* | Detectar anomalias em volume/tipo/SLA — "Tipo X aumentou 40% este mês no Cliente Y" sem consultas manuais. Injetar resultados no array `insights[]` já presente em `GET /v1/analytics/overview` — ver [ADR-008 §2](adr/008_analytics_ml_extension_points.md). | Média | |
+| 7 | Preditor de breach de SLA *(ML)* | Sinalizar chamados com alta probabilidade de violar o SLA antes que isso ocorra, com base em tipo, prioridade e histórico de resolução — alimenta um widget "em risco" no dashboard. Adicionar `GET /v1/analytics/predictions/sla` no router existente — ver [ADR-008 §5](adr/008_analytics_ml_extension_points.md). | Média | |
 | 8 | Exportação CSV | Exportar lista filtrada de chamados ou resumo de relatório para CSV | Média | |
 | 9 | Relatório em PDF | Resumo executivo com gráficos (ReportLab / WeasyPrint) | Média | |
 
@@ -115,13 +117,15 @@
 > Objetivo: evoluir de fluxos reativos baseados em regras para assistência proativa e orientada a dados — sem substituir a lógica explicável onde auditabilidade é essencial.
 >
 > **Pré-requisito:** os dados de analytics da Fase 4 devem existir e ser suficientemente ricos (mínimo ~6 meses de histórico em produção) antes que o treinamento seja viável.
+>
+> **Antes de implementar qualquer item aqui:** leia o [ADR-008](adr/008_analytics_ml_extension_points.md). A API de analytics já expõe `features{}` por agente (para 7.4 e 7.5), `insights[]` no overview (para injeção de anomalias), `meta{}` para signals de predição e o namespace reservado `/v1/analytics/predictions/` para novos endpoints — tudo sem tocar nos consumidores existentes.
 
 | # | Funcionalidade | Descrição | Prioridade |
 |---|----------------|-----------|------------|
 | 1 | Sugestão automática de prioridade | Na ingestão do chamado, sugerir prioridade com base no texto do título/descrição e padrões históricos da fonte — agente pode aceitar ou substituir | Alta |
 | 2 | Categorização automática (tipo) | Classificar o `type` do chamado (bug / melhoria / dúvida / suporte) automaticamente a partir do texto livre usando um classificador ajustado — reduz triagem manual | Alta |
 | 3 | Escalonamento proativo de SLA | Estender o motor de escalonamento baseado em regras (3.8) com um sinal de ML: escalonar chamados com previsão de breach mesmo sem regra determinística disparada | Média |
-| 4 | Preditor de nota CSAT | Prever a nota de satisfação esperada antes do envio da pesquisa, com base em tempo de resolução, número de respostas, agente e tipo — destaca clientes possivelmente insatisfeitos para follow-up proativo | Média |
-| 5 | Balanceador de carga do agente | Sugerir o atribuído ideal para novos chamados com base na fila atual, velocidade histórica de resolução por tipo e disponibilidade do agente | Média |
+| 4 | Preditor de nota CSAT | Prever a nota de satisfação esperada antes do envio da pesquisa, com base em tempo de resolução, número de respostas, agente e tipo — destaca clientes possivelmente insatisfeitos para follow-up proativo. Consumir `features{}` de `GET /v1/analytics/agent/{id}` — ver [ADR-008 §1](adr/008_analytics_ml_extension_points.md). | Média |
+| 5 | Balanceador de carga do agente | Sugerir o atribuído ideal para novos chamados com base na fila atual, velocidade histórica de resolução por tipo e disponibilidade do agente. Consumir `features.currently_open` e `features.avg_mttr_hours` da API de analytics — ver [ADR-008 §1](adr/008_analytics_ml_extension_points.md). | Média |
 | 6 | Análise de sentimento nas respostas | Detectar frustração ou urgência nas mensagens do cliente e sinalizar o chamado visualmente — complementa o CSAT ao identificar clientes insatisfeitos antes do fechamento | Baixa |
 | 7 | Detecção de duplicatas | Sugerir automaticamente a mesclagem de novos chamados semanticamente similares a chamados abertos — estende a funcionalidade de mesclagem manual (3.7) | Baixa |

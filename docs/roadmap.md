@@ -68,16 +68,18 @@
 ## Phase 4 — Analytics & Reporting
 > Goal: visibility into support patterns and team performance.
 > Items ordered by execution sequence: API foundation first, high-urgency agent view early, exports deferred until data model is stable.
+>
+> **ML extension points:** The Analytics API (4.1) was designed with explicit hooks for the ML items below (4.6, 4.7) and for Phase 7. Before implementing any ML feature, read [ADR-008](adr/008_analytics_ml_extension_points.md) — it documents the `features{}`, `insights[]`, `meta{}` and `granularity` contracts, and lists exactly which endpoints to add under `/v1/analytics/` without touching the existing ones.
 
 | # | Feature | Description | Priority | Status | i18n |
 |---|---------|-------------|----------|--------|------|
-| 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time | High | | |
+| 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time. See [ADR-008](adr/008_analytics_ml_extension_points.md) for ML extension points. | High | ✅ | |
 | 2 | Date range picker | Filter all dashboard metrics by configurable date range — reusable component for all analytics screens | High | | |
 | 3 | Agent Profile Page | Dedicated per-agent page: KPI strip (total, open, resolved, MTTR, SLA rate, avg CSAT), volume trend chart, workload by priority/type charts, full ticket history with filters. Admins select any agent; agents see their own. Linked from Team Monitor and User Management. | High | | |
 | 4 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High | | |
 | 5 | CSAT analytics | Average rating per source/period, response rate, rating distribution histogram, worst-rated tickets list | High | | |
-| 6 | Automatic insights *(ML)* | Detect anomalies in volume/type/SLA — surface "Type X up 40% this month at Client Y" without manual querying | Medium | | |
-| 7 | SLA breach predictor *(ML)* | Flag tickets statistically likely to breach SLA before they do, based on ticket type, priority and historical resolution times — feeds a "at-risk" widget on the dashboard | Medium | | |
+| 6 | Automatic insights *(ML)* | Detect anomalies in volume/type/SLA — surface "Type X up 40% this month at Client Y" without manual querying. Inject results into the `insights[]` array already present in `GET /v1/analytics/overview` — see [ADR-008 §2](adr/008_analytics_ml_extension_points.md). | Medium | | |
+| 7 | SLA breach predictor *(ML)* | Flag tickets statistically likely to breach SLA before they do, based on ticket type, priority and historical resolution times — feeds a "at-risk" widget on the dashboard. Add `GET /v1/analytics/predictions/sla` under the existing router — see [ADR-008 §5](adr/008_analytics_ml_extension_points.md). | Medium | | |
 | 8 | CSV export | Export filtered ticket list or report summary to CSV | Medium | | |
 | 9 | PDF report | Executive summary with charts (ReportLab / WeasyPrint) | Medium | | |
 
@@ -115,13 +117,15 @@
 > Goal: move from reactive rule-based workflows to proactive, data-driven assistance — without replacing explainable business logic where auditability matters.
 >
 > **Prerequisite:** Phase 4 analytics data must exist and be sufficiently rich (minimum ~6 months of production history) before training is viable.
+>
+> **Before implementing any item here:** read [ADR-008](adr/008_analytics_ml_extension_points.md). The Analytics API already exposes `features{}` per agent (for 7.4 and 7.5), `insights[]` in the overview (for anomaly injection), `meta{}` for prediction signals, and a reserved namespace `/v1/analytics/predictions/` for new endpoints — all without touching existing consumers.
 
 | # | Feature | Description | Priority | Status | i18n |
 |---|---------|-------------|----------|--------|------|
 | 1 | Auto-priority suggestion | On ticket ingest, suggest priority based on subject/description text and historical patterns for that source — agent can accept or override | High | | |
 | 2 | Auto-categorization (type) | Classify ticket `type` (bug / improvement / question / support) automatically from free text using a fine-tuned classifier — reduces manual triaging | High | | |
 | 3 | Proactive SLA escalation | Extend the rule-based escalation engine (3.8) with an ML signal: escalate tickets predicted to breach even when no deterministic rule has triggered yet | Medium | | |
-| 4 | CSAT score predictor | Predict expected satisfaction rating before the survey is sent, based on resolution time, number of replies, agent, and ticket type — surfaces likely-unhappy clients for proactive follow-up | Medium | | |
-| 5 | Agent workload balancer | Suggest optimal assignee for incoming tickets based on current queue depth, historical resolution speed per type, and agent availability | Medium | | |
+| 4 | CSAT score predictor | Predict expected satisfaction rating before the survey is sent, based on resolution time, number of replies, agent, and ticket type — surfaces likely-unhappy clients for proactive follow-up. Consume `features{}` from `GET /v1/analytics/agent/{id}` — see [ADR-008 §1](adr/008_analytics_ml_extension_points.md). | Medium | | |
+| 5 | Agent workload balancer | Suggest optimal assignee for incoming tickets based on current queue depth, historical resolution speed per type, and agent availability. Consume `features.currently_open` and `features.avg_mttr_hours` from the Analytics API — see [ADR-008 §1](adr/008_analytics_ml_extension_points.md). | Medium | | |
 | 6 | Sentiment analysis on replies | Detect frustration or urgency in client messages and visually flag the ticket — complements CSAT by catching dissatisfied clients before ticket close | Low | | |
 | 7 | Duplicate detection | Automatically suggest merging new tickets that are semantically similar to existing open ones — extends the manual merge feature (3.7) | Low | | |
