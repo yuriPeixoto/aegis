@@ -234,7 +234,29 @@
     },
     "reports": {
       "soon": "Em breve",
-      "soonHint": "Relatórios de desempenho, volume e SLA estão em desenvolvimento."
+      "soonHint": "Relatórios de desempenho, volume e SLA estão em desenvolvimento.",
+      "kpi": {
+        "opened": "Chamados Abertos",
+        "resolved": "Resolvidos",
+        "mttr": "MTTR Médio",
+        "slaRate": "Taxa de SLA"
+      },
+      "volumeTrend": "Volume de Chamados",
+      "resolutionTrend": "Tempo de Resolução",
+      "byPriority": "Por Prioridade",
+      "byType": "Por Tipo",
+      "byAgent": "Por Atendente",
+      "colAgent": "Atendente",
+      "colTotal": "Total",
+      "colResolved": "Resolvidos",
+      "colRate": "Taxa",
+      "colMttr": "MTTR",
+      "noData": "Sem dados para o período selecionado.",
+      "opened": "Abertos",
+      "resolved": "Resolvidos",
+      "mttrLabel": "MTTR (h)",
+      "bySource": "Por Cliente",
+      "colSource": "Cliente"
     },
     "alert": {
       "overdue": "{{count}} chamados em atraso",

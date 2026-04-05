@@ -234,7 +234,29 @@
     },
     "reports": {
       "soon": "Coming soon",
-      "soonHint": "Performance, volume and SLA reports are under development."
+      "soonHint": "Performance, volume and SLA reports are under development.",
+      "kpi": {
+        "opened": "Tickets Opened",
+        "resolved": "Resolved",
+        "mttr": "Avg. MTTR",
+        "slaRate": "SLA Rate"
+      },
+      "volumeTrend": "Ticket Volume",
+      "resolutionTrend": "Resolution Time",
+      "byPriority": "By Priority",
+      "byType": "By Type",
+      "byAgent": "By Agent",
+      "colAgent": "Agent",
+      "colTotal": "Total",
+      "colResolved": "Resolved",
+      "colRate": "Rate",
+      "colMttr": "MTTR",
+      "noData": "No data for the selected period.",
+      "opened": "Opened",
+      "resolved": "Resolved",
+      "mttrLabel": "MTTR (h)",
+      "bySource": "By Client",
+      "colSource": "Client"
     },
     "alert": {
       "overdue": "{{count}} overdue tickets",

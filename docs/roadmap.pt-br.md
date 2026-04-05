@@ -74,9 +74,9 @@
 | # | Funcionalidade | Descrição | Prioridade | Status |
 |---|----------------|-----------|------------|--------|
 | 1 | API de analytics | MTTR por fonte/tipo/prioridade, tendências de volume, conformidade de SLA ao longo do tempo. Ver [ADR-008](adr/008_analytics_ml_extension_points.md) para pontos de extensão ML. | Alta | ✅ |
-| 2 | Seletor de período | Filtrar todas as métricas do dashboard por intervalo de datas configurável — componente reutilizável em todas as telas de analytics | Alta | |
-| 3 | Página de Perfil do Agente | Página dedicada por agente: KPIs (total, abertos, resolvidos, MTTR, taxa de SLA, CSAT médio), gráfico de volume temporal, gráficos de carga por prioridade e tipo, histórico completo de chamados com filtros. Admins selecionam qualquer agente; agentes veem o próprio. Linkada no Monitor de Equipe e na Gestão de Usuários. | Alta | |
-| 4 | Dashboard de relatórios | Gráficos (Recharts): volume de chamados, tempo de resolução, taxa de SLA, breakdown por agente | Alta | |
+| 2 | Seletor de período | Filtrar todas as métricas do dashboard por intervalo de datas configurável — componente reutilizável em todas as telas de analytics | Alta | ✅ |
+| 3 | Página de Perfil do Agente | Página dedicada por agente: KPIs (total, abertos, resolvidos, MTTR, taxa de SLA, CSAT médio), gráfico de volume temporal, gráficos de carga por prioridade e tipo, histórico completo de chamados com filtros. Admins selecionam qualquer agente; agentes veem o próprio. Linkada no Monitor de Equipe e na Gestão de Usuários. | Alta | ✅ |
+| 4 | Dashboard de relatórios | Gráficos (Recharts): volume de chamados, tempo de resolução, taxa de SLA, breakdown por agente e por cliente | Alta | ✅ |
 | 5 | Analytics de CSAT | Nota média por fonte/período, taxa de resposta, histograma de distribuição, lista de chamados com pior avaliação | Alta | |
 | 6 | Insights automáticos *(ML)* | Detectar anomalias em volume/tipo/SLA — "Tipo X aumentou 40% este mês no Cliente Y" sem consultas manuais. Injetar resultados no array `insights[]` já presente em `GET /v1/analytics/overview` — ver [ADR-008 §2](adr/008_analytics_ml_extension_points.md). | Média | |
 | 7 | Preditor de breach de SLA *(ML)* | Sinalizar chamados com alta probabilidade de violar o SLA antes que isso ocorra, com base em tipo, prioridade e histórico de resolução — alimenta um widget "em risco" no dashboard. Adicionar `GET /v1/analytics/predictions/sla` no router existente — ver [ADR-008 §5](adr/008_analytics_ml_extension_points.md). | Média | |

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { CalendarDays } from 'lucide-react'
 import { daysAgo, today, diffDays, autoGranularity } from '../../hooks/useDateRange'
 import type { Granularity } from '../../hooks/useAnalytics'
+import { DateInput } from './DateInput'
 
 interface DateRange {
   from: string
@@ -84,21 +85,17 @@ export function DateRangePicker({ from, to, onChange }: Props) {
       {/* Custom date inputs */}
       {custom && (
         <div className="flex items-center gap-1.5 ml-1">
-          <input
-            type="date"
+          <DateInput
             value={from}
             max={to}
-            onChange={(e) => applyCustom(e.target.value, to)}
-            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]"
+            onChange={(v) => applyCustom(v, to)}
           />
           <span className="text-xs text-slate-600">→</span>
-          <input
-            type="date"
+          <DateInput
             value={to}
             min={from}
             max={today()}
-            onChange={(e) => applyCustom(from, e.target.value)}
-            className="bg-white/5 border border-brand-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]"
+            onChange={(v) => applyCustom(from, v)}
           />
         </div>
       )}
