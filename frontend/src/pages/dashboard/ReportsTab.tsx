@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
+  BarChart, Bar, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ComposedChart, PieChart, Pie, Cell,
   Legend, CartesianGrid,
 } from 'recharts'
