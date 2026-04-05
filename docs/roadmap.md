@@ -74,9 +74,9 @@
 | # | Feature | Description | Priority | Status | i18n |
 |---|---------|-------------|----------|--------|------|
 | 1 | Analytics API | MTTR per source/type/priority, volume trends, SLA compliance over time. See [ADR-008](adr/008_analytics_ml_extension_points.md) for ML extension points. | High | ✅ | — |
-| 2 | Date range picker | Filter all dashboard metrics by configurable date range — reusable component for all analytics screens | High | | |
-| 3 | Agent Profile Page | Dedicated per-agent page: KPI strip (total, open, resolved, MTTR, SLA rate, avg CSAT), volume trend chart, workload by priority/type charts, full ticket history with filters. Admins select any agent; agents see their own. Linked from Team Monitor and User Management. | High | | |
-| 4 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent breakdown | High | | |
+| 2 | Date range picker | Filter all dashboard metrics by configurable date range — reusable component for all analytics screens | High | ✅ | ✅ |
+| 3 | Agent Profile Page | Dedicated per-agent page: KPI strip (total, open, resolved, MTTR, SLA rate, avg CSAT), volume trend chart, workload by priority/type charts, full ticket history with filters. Admins select any agent; agents see their own. Linked from Team Monitor and User Management. | High | ✅ | ✅ |
+| 4 | Reports dashboard | Charts (Recharts): ticket volume, resolution time, SLA rate, by-agent and by-source breakdown | High | ✅ | ✅ |
 | 5 | CSAT analytics | Average rating per source/period, response rate, rating distribution histogram, worst-rated tickets list | High | | |
 | 6 | Automatic insights *(ML)* | Detect anomalies in volume/type/SLA — surface "Type X up 40% this month at Client Y" without manual querying. Inject results into the `insights[]` array already present in `GET /v1/analytics/overview` — see [ADR-008 §2](adr/008_analytics_ml_extension_points.md). | Medium | | |
 | 7 | SLA breach predictor *(ML)* | Flag tickets statistically likely to breach SLA before they do, based on ticket type, priority and historical resolution times — feeds a "at-risk" widget on the dashboard. Add `GET /v1/analytics/predictions/sla` under the existing router — see [ADR-008 §5](adr/008_analytics_ml_extension_points.md). | Medium | | |
