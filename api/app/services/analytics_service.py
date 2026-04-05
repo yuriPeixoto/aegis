@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.source import Source
@@ -27,7 +27,7 @@ def _active_src_subq():
 
 
 def _parse_range(from_date: date | None, to_date: date | None) -> tuple[datetime, datetime]:
-    tz = timezone.utc
+    tz = UTC
     start = datetime.combine(
         from_date or (date.today() - timedelta(days=30)), datetime.min.time()
     ).replace(tzinfo=tz)
@@ -64,7 +64,7 @@ class AnalyticsService:
         granularity: Granularity = 'day',
     ) -> dict | None:
         start, end = _parse_range(from_date, to_date)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         _src = _active_src_subq()
         trunc = _TRUNC[granularity]
 
@@ -322,6 +322,60 @@ class AnalyticsService:
         )
         by_priority = [{'priority': row.priority or 'unknown', 'count': row.cnt} for row in r]
 
+        # By source: total + resolved per active source in the period
+        r = await self._db.execute(
+            select(
+                Source.id,
+                Source.name,
+                func.count(Ticket.id).label('total'),
+                func.sum(
+                    case((Ticket.status.in_(_TERMINAL), 1), else_=0)
+                ).label('resolved'),
+            )
+            .join(Ticket, Ticket.source_id == Source.id)
+            .where(
+                Source.is_active.is_(True),
+                Ticket.first_ingested_at.between(start, end),
+            )
+            .group_by(Source.id, Source.name)
+            .order_by(func.count(Ticket.id).desc())
+        )
+        by_source = [
+            {
+                'source_id': row.id,
+                'name': row.name,
+                'total': row.total,
+                'resolved': row.resolved or 0,
+            }
+            for row in r
+        ]
+
+        # Global SLA rate
+        now = datetime.now(UTC)
+        r = await self._db.execute(
+            select(func.count()).where(
+                _src,
+                Ticket.sla_due_at.is_not(None),
+                Ticket.first_ingested_at.between(start, end),
+            )
+        )
+        sla_total: int = r.scalar_one()
+
+        r = await self._db.execute(
+            select(func.count()).where(
+                _src,
+                Ticket.sla_due_at.is_not(None),
+                Ticket.sla_due_at < now,
+                Ticket.sla_paused_since.is_(None),
+                ~Ticket.status.in_(_TERMINAL),
+                Ticket.first_ingested_at.between(start, end),
+            )
+        )
+        sla_overdue: int = r.scalar_one()
+        sla_rate: float | None = (
+            round((sla_total - sla_overdue) / sla_total * 100, 1) if sla_total > 0 else None
+        )
+
         # By agent: KPIs for each active agent in the period
         agents_r = await self._db.execute(
             select(User)
@@ -386,6 +440,8 @@ class AnalyticsService:
             'by_type': by_type,
             'by_priority': by_priority,
             'by_agent': by_agent,
+            'by_source': by_source,
+            'sla_rate': sla_rate,
             # ML extension point: Phase 4.7 injects anomaly signals here.
             # Shape will be: insights: [{type, message, severity, affected}]
             'insights': [],

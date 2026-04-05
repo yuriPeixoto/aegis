@@ -60,6 +60,13 @@ export interface OverviewAgentRow {
   mttr_hours: number | null
 }
 
+export interface OverviewSourceRow {
+  source_id: number
+  name: string
+  total: number
+  resolved: number
+}
+
 export interface OverviewAnalytics {
   period: AnalyticsPeriod
   granularity: Granularity
@@ -68,6 +75,8 @@ export interface OverviewAnalytics {
   by_type: BreakdownItem[]
   by_priority: BreakdownItem[]
   by_agent: OverviewAgentRow[]
+  by_source: OverviewSourceRow[]
+  sla_rate: number | null
   // ML extension: Phase 4.7 will populate this array with anomaly signals.
   insights: unknown[]
   meta: Record<string, unknown>
