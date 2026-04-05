@@ -20,7 +20,6 @@ export function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Password form state
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordSaving, setPasswordSaving] = useState(false)
@@ -75,7 +74,6 @@ export function ProfilePage() {
     setPasswordSaving(true)
     try {
       await api.post('/auth/change-password', { new_password: newPassword })
-      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
       setPasswordSaved(true)
