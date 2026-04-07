@@ -1,6 +1,6 @@
-import React, { useState, memo } from 'react'
+import React, { useRef, useState, memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Send, AlertCircle, Loader2 } from 'lucide-react'
+import { X, Send, AlertCircle, Loader2, Paperclip, XCircle } from 'lucide-react'
 import { useCreateInternalTicket } from '../../hooks/useTickets'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { FormSelect } from '../common/FormSelect'
@@ -20,10 +20,22 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
     type: 'improvement',
     priority: 'medium',
   })
+  const [files, setFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen, ignoreInputs: false })
 
   if (!isOpen) return null
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? [])
+    setFiles((prev) => [...prev, ...picked])
+    e.target.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +43,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
 
     mutate({
       ...form,
+      files,
       meta: {
         url: window.location.href,
         userAgent: navigator.userAgent,
@@ -39,12 +52,8 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
     }, {
       onSuccess: () => {
         onClose()
-        setForm({
-          subject: '',
-          description: '',
-          type: 'improvement',
-          priority: 'medium',
-        })
+        setForm({ subject: '', description: '', type: 'improvement', priority: 'medium' })
+        setFiles([])
       }
     })
   }
@@ -127,6 +136,43 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
               className="w-full bg-slate-800/50 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple/60 transition-all resize-none"
               placeholder={t('inbox.internalTicket.descriptionPlaceholder')}
             />
+          </div>
+
+          {/* Attachments */}
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFiles}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+              {t('inbox.internalTicket.attachFiles')}
+            </button>
+            {files.length > 0 && (
+              <ul className="space-y-1">
+                {files.map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 rounded-lg px-3 py-1.5">
+                    <Paperclip className="w-3 h-3 shrink-0" />
+                    <span className="truncate flex-1">{f.name}</span>
+                    <span className="text-slate-600 shrink-0">
+                      {f.size < 1024 * 1024
+                        ? `${Math.round(f.size / 1024)}KB`
+                        : `${(f.size / (1024 * 1024)).toFixed(1)}MB`}
+                    </span>
+                    <button type="button" onClick={() => removeFile(i)} className="hover:text-red-400 transition-colors">
+                      <XCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="pt-2 flex justify-end gap-3">

@@ -9,7 +9,7 @@ import { Clock, ShieldCheck, Star, Inbox, TrendingUp, Users } from 'lucide-react
 
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
-import { useAgentAnalytics, type AgentAnalytics } from '../hooks/useAnalytics'
+import { useAgentAnalytics } from '../hooks/useAnalytics'
 import { useTickets } from '../hooks/useTickets'
 import { useDateRange } from '../hooks/useDateRange'
 import { DateRangePicker } from '../components/common/DateRangePicker'
@@ -494,7 +494,7 @@ export function AgentProfilePage() {
                 </Pie>
                 <Tooltip
                   content={<ChartTooltip />}
-                  formatter={(value: number, name: string) => [value, name]}
+                  formatter={(value, name) => [value, name]}
                 />
                 <Legend
                   iconType="circle"
