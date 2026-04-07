@@ -3,7 +3,9 @@ from __future__ import annotations
 import random
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+import json
+
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile, status
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
@@ -23,6 +25,7 @@ from app.schemas.ticket import (
     TicketTagsUpdateRequest,
 )
 from app.schemas.tag import TagResponse
+from app.services.attachment_service import AttachmentService
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
 
@@ -150,18 +153,39 @@ async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
 
 @router.post("/internal", response_model=TicketDetailResponse, status_code=status.HTTP_201_CREATED)
 async def create_internal_ticket(
-    body: InternalTicketCreate,
     db: DbSession,
     current_user: CurrentUser,
+    subject: str = Form(...),
+    description: str = Form(...),
+    type: str = Form(...),
+    priority: str = Form(...),
+    meta: str | None = Form(None),
+    files: list[UploadFile] = File(default=[]),
 ) -> TicketDetailResponse:
+    meta_dict: dict | None = None
+    if meta:
+        try:
+            meta_dict = json.loads(meta)
+        except ValueError:
+            pass
+
     ticket = await TicketService(db).create_internal_ticket(
-        subject=body.subject,
-        description=body.description,
-        type=body.type,
-        priority=body.priority,
+        subject=subject,
+        description=description,
+        type=type,
+        priority=priority,
         user_id=current_user.id,
-        meta=body.meta,
+        meta=meta_dict,
     )
+
+    att_service = AttachmentService(db)
+    for file in files:
+        if file.filename:
+            try:
+                await att_service.upload(ticket.id, file, current_user.id)
+            except ValueError:
+                pass  # tipo/tamanho inválido — ignora silenciosamente, ticket já criado
+
     return _detail(ticket)
 
 
