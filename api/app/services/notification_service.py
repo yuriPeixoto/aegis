@@ -49,6 +49,65 @@ class NotificationService:
 
         await self._db.commit()
 
+    async def create_new_ticket_notifications(
+        self,
+        ticket: Ticket,
+        source_name: str,
+    ) -> None:
+        """Notify admins and the assigned agent when a new high/urgent ticket arrives."""
+        if ticket.priority not in ("high", "urgent"):
+            return
+
+        recipients = await self._resolve_ticket_recipients(ticket)
+        for user in recipients:
+            self._db.add(Notification(
+                user_id=user.id,
+                type="new_ticket",
+                ticket_id=ticket.id,
+                actor_name=source_name,
+                ticket_subject=ticket.subject,
+                ticket_external_id=ticket.external_id,
+            ))
+        await self._db.commit()
+
+    async def create_new_message_notifications(
+        self,
+        ticket: Ticket,
+        author_name: str,
+    ) -> None:
+        """Notify admins and the assigned agent when a client sends a new message."""
+        recipients = await self._resolve_ticket_recipients(ticket)
+        for user in recipients:
+            self._db.add(Notification(
+                user_id=user.id,
+                type="new_client_message",
+                ticket_id=ticket.id,
+                actor_name=author_name,
+                ticket_subject=ticket.subject,
+                ticket_external_id=ticket.external_id,
+            ))
+        await self._db.commit()
+
+    async def _resolve_ticket_recipients(self, ticket: Ticket) -> list[User]:
+        """Return all active admins + the assigned agent (deduplicated)."""
+        result = await self._db.execute(
+            select(User).where(User.is_active.is_(True), User.role == "admin")
+        )
+        recipients: dict[int, User] = {u.id: u for u in result.scalars().all()}
+
+        if ticket.assigned_to_user_id and ticket.assigned_to_user_id not in recipients:
+            result = await self._db.execute(
+                select(User).where(
+                    User.id == ticket.assigned_to_user_id,
+                    User.is_active.is_(True),
+                )
+            )
+            agent = result.scalar_one_or_none()
+            if agent:
+                recipients[agent.id] = agent
+
+        return list(recipients.values())
+
     async def list_for_user(self, user_id: int, limit: int = 20) -> list[Notification]:
         result = await self._db.execute(
             select(Notification)
@@ -90,8 +149,8 @@ class NotificationService:
         )
         await self._db.commit()
 
-    async def mark_ticket_mentions_read(self, user_id: int, ticket_id: int) -> None:
-        """Auto-mark as read when user opens the ticket that has their mentions."""
+    async def mark_ticket_notifications_read(self, user_id: int, ticket_id: int) -> None:
+        """Auto-mark all notifications for this ticket as read when the user opens it."""
         await self._db.execute(
             update(Notification)
             .where(

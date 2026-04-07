@@ -60,4 +60,4 @@ async def mark_ticket_read(
     ticket_id: int, db: DbSession, current_user: CurrentUser
 ) -> None:
     """Called automatically when the user opens a ticket — clears mention notifications for it."""
-    await NotificationService(db).mark_ticket_mentions_read(current_user.id, ticket_id)
+    await NotificationService(db).mark_ticket_notifications_read(current_user.id, ticket_id)

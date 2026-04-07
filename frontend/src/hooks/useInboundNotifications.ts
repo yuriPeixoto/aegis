@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/axios'
 import { useMe } from './useAuth'
@@ -55,7 +55,6 @@ function playDing() {
 export function useInboundNotifications() {
   const { t }       = useTranslation()
   const { data: me } = useMe()
-  const { pathname } = useLocation()
   const navigate    = useNavigate()
 
   // Keep navigate stable in async callbacks
@@ -67,16 +66,6 @@ export function useInboundNotifications() {
   const prevInboundRef = useRef<Record<number, string | null> | null>(null)
   // set of ticket IDs seen so far: detects brand-new high/urgent tickets
   const knownIdsRef    = useRef<Set<number> | null>(null)
-  // count of unseen high/urgent tickets for tab badge
-  const unseenRef      = useRef(0)
-
-  // Clear badge when user is on inbox
-  useEffect(() => {
-    if (pathname === '/') {
-      unseenRef.current = 0
-      document.title = 'Aegis'
-    }
-  }, [pathname])
 
   // Request OS notification permission once on mount
   useEffect(() => {
@@ -154,11 +143,6 @@ export function useInboundNotifications() {
       )
 
       if (prefs.sound) playDing()
-
-      if (prefs.badge) {
-        unseenRef.current++
-        document.title = `(${unseenRef.current}) Aegis`
-      }
     })
 
     // ── 2. New client messages on existing tickets ────────────────────────────
