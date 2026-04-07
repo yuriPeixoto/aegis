@@ -322,9 +322,16 @@ export function useCreateNote(ticketId: number) {
 
 export function useCreateInternalTicket() {
   const queryClient = useQueryClient()
-  return useMutation<TicketDetail, Error, InternalTicketPayload>({
-    mutationFn: async (payload) => {
-      const { data } = await api.post<TicketDetail>('/tickets/internal', payload)
+  return useMutation<TicketDetail, Error, InternalTicketPayload & { files?: File[] }>({
+    mutationFn: async ({ files, ...payload }) => {
+      const form = new FormData()
+      form.append('subject', payload.subject)
+      form.append('description', payload.description)
+      form.append('type', payload.type)
+      form.append('priority', payload.priority)
+      if (payload.meta) form.append('meta', JSON.stringify(payload.meta))
+      files?.forEach((f) => form.append('files', f))
+      const { data } = await api.post<TicketDetail>('/tickets/internal', form)
       return data
     },
     onSuccess: () => {
