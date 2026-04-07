@@ -492,7 +492,10 @@ export function AgentProfilePage() {
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip
+                  content={<ChartTooltip />}
+                  formatter={(value, name) => [value, name]}
+                />
                 <Legend
                   iconType="circle"
                   iconSize={8}

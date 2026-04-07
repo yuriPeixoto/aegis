@@ -13,6 +13,7 @@ from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
 from app.services.attachment_service import AttachmentService
+from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
@@ -80,6 +81,9 @@ class IngestService:
             )
             await self._db.commit()
             await self._db.refresh(ticket)
+            await NotificationService(self._db).create_new_ticket_notifications(
+                ticket, source.name
+            )
             return ticket, True
 
         # Update existing ticket
@@ -156,6 +160,7 @@ class IngestService:
         self._db.add(event)
 
         # When the source system sends a client reply, store it as a conversation message
+        new_client_message_author: str | None = None
         if data.event_type == "client_reply" and data.payload:
             body = data.payload.get("body")
             author_name = data.payload.get("author_name", "Client")
@@ -208,6 +213,8 @@ class IngestService:
                                 exc_info=True,
                             )
 
+                    new_client_message_author = author_name
+
         # When the source system reports a status change, update the Aegis ticket
         if data.event_type == "status_changed" and data.payload:
             gf_status = data.payload.get("status")
@@ -254,4 +261,10 @@ class IngestService:
 
         await self._db.commit()
         await self._db.refresh(event)
+
+        if new_client_message_author is not None:
+            await NotificationService(self._db).create_new_message_notifications(
+                ticket, new_client_message_author
+            )
+
         return event
