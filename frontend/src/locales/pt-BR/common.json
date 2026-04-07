@@ -587,6 +587,9 @@
       "markAllRead": "Marcar todas como lidas",
       "empty": "Nenhuma notificação",
       "mentionedYou": "mencionou você em",
+      "newTicketFrom": "Novo ticket de",
+      "newMessageFrom": "Nova mensagem de",
+      "inTicket": "em",
       "justNow": "agora"
     }
   }

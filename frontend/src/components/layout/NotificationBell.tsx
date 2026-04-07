@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Bell, Lock, CheckCheck } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { Bell, AtSign, AlertTriangle, MessageCircle, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -8,6 +8,34 @@ import {
   useMarkRead,
   useMarkAllRead,
 } from '../../hooks/useNotifications'
+
+type NotifMetaResult = { icon: React.ElementType; label: React.ReactNode }
+
+function notifMeta(
+  notif: { type: string; actor_name: string; ticket_external_id: string },
+  t: (key: string, opts?: Record<string, string>) => string,
+): NotifMetaResult {
+  const id = <span className="font-mono text-amber-400">#{notif.ticket_external_id}</span>
+  const actor = <span className="font-semibold">{notif.actor_name}</span>
+
+  if (notif.type === 'new_ticket') {
+    return {
+      icon: AlertTriangle,
+      label: <>{t('notifications.bell.newTicketFrom')} {actor} {id}</>,
+    }
+  }
+  if (notif.type === 'new_client_message') {
+    return {
+      icon: MessageCircle,
+      label: <>{t('notifications.bell.newMessageFrom')} {actor} {t('notifications.bell.inTicket')} {id}</>,
+    }
+  }
+  // default: mention
+  return {
+    icon: AtSign,
+    label: <>{actor} {t('notifications.bell.mentionedYou')} {id}</>,
+  }
+}
 
 function formatRelative(iso: string, justNow: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -29,6 +57,11 @@ export function NotificationBell() {
   const { data: notifications = [] } = useNotifications()
   const markRead = useMarkRead()
   const markAllRead = useMarkAllRead()
+
+  // Sync unread count to browser tab title
+  useEffect(() => {
+    document.title = count > 0 ? `(${count}) Aegis` : 'Aegis'
+  }, [count])
 
   // Close on outside click
   useEffect(() => {
@@ -87,6 +120,7 @@ export function NotificationBell() {
             ) : (
               notifications.map((notif) => {
                 const unread = !notif.read_at
+                const { icon: Icon, label } = notifMeta(notif, t)
                 return (
                   <button
                     key={notif.id}
@@ -99,16 +133,12 @@ export function NotificationBell() {
                     <div className={`mt-0.5 shrink-0 p-1.5 rounded-lg ${
                       unread ? 'bg-amber-900/40 text-amber-400' : 'bg-white/5 text-slate-500'
                     }`}>
-                      <Lock className="w-3 h-3" />
+                      <Icon className="w-3 h-3" />
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-200 leading-snug">
-                        <span className="font-semibold">{notif.actor_name}</span>
-                        {' '}{t('notifications.bell.mentionedYou')}{' '}
-                        <span className="font-mono text-amber-400">#{notif.ticket_external_id}</span>
-                      </p>
+                      <p className="text-xs text-slate-200 leading-snug">{label}</p>
                       <p className="text-[10px] text-slate-500 truncate mt-0.5">
                         {notif.ticket_subject}
                       </p>

@@ -37,7 +37,13 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     logger.info("app: starting up")
-    Path(settings.upload_dir, "avatars").mkdir(parents=True, exist_ok=True)
+    avatar_dir = Path(settings.upload_dir) / "avatars"
+    avatar_dir.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        "/media/avatars",
+        StaticFiles(directory=str(avatar_dir)),
+        name="avatars",
+    )
     yield
     logger.info("app: shutting down")
 
@@ -65,15 +71,6 @@ app.include_router(dashboard.router)
 app.include_router(escalation.router)
 app.include_router(views.router)
 app.include_router(settings_router.router)
-
-
-avatar_dir = Path(settings.upload_dir) / "avatars"
-avatar_dir.mkdir(parents=True, exist_ok=True)
-app.mount(
-    "/media/avatars",
-    StaticFiles(directory=str(avatar_dir)),
-    name="avatars",
-)
 
 
 @app.get("/health")
