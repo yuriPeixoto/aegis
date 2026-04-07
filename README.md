@@ -46,6 +46,7 @@ cd api
 cp .env.example .env   # fill in your credentials
 pip install -r requirements.txt
 alembic upgrade head
+.\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 
 # Frontend

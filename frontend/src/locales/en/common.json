@@ -182,7 +182,8 @@
       "typeSuggestion": "Suggestion",
       "priority": "Priority",
       "description": "Description",
-      "descriptionPlaceholder": "Explain in detail what happened or what could be improved..."
+      "descriptionPlaceholder": "Explain in detail what happened or what could be improved...",
+      "attachFiles": "Attach files"
     }
   },
   "sla": {
