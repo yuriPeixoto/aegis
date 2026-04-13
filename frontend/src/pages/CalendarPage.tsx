@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Plus, X, Pencil, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react'
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
 import { useSources } from '../hooks/useSources'
@@ -25,11 +25,6 @@ function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-function formatDateStr(s: string, locale: string): string {
-  return new Date(s + 'T00:00:00').toLocaleDateString(locale, {
-    weekday: 'long', day: 'numeric', month: 'long',
-  })
-}
 
 const EVENT_COLORS: Record<CalendarEventType, string> = {
   on_call:  'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
