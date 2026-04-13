@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, status
 from pydantic import BaseModel
@@ -15,10 +15,14 @@ router = APIRouter(prefix="/v1/me/notifications", tags=["notifications"])
 class NotificationResponse(BaseModel):
     id: int
     type: str
-    ticket_id: int
-    ticket_external_id: str
-    ticket_subject: str
+    # ticket fields (null for calendar notifications)
+    ticket_id: int | None
+    ticket_external_id: str | None
+    ticket_subject: str | None
     actor_name: str
+    # calendar fields (null for ticket notifications)
+    calendar_event_id: int | None = None
+    event_date: date | None = None
     read_at: datetime | None
     created_at: datetime
 

@@ -1,4 +1,5 @@
 from app.models.business_hours import BusinessHoursConfig
+from app.models.calendar_event import CalendarEvent
 from app.models.canned_response import CannedResponse
 from app.models.escalation_rule import EscalationRule, TicketEscalation
 from app.models.saved_view import SavedView
@@ -16,6 +17,7 @@ from app.models.user import User
 
 __all__ = [
     "BusinessHoursConfig",
+    "CalendarEvent",
     "CannedResponse",
     "EscalationRule",
     "GlobalSetting",
