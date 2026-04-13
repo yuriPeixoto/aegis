@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2 } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 import { useTickets } from '../../hooks/useTickets'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
@@ -33,6 +33,7 @@ export function Sidebar() {
 
   useKeyboardShortcut('i', () => navigate('/'))
   useKeyboardShortcut('d', () => navigate('/dashboard'), { enabled: user?.role === 'admin' })
+  useKeyboardShortcut('a', () => navigate('/agenda'))
   useKeyboardShortcut('s', () => navigate('/settings'))
   useKeyboardShortcut('c', () => setIsModalOpen(true), { enabled: !isModalOpen })
   useKeyboardShortcut('ctrl+k', () => setIsModalOpen(true), { enabled: !isModalOpen })
@@ -65,6 +66,11 @@ export function Sidebar() {
             {t('nav.dashboard')}
           </NavLink>
         )}
+
+        <NavLink to="/agenda" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+          <CalendarDays className="w-4 h-4 shrink-0" />
+          {t('nav.calendar')}
+        </NavLink>
 
         <NavLink to="/settings" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
           <Settings className="w-4 h-4 shrink-0" />

@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import { Clock, ShieldCheck, Star, Inbox, TrendingUp, Users } from 'lucide-react'
+import { Clock, ShieldCheck, Star, Inbox, TrendingUp, Users, CalendarDays, BookOpen } from 'lucide-react'
 
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
@@ -18,6 +18,7 @@ import { PriorityBadge } from '../components/inbox/PriorityBadge'
 import { StatusBadge } from '../components/inbox/StatusBadge'
 import { FilterSelect } from '../components/inbox/FilterSelect'
 import type { Granularity } from '../hooks/useAnalytics'
+import { useCalendarEvents } from '../hooks/useCalendar'
 
 // ── Colour palettes ───────────────────────────────────────────────────────────
 
@@ -247,6 +248,76 @@ function TicketHistory({ userId }: { userId: number }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+
+// ── Agent Calendar Widget ─────────────────────────────────────────────────────
+
+function AgentCalendarWidget({ agentId }: { agentId: number }) {
+  const { t, i18n } = useTranslation()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const { data: events = [], isLoading } = useCalendarEvents({ agent_id: agentId, from_date: today })
+
+  const onCallEvents  = events.filter((e) => e.type === 'on_call').slice(0, 5)
+  const trainingEvents = events.filter((e) => e.type === 'training').slice(0, 5)
+
+  if (isLoading) return null
+  if (!onCallEvents.length && !trainingEvents.length) return null
+
+  function fmtDate(s: string) {
+    return new Date(s + 'T00:00:00').toLocaleDateString(i18n.language, {
+      weekday: 'short', day: 'numeric', month: 'short',
+    })
+  }
+
+  return (
+    <div>
+      <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
+        {t('agentProfile.upcomingAgenda')}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Plantões */}
+        {onCallEvents.length > 0 && (
+          <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs font-semibold text-slate-300">{t('calendar.type.on_call')}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {onCallEvents.map((ev) => (
+                <li key={ev.id} className="flex items-center gap-2 text-xs text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                  <span>{fmtDate(ev.event_date)}</span>
+                  {ev.start_time && (
+                    <span className="text-slate-600">{ev.start_time}{ev.end_time ? `–${ev.end_time}` : ''}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Treinamentos */}
+        {trainingEvents.length > 0 && (
+          <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-semibold text-slate-300">{t('calendar.type.training')}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {trainingEvents.map((ev) => (
+                <li key={ev.id} className="flex items-center gap-2 text-xs text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span>{fmtDate(ev.event_date)}</span>
+                  {ev.source && <span className="text-slate-500 truncate">— {ev.source.name}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function AgentProfilePage() {
   const { t, i18n } = useTranslation()
@@ -510,6 +581,9 @@ export function AgentProfilePage() {
           )}
         </div>
       </div>
+
+      {/* ── Agenda ── */}
+      <AgentCalendarWidget agentId={userId} />
 
       {/* ── Ticket history ── */}
       <div>

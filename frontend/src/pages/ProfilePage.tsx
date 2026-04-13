@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera } from 'lucide-react'
+import { Camera, CalendarDays, BookOpen } from 'lucide-react'
 import { useMe, useUpdateProfile } from '../hooks/useAuth'
 import { Avatar } from '../components/common/Avatar'
 import { api } from '../lib/axios'
+import { useCalendarEvents } from '../hooks/useCalendar'
 
 export function ProfilePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { data: user } = useMe()
   const updateProfile = useUpdateProfile()
 
@@ -83,6 +84,19 @@ export function ProfilePage() {
     } finally {
       setPasswordSaving(false)
     }
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: calendarEvents = [] } = useCalendarEvents(
+    user ? { agent_id: user.id, from_date: today } : {}
+  )
+  const onCallEvents   = calendarEvents.filter((e) => e.type === 'on_call').slice(0, 5)
+  const trainingEvents = calendarEvents.filter((e) => e.type === 'training').slice(0, 5)
+
+  function fmtDate(s: string) {
+    return new Date(s + 'T00:00:00').toLocaleDateString(i18n.language, {
+      weekday: 'short', day: 'numeric', month: 'short',
+    })
   }
 
   const displayAvatar = avatarPreview
@@ -166,6 +180,51 @@ export function ProfilePage() {
           </div>
         </form>
       </div>
+
+      {/* Agenda */}
+      {(onCallEvents.length > 0 || trainingEvents.length > 0) && (
+        <div className="bg-white/[0.03] border border-brand-border rounded-2xl p-6">
+          <h2 className="text-sm font-semibold text-slate-200 mb-4">{t('agentProfile.upcomingAgenda')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {onCallEvents.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarDays className="w-4 h-4 text-indigo-400" />
+                  <span className="text-xs font-semibold text-slate-300">{t('calendar.type.on_call')}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {onCallEvents.map((ev) => (
+                    <li key={ev.id} className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                      <span>{fmtDate(ev.event_date)}</span>
+                      {ev.start_time && (
+                        <span className="text-slate-600">{ev.start_time}{ev.end_time ? `–${ev.end_time}` : ''}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {trainingEvents.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-semibold text-slate-300">{t('calendar.type.training')}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {trainingEvents.map((ev) => (
+                    <li key={ev.id} className="flex items-center gap-2 text-xs text-slate-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{fmtDate(ev.event_date)}</span>
+                      {ev.source && <span className="text-slate-500 truncate">— {ev.source.name}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Change Password */}
       <div className="bg-white/[0.03] border border-brand-border rounded-2xl p-6">

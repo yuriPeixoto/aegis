@@ -21,7 +21,9 @@
     "shortcutsTicketDetail": "Ticket Details",
     "shortcutAssign": "Assign",
     "shortcutBulkStatus": "Change status (bulk)",
-    "shortcutBulkPriority": "Change priority (bulk)"
+    "shortcutBulkPriority": "Change priority (bulk)",
+    "calendar": "Agenda",
+    "shortcutCalendar": "Go to Agenda"
   },
   "common": {
     "clear": "Clear",
@@ -31,7 +33,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "create": "Create"
   },
   "topbar": {
     "signOut": "Sign out",
@@ -61,7 +64,8 @@
       "slaRate": "SLA rate",
       "slaTarget": "Target: 80%",
       "csat": "Avg CSAT"
-    }
+    },
+    "upcomingAgenda": "Upcoming Agenda"
   },
   "dateRange": {
     "today": "Today",
@@ -333,10 +337,9 @@
       "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
-      "tags": "Tags",
       "cannedResponses": "Canned Responses",
       "escalation": "Escalation",
-    "notifications": "Notifications"
+      "notifications": "Notifications"
     },
     "users": {
       "title": "Users",
@@ -591,7 +594,41 @@
       "newTicketFrom": "New ticket from",
       "newMessageFrom": "New message from",
       "inTicket": "in",
-      "justNow": "just now"
+      "justNow": "just now",
+      "onCallReminder": "On-call reminder for",
+      "trainingReminder": "Training reminder for"
+    }
+  },
+  "calendar": {
+    "title": "Agenda",
+    "subtitle": "On-call schedule and client training sessions",
+    "type": {
+      "on_call": "On-call",
+      "training": "Training"
+    },
+    "weekday": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "modal": {
+      "title_new": "New Event",
+      "title_edit": "Edit Event",
+      "type": "Type",
+      "agent": "Agent",
+      "date": "Date",
+      "start_time": "Start",
+      "end_time": "End",
+      "client": "Client",
+      "select_client": "Select a client...",
+      "notes": "Notes",
+      "notes_placeholder": "Optional notes...",
+      "delete": "Delete event",
+      "error_generic": "Something went wrong. Please try again."
     }
   }
 }

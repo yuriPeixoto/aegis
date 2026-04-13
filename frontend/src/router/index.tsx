@@ -7,6 +7,7 @@ import { TicketDetailPage } from '../pages/TicketDetailPage'
 import { ShortcutsPage } from '../pages/ShortcutsPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { AgentProfilePage } from '../pages/AgentProfilePage'
+import { CalendarPage } from '../pages/CalendarPage'
 
 import { DashboardLayout } from '../pages/dashboard/DashboardLayout'
 import { OverviewTab } from '../pages/dashboard/OverviewTab'
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
       {
         path: '/tickets/:id',
         element: <TicketDetailPage />,
+      },
+      {
+        path: '/agenda',
+        element: <CalendarPage />,
       },
       {
         path: '/shortcuts',
