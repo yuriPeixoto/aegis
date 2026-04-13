@@ -21,7 +21,9 @@
     "shortcutsTicketDetail": "Detalhes do Ticket",
     "shortcutAssign": "Atribuir",
     "shortcutBulkStatus": "Mudar status (em lote)",
-    "shortcutBulkPriority": "Mudar prioridade (em lote)"
+    "shortcutBulkPriority": "Mudar prioridade (em lote)",
+    "calendar": "Agenda",
+    "shortcutCalendar": "Ir para Agenda"
   },
   "topbar": {
     "signOut": "Sair",
@@ -51,7 +53,8 @@
       "slaRate": "Taxa de SLA",
       "slaTarget": "Meta: 80%",
       "csat": "CSAT Médio"
-    }
+    },
+    "upcomingAgenda": "Agenda"
   },
   "dateRange": {
     "today": "Hoje",
@@ -79,7 +82,8 @@
     "cancel": "Cancelar",
     "save": "Salvar",
     "saving": "Salvando...",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "create": "Criar"
   },
   "login": {
     "subtitle": "Central de Suporte",
@@ -333,10 +337,9 @@
       "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
-      "tags": "Tags",
       "cannedResponses": "Respostas Prontas",
       "escalation": "Escalação",
-    "notifications": "Notificações"
+      "notifications": "Notificações"
     },
     "users": {
       "title": "Usuários",
@@ -591,7 +594,41 @@
       "newTicketFrom": "Novo ticket de",
       "newMessageFrom": "Nova mensagem de",
       "inTicket": "em",
-      "justNow": "agora"
+      "justNow": "agora",
+      "onCallReminder": "Lembrete de plantão para",
+      "trainingReminder": "Lembrete de treinamento para"
+    }
+  },
+  "calendar": {
+    "title": "Agenda",
+    "subtitle": "Escala de plantão e treinamentos de clientes",
+    "type": {
+      "on_call": "Plantão",
+      "training": "Treinamento"
+    },
+    "weekday": {
+      "sun": "Dom",
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb"
+    },
+    "modal": {
+      "title_new": "Novo Evento",
+      "title_edit": "Editar Evento",
+      "type": "Tipo",
+      "agent": "Agent",
+      "date": "Data",
+      "start_time": "Início",
+      "end_time": "Fim",
+      "client": "Cliente",
+      "select_client": "Selecione um cliente...",
+      "notes": "Observações",
+      "notes_placeholder": "Observações opcionais...",
+      "delete": "Excluir evento",
+      "error_generic": "Algo deu errado. Tente novamente."
     }
   }
 }

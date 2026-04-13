@@ -11,6 +11,7 @@ export function ShortcutsPage() {
       shortcuts: [
         { keys: ['I'], description: t('nav.shortcutInbox') },
         { keys: ['D'], description: t('nav.shortcutDashboard') },
+        { keys: ['A'], description: t('nav.shortcutCalendar') },
         { keys: ['S'], description: t('nav.shortcutSettings') },
         { keys: ['C'], description: t('nav.shortcutReport') },
         { keys: ['Ctrl', 'K'], description: t('nav.shortcutReport') },

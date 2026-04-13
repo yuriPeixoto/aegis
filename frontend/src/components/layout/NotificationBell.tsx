@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Bell, AtSign, AlertTriangle, MessageCircle, CheckCheck } from 'lucide-react'
+import { Bell, AtSign, AlertTriangle, MessageCircle, CheckCheck, CalendarDays, BookOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,31 +9,56 @@ import {
   useMarkAllRead,
 } from '../../hooks/useNotifications'
 
-type NotifMetaResult = { icon: React.ElementType; label: React.ReactNode }
+type NotifMetaResult = { icon: React.ElementType; label: React.ReactNode; href: string }
 
 function notifMeta(
-  notif: { type: string; actor_name: string; ticket_external_id: string },
+  notif: {
+    type: string
+    actor_name: string
+    ticket_id: number | null
+    ticket_external_id: string | null
+    event_date: string | null
+  },
   t: (key: string, opts?: Record<string, string>) => string,
 ): NotifMetaResult {
+  if (notif.type === 'on_call_reminder') {
+    return {
+      icon: CalendarDays,
+      label: <>{t('notifications.bell.onCallReminder')} <span className="font-semibold">{notif.event_date}</span></>,
+      href: '/agenda',
+    }
+  }
+  if (notif.type === 'training_reminder') {
+    return {
+      icon: BookOpen,
+      label: <>{t('notifications.bell.trainingReminder')} <span className="font-semibold">{notif.event_date}</span></>,
+      href: '/agenda',
+    }
+  }
+
   const id = <span className="font-mono text-amber-400">#{notif.ticket_external_id}</span>
   const actor = <span className="font-semibold">{notif.actor_name}</span>
+  const ticketHref = `/tickets/${notif.ticket_id}`
 
   if (notif.type === 'new_ticket') {
     return {
       icon: AlertTriangle,
       label: <>{t('notifications.bell.newTicketFrom')} {actor} {id}</>,
+      href: ticketHref,
     }
   }
   if (notif.type === 'new_client_message') {
     return {
       icon: MessageCircle,
       label: <>{t('notifications.bell.newMessageFrom')} {actor} {t('notifications.bell.inTicket')} {id}</>,
+      href: ticketHref,
     }
   }
   // default: mention
   return {
     icon: AtSign,
     label: <>{actor} {t('notifications.bell.mentionedYou')} {id}</>,
+    href: ticketHref,
   }
 }
 
@@ -77,7 +102,8 @@ export function NotificationBell() {
   function handleNotificationClick(notif: typeof notifications[number]) {
     if (!notif.read_at) markRead.mutate(notif.id)
     setOpen(false)
-    navigate(`/tickets/${notif.ticket_id}`)
+    const { href } = notifMeta(notif, t)
+    navigate(href)
   }
 
   return (

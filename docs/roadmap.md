@@ -85,6 +85,21 @@
 
 ---
 
+## Phase 4.5 — Team Calendar
+> Goal: calendário operacional compartilhado — escala de plantão dos sábados (gerenciada por admins) e agendamento de treinamentos de clientes (por agents). Dado de disponibilidade que alimentará o workload balancer da Fase 7.5.
+> **Status: foco atual** — Fase 4 pausada.
+
+| # | Feature | Descrição | Prioridade | Status | i18n |
+|---|---------|-----------|------------|--------|------|
+| 1 | Data model & API | Tabela `calendar_events`: type (`on_call` \| `training`), agent, date/time, source opcional, notes. CRUD em `/v1/calendar/` | High | | — |
+| 2 | Escala de plantão | Admin atribui um agent por sábado (ou qualquer data); grid mensal mostra quem está de plantão; agent vê seus próprios turnos futuros | High | | ✅ |
+| 3 | Treinamentos | Agent cria sessão de treinamento vinculada a um cliente (source) — data, hora, duração, notas opcionais | High | | ✅ |
+| 4 | Calendar UI | View mensal unificada, color-coded por tipo (plantão vs treinamento); clique para criar/editar/excluir | High | | ✅ |
+| 5 | Entrada no sidebar | Item "Agenda" acessível a todos os roles; criação restrita por role (plantão: admin only; treinamento: agent + admin) | Medium | | ✅ |
+| 6 | Integração com Agent Profile | Página de perfil do agent (4.3) exibe próximos plantões e treinamentos agendados | Low | | ✅ |
+
+---
+
 ## Phase 5 — Ecosystem Integration
 > Goal: connect Aegis to the rest of the internal ecosystem.
 

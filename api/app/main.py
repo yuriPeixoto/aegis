@@ -13,6 +13,7 @@ from app.routers import (
     analytics,
     attachments,
     auth,
+    calendar,
     canned_responses,
     dashboard,
     escalation,
@@ -58,6 +59,7 @@ app = FastAPI(
 
 app.include_router(auth.router)
 app.include_router(analytics.router)
+app.include_router(calendar.router)
 app.include_router(sources.router)
 app.include_router(ingest.router)
 app.include_router(tickets.router)
