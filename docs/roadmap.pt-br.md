@@ -85,6 +85,21 @@
 
 ---
 
+## Fase 4.5 — Agenda da Equipe ✅
+> Objetivo: calendário operacional compartilhado — escala de plantão dos sábados (gerenciada por admins) e agendamento de treinamentos de clientes (por agentes). Dado de disponibilidade que alimentará o balanceador de carga da Fase 7.5.
+> **Concluída em:** 13/04/2026
+
+| # | Funcionalidade | Descrição | Prioridade | Status |
+|---|----------------|-----------|------------|--------|
+| 1 | Modelo de dados & API | Tabela `calendar_events`: type (`on_call` \| `training`), agente, data/hora, source opcional, notas. CRUD em `/v1/calendar/` | Alta | ✅ |
+| 2 | Escala de plantão | Admin atribui um agente por sábado (ou qualquer data); grid mensal mostra quem está de plantão; agente vê seus próprios turnos futuros | Alta | ✅ |
+| 3 | Treinamentos | Agente cria sessão de treinamento vinculada a um cliente (source) — data, hora, duração, notas opcionais | Alta | ✅ |
+| 4 | Calendar UI | View mensal unificada, color-coded por tipo (plantão vs treinamento); clique para criar/editar/excluir | Alta | ✅ |
+| 5 | Entrada no sidebar | Item "Agenda" acessível a todos os roles; criação restrita por role (plantão: somente admin; treinamento: agente + admin) | Média | ✅ |
+| 6 | Integração com Perfil do Agente | Página de perfil do agente (4.3) exibe próximos plantões e treinamentos agendados | Baixa | ✅ |
+
+---
+
 ## Fase 5 — Integração com o Ecossistema
 > Objetivo: conectar o Aegis ao restante do ecossistema interno.
 

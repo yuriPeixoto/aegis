@@ -85,18 +85,18 @@
 
 ---
 
-## Phase 4.5 — Team Calendar
-> Goal: calendário operacional compartilhado — escala de plantão dos sábados (gerenciada por admins) e agendamento de treinamentos de clientes (por agents). Dado de disponibilidade que alimentará o workload balancer da Fase 7.5.
-> **Status: foco atual** — Fase 4 pausada.
+## Phase 4.5 — Team Calendar ✅
+> Goal: shared operational calendar — Saturday on-call schedule (managed by admins) and client training scheduling (by agents). Availability data that will feed the workload balancer in Phase 7.5.
+> **Completed:** 2026-04-13
 
-| # | Feature | Descrição | Prioridade | Status | i18n |
-|---|---------|-----------|------------|--------|------|
-| 1 | Data model & API | Tabela `calendar_events`: type (`on_call` \| `training`), agent, date/time, source opcional, notes. CRUD em `/v1/calendar/` | High | | — |
-| 2 | Escala de plantão | Admin atribui um agent por sábado (ou qualquer data); grid mensal mostra quem está de plantão; agent vê seus próprios turnos futuros | High | | ✅ |
-| 3 | Treinamentos | Agent cria sessão de treinamento vinculada a um cliente (source) — data, hora, duração, notas opcionais | High | | ✅ |
-| 4 | Calendar UI | View mensal unificada, color-coded por tipo (plantão vs treinamento); clique para criar/editar/excluir | High | | ✅ |
-| 5 | Entrada no sidebar | Item "Agenda" acessível a todos os roles; criação restrita por role (plantão: admin only; treinamento: agent + admin) | Medium | | ✅ |
-| 6 | Integração com Agent Profile | Página de perfil do agent (4.3) exibe próximos plantões e treinamentos agendados | Low | | ✅ |
+| # | Feature | Description | Priority | Status | i18n |
+|---|---------|-------------|----------|--------|------|
+| 1 | Data model & API | `calendar_events` table: type (`on_call` \| `training`), agent, date/time, optional source, notes. CRUD at `/v1/calendar/` | High | ✅ | — |
+| 2 | On-call schedule | Admin assigns an agent per Saturday (or any date); monthly grid shows who is on call; agent sees their own upcoming shifts | High | ✅ | ✅ |
+| 3 | Training sessions | Agent creates a training session linked to a client (source) — date, time, duration, optional notes | High | ✅ | ✅ |
+| 4 | Calendar UI | Unified monthly view, color-coded by type (on-call vs training); click to create/edit/delete | High | ✅ | ✅ |
+| 5 | Sidebar entry | "Schedule" item accessible to all roles; creation restricted by role (on-call: admin only; training: agent + admin) | Medium | ✅ | ✅ |
+| 6 | Agent Profile integration | Agent profile page (4.3) displays upcoming on-call shifts and scheduled training sessions | Low | ✅ | ✅ |
 
 ---
 

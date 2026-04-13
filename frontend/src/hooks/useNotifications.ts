@@ -4,10 +4,11 @@ import { api } from '../lib/axios'
 export interface AppNotification {
   id: number
   type: string
-  ticket_id: number
-  ticket_external_id: string
+  ticket_id: number | null
+  ticket_external_id: string | null
   ticket_subject: string
   actor_name: string
+  event_date: string | null
   read_at: string | null
   created_at: string
 }
