@@ -167,7 +167,7 @@ export function NotificationsPage() {
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-brand-accent/20 border border-brand-accent/40 text-brand-accent rounded-lg hover:bg-brand-accent/30 transition-colors disabled:opacity-50"
           >
             <CheckCheck className="w-3.5 h-3.5" />
-            {t('notificationsPage.markSelected', { count: String(selectedUnreadIds.length) })}
+            {t('notificationsPage.markSelected', { count: selectedUnreadIds.length })}
           </button>
         )}
       </div>
@@ -194,7 +194,7 @@ export function NotificationsPage() {
             />
             <span className="text-xs text-slate-500">
               {selected.size > 0
-                ? t('notificationsPage.selectedCount', { count: String(selected.size) })
+                ? t('notificationsPage.selectedCount', { count: selected.size })
                 : t('notificationsPage.selectAll')}
             </span>
           </div>
