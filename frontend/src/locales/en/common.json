@@ -145,6 +145,14 @@
       "send": "Send",
       "eventHistory": "Event History",
       "noEvents": "No events recorded.",
+      "events": {
+        "assigned": "{{assigned_by}} assigned to {{assigned_to}}",
+        "unassigned": "{{assigned_by}} removed assignment",
+        "assigned_previous": "previously: {{previous_assignee}}",
+        "status_changed": "{{from}} → {{to}}",
+        "priority_changed": "{{from}} → {{to}}",
+        "by": "by {{name}}"
+      },
       "back": "Inbox",
       "description": "Description",
       "attachments": "Attachments",

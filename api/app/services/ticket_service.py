@@ -139,14 +139,34 @@ class TicketService:
         )
         return result.scalar_one_or_none()
 
-    async def assign_ticket(self, ticket_id: int, user_id: int | None) -> Ticket | None:
+    async def assign_ticket(
+        self, ticket_id: int, user_id: int | None, assigned_by_name: str
+    ) -> Ticket | None:
         ticket = await self.get_ticket(ticket_id)
         if ticket is None:
             return None
+
+        previous_assignee_name: str | None = ticket.assignee.name if ticket.assignee else None
+
+        new_assignee_name: str | None = None
+        if user_id is not None:
+            user_result = await self._db.execute(select(User).where(User.id == user_id))
+            new_user = user_result.scalar_one_or_none()
+            if new_user:
+                new_assignee_name = new_user.name
+
         ticket.assigned_to_user_id = user_id
+
+        event_payload: dict = {
+            "assigned_by": assigned_by_name,
+            "assigned_to": new_assignee_name,
+        }
+        if previous_assignee_name:
+            event_payload["previous_assignee"] = previous_assignee_name
+
+        self._db.add(TicketEvent(ticket_id=ticket_id, event_type="assigned", payload=event_payload))
+
         await self._db.commit()
-        await self._db.refresh(ticket)
-        # Reload relationships after refresh
         result = await self._db.execute(
             select(Ticket)
             .where(Ticket.id == ticket_id)
