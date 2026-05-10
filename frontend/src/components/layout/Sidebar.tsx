@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 import { useTickets } from '../../hooks/useTickets'
+import { useUnreadCount } from '../../hooks/useNotifications'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { useSavedViews, useDeleteSavedView } from '../../hooks/useSavedViews'
 import { InternalTicketModal } from './InternalTicketModal'
@@ -14,6 +15,16 @@ function InboxBadge({ userId }: { userId: number }) {
   if (!count) return null
   return (
     <span className="ml-auto text-[10px] font-bold bg-brand-purple/80 text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
+
+function UnreadBadge() {
+  const { data: count = 0 } = useUnreadCount()
+  if (!count) return null
+  return (
+    <span className="ml-auto text-[10px] font-bold bg-amber-500 text-black rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
       {count > 99 ? '99+' : count}
     </span>
   )
@@ -58,6 +69,12 @@ export function Sidebar() {
           <Inbox className="w-4 h-4 shrink-0" />
           {t('nav.inbox')}
           {user && <InboxBadge userId={user.id} />}
+        </NavLink>
+
+        <NavLink to="/notifications" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+          <Bell className="w-4 h-4 shrink-0" />
+          {t('nav.notifications')}
+          <UnreadBadge />
         </NavLink>
 
         {user?.role === 'admin' && (

@@ -1,6 +1,7 @@
 {
   "nav": {
     "inbox": "Caixa de Entrada",
+    "notifications": "Notificações",
     "dashboard": "Dashboard",
     "settings": "Configurações",
     "reportIssue": "Reportar Problema",
@@ -601,6 +602,20 @@
       "error": "Erro ao salvar tag.",
       "errorDelete": "Erro ao excluir tag."
     }
+  },
+  "notificationsPage": {
+    "title": "Notificações",
+    "subtitle": "Todas as suas notificações em um só lugar",
+    "search": "Buscar por chamado, cliente ou autor...",
+    "allClients": "Todos os clientes",
+    "filter": {
+      "all": "Todas",
+      "unread": "Não lidas",
+      "read": "Lidas"
+    },
+    "markSelected": "Marcar {{count}} como lida(s)",
+    "selectedCount": "{{count}} selecionada(s)",
+    "selectAll": "Selecionar visíveis"
   },
   "notifications": {
     "newUrgentTicket": "Novo ticket {{priority}} — atenção!",
