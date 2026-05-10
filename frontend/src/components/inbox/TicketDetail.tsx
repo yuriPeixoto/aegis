@@ -45,6 +45,71 @@ function formatDate(iso: string | null, locale: string) {
   })
 }
 
+function EventDescription({
+  type,
+  payload,
+}: {
+  type: string
+  payload: Record<string, unknown> | null
+}) {
+  const { t } = useTranslation()
+
+  if (!payload || Object.keys(payload).length === 0) return null
+
+  switch (type) {
+    case 'assigned': {
+      const assignedBy = payload.assigned_by as string | undefined
+      const assignedTo = payload.assigned_to as string | null | undefined
+      const previous = payload.previous_assignee as string | undefined
+      if (!assignedBy) break
+      return (
+        <div className="text-xs text-slate-300 space-y-0.5">
+          <p>
+            {assignedTo
+              ? t('inbox.detail.events.assigned', { assigned_by: assignedBy, assigned_to: assignedTo })
+              : t('inbox.detail.events.unassigned', { assigned_by: assignedBy })}
+          </p>
+          {previous && (
+            <p className="text-[11px] text-slate-500">
+              {t('inbox.detail.events.assigned_previous', { previous_assignee: previous })}
+            </p>
+          )}
+        </div>
+      )
+    }
+    case 'status_changed': {
+      const from = (payload.from ?? payload.old_status) as string | undefined
+      const to = (payload.to ?? payload.new_status) as string | undefined
+      const by = payload.changed_by as string | undefined
+      if (!from || !to) break
+      return (
+        <div className="text-xs text-slate-300 space-y-0.5">
+          <p>{t('inbox.detail.events.status_changed', { from, to })}</p>
+          {by && <p className="text-[11px] text-slate-500">{t('inbox.detail.events.by', { name: by })}</p>}
+        </div>
+      )
+    }
+    case 'priority_changed': {
+      const from = payload.old_priority as string | undefined
+      const to = payload.new_priority as string | undefined
+      const by = payload.changed_by as string | undefined
+      if (!from || !to) break
+      return (
+        <div className="text-xs text-slate-300 space-y-0.5">
+          <p>{t('inbox.detail.events.priority_changed', { from, to })}</p>
+          {by && <p className="text-[11px] text-slate-500">{t('inbox.detail.events.by', { name: by })}</p>}
+        </div>
+      )
+    }
+  }
+
+  return (
+    <pre className="text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all">
+      {JSON.stringify(payload, null, 2)}
+    </pre>
+  )
+}
+
 function EventItem({
   type,
   payload,
@@ -67,11 +132,7 @@ function EventItem({
           </span>
           <span className="text-xs font-mono text-slate-400">{formatDate(date, locale)}</span>
         </div>
-        {payload && Object.keys(payload).length > 0 && (
-          <pre className="text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all">
-            {JSON.stringify(payload, null, 2)}
-          </pre>
-        )}
+        <EventDescription type={type} payload={payload} />
       </div>
     </div>
   )
