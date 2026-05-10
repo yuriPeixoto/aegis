@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
-  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock, GitMerge
+  ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock, GitMerge, CalendarClock
 } from 'lucide-react'
 import { api } from '../lib/axios'
 import type { TicketMessage } from '../types/ticket'
@@ -207,6 +207,72 @@ function EventItem({
   )
 }
 
+function DeploymentModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: (deploymentAt: string | null, prNumber: string | null) => void
+  onCancel: () => void
+}) {
+  const { t } = useTranslation()
+  const [deploymentAt, setDeploymentAt] = useState('')
+  const [prNumber, setPrNumber] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-brand-dark border border-brand-border rounded-xl shadow-2xl w-full max-w-sm mx-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-semibold text-slate-100">{t('inbox.detail.deployment.modalTitle')}</h2>
+          </div>
+          <button onClick={onCancel} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-4">
+          <p className="text-xs text-slate-400">{t('inbox.detail.deployment.modalHint')}</p>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">{t('inbox.detail.deployment.scheduledAt')}</label>
+            <input
+              type="datetime-local"
+              value={deploymentAt}
+              onChange={(e) => setDeploymentAt(e.target.value)}
+              className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">{t('inbox.detail.deployment.prNumber')}</label>
+            <input
+              type="text"
+              value={prNumber}
+              onChange={(e) => setPrNumber(e.target.value)}
+              placeholder={t('inbox.detail.deployment.prPlaceholder')}
+              className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-brand-border">
+          <button
+            type="button"
+            onClick={() => onConfirm(null, null)}
+            className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            {t('inbox.detail.deployment.skipInfo')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(deploymentAt || null, prNumber || null)}
+            className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-md transition-colors"
+          >
+            {t('inbox.detail.deployment.confirm')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>()
   const ticketId = Number(id)
@@ -232,6 +298,7 @@ export function TicketDetailPage() {
   const [replyFile, setReplyFile] = useState<File | null>(null)
   const [isInternal, setIsInternal] = useState(false)
   const [showMergeModal, setShowMergeModal] = useState(false)
+  const [showDeploymentModal, setShowDeploymentModal] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionAnchor, setMentionAnchor] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -581,7 +648,13 @@ export function TicketDetailPage() {
                   <button
                     key={next}
                     disabled={updateStatus.isPending}
-                    onClick={() => updateStatus.mutate({ status: next })}
+                    onClick={() => {
+                      if (next === 'pending_closure') {
+                        setShowDeploymentModal(true)
+                      } else {
+                        updateStatus.mutate({ status: next })
+                      }
+                    }}
                     className="text-xs font-semibold px-3 py-1 rounded border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t(getActionLabel(ticket.status, next))}
@@ -780,6 +853,20 @@ export function TicketDetailPage() {
         </div>
       </div>
     </div>
+
+    {showDeploymentModal && (
+      <DeploymentModal
+        onConfirm={(deploymentAt, prNumber) => {
+          setShowDeploymentModal(false)
+          updateStatus.mutate({
+            status: 'pending_closure',
+            deployment_scheduled_at: deploymentAt,
+            pr_number: prNumber,
+          })
+        }}
+        onCancel={() => setShowDeploymentModal(false)}
+      />
+    )}
 
     {showMergeModal && ticket && (
       <MergeTicketModal
