@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Clock, RefreshCw, ExternalLink, UserCircle, GitMerge } from 'lucide-react'
+import { X, Clock, RefreshCw, ExternalLink, UserCircle, GitMerge, GitBranch, CalendarClock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTicket, useUpdateTicketStatus, useAssignTicket, useUsers } from '../../hooks/useTickets'
 import { StatusBadge } from './StatusBadge'
@@ -13,8 +13,9 @@ import TagSelector from './TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open: ['in_progress', 'cancelled'],
-  in_progress: ['waiting_client', 'resolved', 'cancelled'],
-  waiting_client: ['in_progress', 'resolved', 'cancelled'],
+  in_progress: ['waiting_client', 'pending_closure', 'cancelled'],
+  waiting_client: ['in_progress', 'pending_closure', 'cancelled'],
+  pending_closure: ['in_progress', 'closed'],
   resolved: ['open'],
   closed: [],
   cancelled: [],
@@ -24,9 +25,81 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 const STATUS_ACTION_LABEL: Record<string, string> = {
   in_progress: 'status.action.startProgress',
   waiting_client: 'status.action.waitClient',
+  pending_closure: 'status.action.pendingClosure',
   resolved: 'status.action.resolve',
   cancelled: 'status.action.cancel',
   open: 'status.action.reopen',
+  closed: 'status.action.close',
+}
+
+function DeploymentModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: (deploymentAt: string | null, prNumber: string | null) => void
+  onCancel: () => void
+}) {
+  const { t } = useTranslation()
+  const [deploymentAt, setDeploymentAt] = useState('')
+  const [prNumber, setPrNumber] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-brand-dark border border-brand-border rounded-xl shadow-2xl w-full max-w-sm mx-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-semibold text-slate-100">{t('inbox.detail.deployment.modalTitle')}</h2>
+          </div>
+          <button onClick={onCancel} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          <p className="text-xs text-slate-400">{t('inbox.detail.deployment.modalHint')}</p>
+
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">{t('inbox.detail.deployment.scheduledAt')}</label>
+            <input
+              type="datetime-local"
+              value={deploymentAt}
+              onChange={(e) => setDeploymentAt(e.target.value)}
+              className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">{t('inbox.detail.deployment.prNumber')}</label>
+            <input
+              type="text"
+              value={prNumber}
+              onChange={(e) => setPrNumber(e.target.value)}
+              placeholder={t('inbox.detail.deployment.prPlaceholder')}
+              className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-brand-border">
+          <button
+            type="button"
+            onClick={() => onConfirm(null, null)}
+            className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            {t('inbox.detail.deployment.skipInfo')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(deploymentAt || null, prNumber || null)}
+            className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-md transition-colors"
+          >
+            {t('inbox.detail.deployment.confirm')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 interface TicketDetailProps {
@@ -101,6 +174,17 @@ function EventDescription({
         </div>
       )
     }
+    case 'deployment_scheduled': {
+      const at = payload.deployment_at as string | undefined
+      const pr = payload.pr_number as string | undefined
+      if (!at) break
+      return (
+        <div className="text-xs text-amber-300 space-y-0.5">
+          <p>{t('inbox.detail.events.deployment_scheduled', { at: new Date(at).toLocaleString() })}</p>
+          {pr && <p className="text-[11px] text-amber-500">{t('inbox.detail.events.pr_number', { pr })}</p>}
+        </div>
+      )
+    }
   }
 
   return (
@@ -147,6 +231,8 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
   const assignTicket = useAssignTicket(ticketId)
   const { data: users = [] } = useUsers()
   const [showMergeModal, setShowMergeModal] = useState(false)
+
+  const [showDeploymentModal, setShowDeploymentModal] = useState(false)
 
   const isMergeable = ticket
     && ticket.status !== 'merged'
@@ -206,7 +292,13 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
                   <button
                     key={next}
                     disabled={updateStatus.isPending}
-                    onClick={() => updateStatus.mutate({ status: next })}
+                    onClick={() => {
+                      if (next === 'pending_closure') {
+                        setShowDeploymentModal(true)
+                      } else {
+                        updateStatus.mutate({ status: next })
+                      }
+                    }}
                     className="text-xs font-semibold px-3 py-1 rounded border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t(STATUS_ACTION_LABEL[next] ?? next)}
@@ -262,6 +354,26 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
                 ))}
               </select>
             </div>
+            {ticket.deployment_scheduled_at && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <CalendarClock className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                <span>
+                  {t('inbox.detail.deployment.scheduledAt')}:{' '}
+                  <span className="text-amber-300 font-mono">
+                    {formatDate(ticket.deployment_scheduled_at, locale)}
+                  </span>
+                </span>
+              </div>
+            )}
+            {ticket.pr_number && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <GitBranch className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                <span>
+                  {t('inbox.detail.deployment.prNumber')}:{' '}
+                  <span className="text-amber-300 font-mono">{ticket.pr_number}</span>
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Clock className="w-3.5 h-3.5 shrink-0" />
               <span>
@@ -309,6 +421,20 @@ export function TicketDetail({ ticketId, onClose }: TicketDetailProps) {
         </div>
       )}
     </div>
+
+    {showDeploymentModal && ticket && (
+      <DeploymentModal
+        onConfirm={(deploymentAt, prNumber) => {
+          setShowDeploymentModal(false)
+          updateStatus.mutate({
+            status: 'pending_closure',
+            deployment_scheduled_at: deploymentAt,
+            pr_number: prNumber,
+          })
+        }}
+        onCancel={() => setShowDeploymentModal(false)}
+      />
+    )}
 
     {showMergeModal && ticket && (
       <MergeTicketModal

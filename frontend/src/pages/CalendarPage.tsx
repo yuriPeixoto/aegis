@@ -27,13 +27,15 @@ function toDateStr(d: Date): string {
 
 
 const EVENT_COLORS: Record<CalendarEventType, string> = {
-  on_call:  'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  training: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  on_call:    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  training:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  deployment: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
 }
 
 const DOT_COLORS: Record<CalendarEventType, string> = {
-  on_call:  'bg-indigo-400',
-  training: 'bg-emerald-400',
+  on_call:    'bg-indigo-400',
+  training:   'bg-emerald-400',
+  deployment: 'bg-amber-400',
 }
 
 // ── Event Modal ───────────────────────────────────────────────────────────────
@@ -378,6 +380,10 @@ export function CalendarPage() {
               <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
               {t('calendar.type.training')}
             </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+              {t('calendar.type.deployment')}
+            </span>
           </div>
           {/* Navegação mês */}
           <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
@@ -457,7 +463,9 @@ export function CalendarPage() {
                         <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${DOT_COLORS[ev.type as CalendarEventType]}`} />
                         {ev.type === 'on_call'
                           ? ev.agent.name
-                          : ev.source?.name ?? ev.agent.name
+                          : ev.type === 'deployment'
+                            ? (ev.notes ?? t('calendar.type.deployment'))
+                            : ev.source?.name ?? ev.agent.name
                         }
                       </button>
                     ))}

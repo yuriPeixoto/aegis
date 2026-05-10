@@ -151,7 +151,18 @@
         "assigned_previous": "previously: {{previous_assignee}}",
         "status_changed": "{{from}} → {{to}}",
         "priority_changed": "{{from}} → {{to}}",
-        "by": "by {{name}}"
+        "by": "by {{name}}",
+        "deployment_scheduled": "Deployment scheduled for {{at}}",
+        "pr_number": "PR: {{pr}}"
+      },
+      "deployment": {
+        "modalTitle": "Complete ticket",
+        "modalHint": "Inform when the update will be available and the linked PR. It will be automatically registered in the agenda.",
+        "scheduledAt": "Scheduled deployment",
+        "prNumber": "PR number",
+        "prPlaceholder": "e.g. #1234 or feature/fix-bug",
+        "skipInfo": "Complete without informing",
+        "confirm": "Confirm and complete"
       },
       "back": "Inbox",
       "description": "Description",
@@ -612,7 +623,8 @@
     "subtitle": "On-call schedule and client training sessions",
     "type": {
       "on_call": "On-call",
-      "training": "Training"
+      "training": "Training",
+      "deployment": "Deployment"
     },
     "weekday": {
       "sun": "Sun",

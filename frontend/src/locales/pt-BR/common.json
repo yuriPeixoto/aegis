@@ -151,7 +151,18 @@
         "assigned_previous": "anteriormente: {{previous_assignee}}",
         "status_changed": "{{from}} → {{to}}",
         "priority_changed": "{{from}} → {{to}}",
-        "by": "por {{name}}"
+        "by": "por {{name}}",
+        "deployment_scheduled": "Deploy previsto para {{at}}",
+        "pr_number": "PR: {{pr}}"
+      },
+      "deployment": {
+        "modalTitle": "Concluir chamado",
+        "modalHint": "Informe quando a atualização estará disponível e o PR vinculado. Será registrado automaticamente na agenda.",
+        "scheduledAt": "Deploy previsto",
+        "prNumber": "Número do PR",
+        "prPlaceholder": "ex: #1234 ou feature/fix-bug",
+        "skipInfo": "Concluir sem informar",
+        "confirm": "Confirmar e concluir"
       },
       "back": "Caixa de Entrada",
       "description": "Descrição",
@@ -612,7 +623,8 @@
     "subtitle": "Escala de plantão e treinamentos de clientes",
     "type": {
       "on_call": "Plantão",
-      "training": "Treinamento"
+      "training": "Treinamento",
+      "deployment": "Deploy"
     },
     "weekday": {
       "sun": "Dom",
