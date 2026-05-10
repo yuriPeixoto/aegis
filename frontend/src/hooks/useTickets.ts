@@ -331,7 +331,9 @@ export function useCreateInternalTicket() {
       form.append('priority', payload.priority)
       if (payload.meta) form.append('meta', JSON.stringify(payload.meta))
       files?.forEach((f) => form.append('files', f))
-      const { data } = await api.post<TicketDetail>('/tickets/internal', form)
+      const { data } = await api.post<TicketDetail>('/tickets/internal', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {
