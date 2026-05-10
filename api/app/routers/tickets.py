@@ -69,6 +69,8 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         csat_comment=ticket.csat_comment,
         csat_submitted_at=ticket.csat_submitted_at,
         csat_requested_at=ticket.csat_requested_at,
+        deployment_scheduled_at=ticket.deployment_scheduled_at,
+        pr_number=ticket.pr_number,
         events=[
             {
                 "id": e.id,
@@ -202,6 +204,8 @@ async def update_ticket_status(
         body.status,
         changed_by_user_id=current_user.id,
         comment=body.comment,
+        deployment_scheduled_at=body.deployment_scheduled_at,
+        pr_number=body.pr_number,
     )
     if error == "not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
