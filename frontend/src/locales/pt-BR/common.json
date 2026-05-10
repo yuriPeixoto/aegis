@@ -145,6 +145,14 @@
       "send": "Enviar",
       "eventHistory": "Histórico de Eventos",
       "noEvents": "Nenhum evento registrado.",
+      "events": {
+        "assigned": "{{assigned_by}} atribuiu para {{assigned_to}}",
+        "unassigned": "{{assigned_by}} removeu a atribuição",
+        "assigned_previous": "anteriormente: {{previous_assignee}}",
+        "status_changed": "{{from}} → {{to}}",
+        "priority_changed": "{{from}} → {{to}}",
+        "by": "por {{name}}"
+      },
       "back": "Caixa de Entrada",
       "description": "Descrição",
       "attachments": "Anexos",
