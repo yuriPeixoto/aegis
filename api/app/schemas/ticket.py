@@ -56,6 +56,8 @@ class TicketResponse(BaseModel):
     csat_comment: str | None = None
     csat_submitted_at: datetime | None = None
     csat_requested_at: datetime | None = None
+    deployment_scheduled_at: datetime | None = None
+    pr_number: str | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -87,6 +89,8 @@ class AssignTicketRequest(BaseModel):
 class UpdateStatusRequest(BaseModel):
     status: str
     comment: str | None = None
+    deployment_scheduled_at: datetime | None = None
+    pr_number: str | None = None
 
 
 class OverrideSlaRequest(BaseModel):

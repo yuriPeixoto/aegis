@@ -55,6 +55,8 @@ export interface Ticket {
   tags: Tag[]
   merged_into_ticket_id: number | null
   merged_at: string | null
+  deployment_scheduled_at: string | null
+  pr_number: string | null
 }
 
 export interface TicketDetail extends Ticket {

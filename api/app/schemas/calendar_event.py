@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, field_validator, model_validator
 
-EVENT_TYPES = {"on_call", "training"}
+EVENT_TYPES = {"on_call", "training", "deployment"}
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
 
 
@@ -31,6 +31,8 @@ class CalendarEventCreate(BaseModel):
         if v is not None and not _TIME_RE.match(v):
             raise ValueError("time must be in HH:MM format")
         return v
+
+    ticket_id: int | None = None
 
     @model_validator(mode="after")
     def training_requires_source(self) -> CalendarEventCreate:
@@ -78,6 +80,7 @@ class CalendarEventResponse(BaseModel):
     start_time: str | None
     end_time: str | None
     source_id: int | None
+    ticket_id: int | None
     notes: str | None
     created_at: datetime
     updated_at: datetime

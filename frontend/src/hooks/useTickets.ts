@@ -137,7 +137,7 @@ export function useAssignTicket(ticketId: number) {
 
 export function useUpdateTicketStatus(ticketId: number) {
   const queryClient = useQueryClient()
-  return useMutation<TicketDetail, Error, { status: string; comment?: string }>({
+  return useMutation<TicketDetail, Error, { status: string; comment?: string; deployment_scheduled_at?: string | null; pr_number?: string | null }>({
     mutationFn: async (body) => {
       const { data } = await api.patch<TicketDetail>(`/tickets/${ticketId}/status`, body)
       return data

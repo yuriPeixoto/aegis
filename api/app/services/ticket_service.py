@@ -185,6 +185,8 @@ class TicketService:
         new_status: str,
         changed_by_user_id: int,
         comment: str | None = None,
+        deployment_scheduled_at: datetime | None = None,
+        pr_number: str | None = None,
     ) -> tuple[Ticket, None] | tuple[None, str]:
         """Return (ticket, None) on success, or (None, error_message) on failure."""
         ticket = await self.get_ticket(ticket_id)
@@ -212,6 +214,37 @@ class TicketService:
             },
         )
         self._db.add(event)
+
+        if new_status == "pending_closure" and deployment_scheduled_at is not None:
+            from app.models.calendar_event import CalendarEvent, EVENT_TYPE_DEPLOYMENT
+
+            ticket.deployment_scheduled_at = deployment_scheduled_at
+            if pr_number:
+                ticket.pr_number = pr_number
+
+            agent_id = ticket.assigned_to_user_id or changed_by_user_id
+            notes = f"Chamado #{ticket.external_id}"
+            if pr_number:
+                notes += f" — PR #{pr_number}"
+
+            self._db.add(CalendarEvent(
+                type=EVENT_TYPE_DEPLOYMENT,
+                agent_id=agent_id,
+                event_date=deployment_scheduled_at.date(),
+                start_time=deployment_scheduled_at.strftime("%H:%M"),
+                source_id=ticket.source_id,
+                ticket_id=ticket_id,
+                notes=notes,
+            ))
+            self._db.add(TicketEvent(
+                ticket_id=ticket_id,
+                event_type="deployment_scheduled",
+                payload={
+                    "deployment_at": deployment_scheduled_at.isoformat(),
+                    **({"pr_number": pr_number} if pr_number else {}),
+                },
+            ))
+
         await self._db.commit()
 
         result = await self._db.execute(

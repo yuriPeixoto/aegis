@@ -65,6 +65,10 @@ class Ticket(Base):
     # When the ticket was moved to a terminal status (resolved, closed, etc.)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
+    # Deployment info — set when ticket moves to pending_closure
+    deployment_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pr_number: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     # CSAT — satisfaction survey
     csat_rating: Mapped[int | None] = mapped_column(nullable=True)
     csat_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
