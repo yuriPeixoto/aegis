@@ -6,11 +6,13 @@ export interface AppNotification {
   type: string
   ticket_id: number | null
   ticket_external_id: string | null
-  ticket_subject: string
+  ticket_subject: string | null
   actor_name: string
   event_date: string | null
   read_at: string | null
   created_at: string
+  source_id: number | null
+  source_name: string | null
 }
 
 export function useNotifications() {
@@ -18,6 +20,21 @@ export function useNotifications() {
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data } = await api.get<AppNotification[]>('/me/notifications')
+      return data
+    },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+export function useAllNotifications(params?: { unread_only?: boolean }) {
+  return useQuery<AppNotification[]>({
+    queryKey: ['notifications', 'all', params],
+    queryFn: async () => {
+      const search = new URLSearchParams()
+      search.set('limit', '500')
+      if (params?.unread_only) search.set('unread_only', 'true')
+      const { data } = await api.get<AppNotification[]>(`/me/notifications?${search}`)
       return data
     },
     refetchInterval: 30_000,
@@ -45,7 +62,6 @@ export function useMarkRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] })
     },
   })
 }
@@ -58,7 +74,18 @@ export function useMarkAllRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] })
+    },
+  })
+}
+
+export function useMarkSelectedRead() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, number[]>({
+    mutationFn: async (ids) => {
+      await api.post('/me/notifications/read-selected', { ids })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }
