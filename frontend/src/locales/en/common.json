@@ -1,6 +1,7 @@
 {
   "nav": {
     "inbox": "Inbox",
+    "notifications": "Notifications",
     "dashboard": "Dashboard",
     "settings": "Settings",
     "reportIssue": "Report an Issue",
@@ -601,6 +602,20 @@
       "error": "Error saving tag.",
       "errorDelete": "Error deleting tag."
     }
+  },
+  "notificationsPage": {
+    "title": "Notifications",
+    "subtitle": "All your notifications in one place",
+    "search": "Search by ticket, client or author...",
+    "allClients": "All clients",
+    "filter": {
+      "all": "All",
+      "unread": "Unread",
+      "read": "Read"
+    },
+    "markSelected": "Mark {{count}} as read",
+    "selectedCount": "{{count}} selected",
+    "selectAll": "Select visible"
   },
   "notifications": {
     "newUrgentTicket": "New {{priority}} ticket — heads up!",

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.notification import Notification
 from app.models.ticket import Ticket
@@ -108,14 +109,36 @@ class NotificationService:
 
         return list(recipients.values())
 
-    async def list_for_user(self, user_id: int, limit: int = 20) -> list[Notification]:
-        result = await self._db.execute(
+    async def list_for_user(
+        self,
+        user_id: int,
+        *,
+        unread_only: bool = False,
+        limit: int = 20,
+    ) -> list[Notification]:
+        stmt = (
             select(Notification)
             .where(Notification.user_id == user_id)
+            .options(selectinload(Notification.ticket).selectinload(Ticket.source))
             .order_by(Notification.created_at.desc())
             .limit(limit)
         )
+        if unread_only:
+            stmt = stmt.where(Notification.read_at.is_(None))
+        result = await self._db.execute(stmt)
         return list(result.scalars().all())
+
+    async def mark_selected_read(self, user_id: int, notification_ids: list[int]) -> None:
+        await self._db.execute(
+            update(Notification)
+            .where(
+                Notification.id.in_(notification_ids),
+                Notification.user_id == user_id,
+                Notification.read_at.is_(None),
+            )
+            .values(read_at=datetime.now(timezone.utc))
+        )
+        await self._db.commit()
 
     async def unread_count(self, user_id: int) -> int:
         result = await self._db.execute(

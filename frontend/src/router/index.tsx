@@ -8,6 +8,7 @@ import { ShortcutsPage } from '../pages/ShortcutsPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { AgentProfilePage } from '../pages/AgentProfilePage'
 import { CalendarPage } from '../pages/CalendarPage'
+import { NotificationsPage } from '../pages/NotificationsPage'
 
 import { DashboardLayout } from '../pages/dashboard/DashboardLayout'
 import { OverviewTab } from '../pages/dashboard/OverviewTab'
@@ -75,6 +76,10 @@ export const router = createBrowserRouter([
       {
         path: '/agenda',
         element: <CalendarPage />,
+      },
+      {
+        path: '/notifications',
+        element: <NotificationsPage />,
       },
       {
         path: '/shortcuts',
