@@ -44,11 +44,11 @@ class AutoCloseService:
         warning_threshold = now - timedelta(days=warning_days)
 
         # 1. Tickets to CLOSE
-        # Logic: In status 'waiting_client' and (last interaction or ingestion) > wait_days
+        # Logic: In status 'pending_closure' and (last interaction or ingestion) > wait_days
         # Also ensure we only close if we already sent a warning or if warning is not applicable.
         # For simplicity, we check if last interaction > wait_days.
         close_stmt = select(Ticket).where(
-            Ticket.status == "waiting_client",
+            Ticket.status == "pending_closure",
             Ticket.last_synced_at <= close_threshold
         )
         to_close_result = await self.db.execute(close_stmt)
@@ -88,11 +88,11 @@ class AutoCloseService:
             closed_count += 1
 
         # 2. Tickets to WARN
-        # Logic: In status 'waiting_client', last interaction > warning_days, 
+        # Logic: In status 'pending_closure', last interaction > warning_days, 
         # AND haven't received a warning yet.
         # We check the existence of a 'auto_warning_sent' event to avoid duplicates.
         warn_stmt = select(Ticket).where(
-            Ticket.status == "waiting_client",
+            Ticket.status == "pending_closure",
             Ticket.last_synced_at <= warning_threshold,
             Ticket.last_synced_at > close_threshold # Don't warn if already in close range
         )

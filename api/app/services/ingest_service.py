@@ -19,7 +19,7 @@ from app.services.sla_service import SlaService
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 _GF_TO_AEGIS: dict[str, str] = {
     "em_atendimento":              "in_progress",
-    "aguardando_cliente":          "waiting_client",
+    "aguardando_cliente":           "pending_closure",
     "aguardando_validacao_cliente": "pending_closure",
     "resolvido":                   "resolved",
     "fechado":                     "closed",

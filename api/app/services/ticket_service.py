@@ -16,8 +16,7 @@ from app.services.sla_service import SlaService
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "open":            {"in_progress", "cancelled"},
-    "in_progress":     {"waiting_client", "pending_closure", "cancelled"},
-    "waiting_client":  {"in_progress", "pending_closure", "cancelled"},
+    "in_progress":     {"pending_closure", "cancelled"},
     "pending_closure": {"in_progress", "closed"},
     "resolved":        {"open", "closed"},   # mantido por retrocompatibilidade
     "closed":          set(),
