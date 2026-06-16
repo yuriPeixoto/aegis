@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, computed_field
 
 from .tag import TagResponse
-
 
 _TERMINAL_STATUSES = {"resolved", "closed", "cancelled"}
 
