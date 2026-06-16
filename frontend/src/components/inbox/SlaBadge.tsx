@@ -5,10 +5,11 @@ const STYLE: Record<string, string> = {
   at_risk: 'border-amber-500/40 bg-amber-500/10 text-amber-400',
   overdue: 'border-red-500/40 bg-red-500/10 text-red-400',
   met:     'border-slate-500/30 bg-slate-500/10 text-slate-500',
+  paused:  'border-sky-500/40 bg-sky-500/10 text-sky-400',
 }
 
 interface SlaBadgeProps {
-  status: 'on_time' | 'at_risk' | 'overdue' | 'met' | null
+  status: 'on_time' | 'at_risk' | 'overdue' | 'met' | 'paused' | null
   dueAt: string | null
 }
 
