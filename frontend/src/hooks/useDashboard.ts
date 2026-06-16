@@ -11,6 +11,7 @@ export interface AgentMonitorTicket {
   sla_status: 'ok' | 'at_risk' | 'overdue' | null
   has_unanswered_message: boolean
   last_message_at: string | null
+  waiting_since: string | null
 }
 
 export interface AgentMonitorEntry {

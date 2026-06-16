@@ -14,7 +14,8 @@ from app.services.business_hours_service import BusinessHoursService
 
 logger = logging.getLogger(__name__)
 
-_TERMINAL = {"pending_closure", "resolved", "closed", "cancelled"}
+_PAUSED_STATUSES = frozenset({"pending_closure"})
+_TERMINAL = frozenset({"resolved", "closed", "cancelled"})
 
 
 class SlaService:
@@ -34,10 +35,18 @@ class SlaService:
         status change, before committing.  Mutates `ticket` in place.
         """
         if new_status == "in_progress":
-            if ticket.sla_started_at is None:
+            if old_status in _PAUSED_STATUSES:
+                await self._resume(ticket, changed_at)
+            elif ticket.sla_started_at is None:
                 await self._start(ticket, changed_at)
 
+        elif new_status in _PAUSED_STATUSES:
+            if ticket.sla_started_at is not None:
+                self._pause(ticket, changed_at)
+
         elif new_status in _TERMINAL:
+            if ticket.sla_paused_since is not None:
+                ticket.sla_paused_since = None
             self._finalize(ticket, changed_at)
 
     async def override_due_at(
@@ -100,6 +109,29 @@ class SlaService:
             ticket.sla_due_at,
             policy.resolution_hours,
         )
+
+    def _pause(self, ticket: Ticket, now: datetime) -> None:
+        if ticket.sla_paused_since is None:
+            ticket.sla_paused_since = now
+
+    async def _resume(self, ticket: Ticket, now: datetime) -> None:
+        paused_since = ticket.sla_paused_since
+        if paused_since is None:
+            return
+        elapsed_secs = int((now - paused_since).total_seconds())
+        ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + elapsed_secs
+        ticket.sla_paused_since = None
+        if ticket.sla_due_at is not None:
+            config = await self._get_config()
+            holidays = await self._get_holidays()
+            if config is not None:
+                # Recompute due_at: how many business hours were left when paused?
+                remaining_bh = self._bh.remaining_business_hours(
+                    paused_since, ticket.sla_due_at, config, holidays
+                )
+                ticket.sla_due_at = self._bh.add_business_hours(
+                    now, max(remaining_bh, 0.0), config, holidays
+                )
 
     def _finalize(self, ticket: Ticket, now: datetime) -> None:
         ticket.resolved_at = now
