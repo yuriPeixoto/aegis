@@ -8,7 +8,7 @@ from pydantic import BaseModel, computed_field
 from .tag import TagResponse
 
 
-_TERMINAL_STATUSES = {"pending_closure", "resolved", "closed", "cancelled"}
+_TERMINAL_STATUSES = {"resolved", "closed", "cancelled"}
 
 
 class TicketEventResponse(BaseModel):
@@ -63,6 +63,8 @@ class TicketResponse(BaseModel):
     def sla_status(self) -> str | None:
         if self.sla_due_at is None:
             return None
+        if self.sla_paused_since is not None:
+            return "paused"
         if self.status in _TERMINAL_STATUSES:
             return "met"
         now = datetime.now(UTC)
