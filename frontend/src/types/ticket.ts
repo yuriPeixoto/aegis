@@ -3,7 +3,6 @@ export type TicketPriority = 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW'
 export type TicketStatus =
   | 'OPEN'
   | 'IN_PROGRESS'
-  | 'WAITING_CLIENT'
   | 'WAITING_DEV'
   | 'IN_DEV'
   | 'PENDING_CLOSURE'

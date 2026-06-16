@@ -155,7 +155,7 @@ function TicketHistory({ userId }: { userId: number }) {
             value={status || undefined}
             onChange={(v) => { setStatus(v); setPage(0) }}
             placeholder={t('inbox.allStatuses')}
-            options={['open','in_progress','waiting_client','pending_closure','resolved','closed','cancelled'].map((s) => ({
+            options={['open','in_progress','pending_closure','resolved','closed','cancelled'].map((s) => ({
               value: s,
               label: t(`status.${s.toUpperCase()}`),
             }))}

@@ -17,7 +17,7 @@ import { inputCls } from './shared'
 const TRIGGER_KEYS = ['sla_at_risk', 'sla_breach', 'no_update', 'unassigned_time'] as const
 const ACTION_KEYS = ['reassign_to_user', 'notify_admins', 'increase_priority', 'add_tag', 'notify_senior_agents'] as const
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
-const STATUS_OPTIONS = ['open', 'in_progress', 'waiting_client']
+const STATUS_OPTIONS = ['open', 'in_progress']
 
 const blankForm: EscalationRuleCreate = {
   name: '',
