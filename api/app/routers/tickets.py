@@ -1,30 +1,27 @@
 from __future__ import annotations
 
+import json
 import random
 from datetime import datetime
 
-import json
-
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile, status
 
-from app.core.auth import CurrentUser
+from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
-from app.core.auth import AdminUser
+from app.schemas.tag import TagResponse
 from app.schemas.ticket import (
     AssigneeResponse,
     AssignTicketRequest,
-    InternalTicketCreate,
+    BulkUpdateTicketsRequest,
     MergeTicketRequest,
     OverrideSlaRequest,
     TicketDetailResponse,
     TicketListResponse,
     TicketResponse,
+    TicketTagsUpdateRequest,
     UpdatePriorityRequest,
     UpdateStatusRequest,
-    BulkUpdateTicketsRequest,
-    TicketTagsUpdateRequest,
 )
-from app.schemas.tag import TagResponse
 from app.services.attachment_service import AttachmentService
 from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
@@ -489,7 +486,39 @@ async def bulk_update_tickets(
                     webhook_url_internal=ticket.source.webhook_url_internal,
                 )
 
-    return updated_tickets
+    return [
+        TicketResponse(
+            id=t.id,
+            source_id=t.source_id,
+            source_name=t.source.name if t.source else "",
+            external_id=t.external_id,
+            type=t.type,
+            priority=t.priority,
+            status=t.status,
+            subject=t.subject,
+            description=t.description,
+            source_metadata=t.source_metadata,
+            source_created_at=t.source_created_at,
+            source_updated_at=t.source_updated_at,
+            first_ingested_at=t.first_ingested_at,
+            last_synced_at=t.last_synced_at,
+            sla_due_at=t.sla_due_at,
+            sla_started_at=t.sla_started_at,
+            sla_paused_seconds=t.sla_paused_seconds or 0,
+            sla_paused_since=t.sla_paused_since,
+            assigned_to=_assignee(t),
+            tags=[TagResponse.model_validate(tag) for tag in (t.tags or [])],
+            merged_into_ticket_id=t.merged_into_ticket_id,
+            merged_at=t.merged_at,
+            csat_rating=t.csat_rating,
+            csat_comment=t.csat_comment,
+            csat_submitted_at=t.csat_submitted_at,
+            csat_requested_at=t.csat_requested_at,
+            deployment_scheduled_at=t.deployment_scheduled_at,
+            pr_number=t.pr_number,
+        )
+        for t in updated_tickets
+    ]
 
 
 @router.post("/{ticket_id}/merge", response_model=TicketDetailResponse)

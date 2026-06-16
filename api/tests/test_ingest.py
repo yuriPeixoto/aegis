@@ -15,9 +15,9 @@ def unique_external_id() -> str:
 
 
 @pytest.fixture
-async def source_with_key(client: AsyncClient) -> dict:
+async def source_with_key(admin_client: AsyncClient) -> dict:
     """Create a source and return its data including the plaintext API key."""
-    resp = await client.post(
+    resp = await admin_client.post(
         "/v1/sources",
         json={"name": "Test Source", "slug": unique_slug()},
     )
