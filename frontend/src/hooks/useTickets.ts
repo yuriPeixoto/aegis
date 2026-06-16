@@ -176,7 +176,6 @@ export function useSendMessage(ticketId: number) {
       const { data } = await api.post<TicketMessage>(
         `/tickets/${ticketId}/messages`,
         form,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
       )
       return data
     },

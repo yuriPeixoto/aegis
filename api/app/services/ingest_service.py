@@ -81,6 +81,36 @@ class IngestService:
             )
             await self._db.commit()
             await self._db.refresh(ticket)
+
+            if data.attachments:
+                att_service = AttachmentService(self._db)
+                stored, failed = 0, 0
+                for att in data.attachments:
+                    try:
+                        raw = base64.b64decode(att.data)
+                        await att_service.store_from_bytes(
+                            ticket_id=ticket.id,
+                            filename=att.filename,
+                            content_type=att.content_type,
+                            content=raw,
+                        )
+                        stored += 1
+                    except Exception:
+                        failed += 1
+                        logger.warning(
+                            "ingest: failed to store attachment '%s' for ticket %s",
+                            att.filename,
+                            ticket.id,
+                            exc_info=True,
+                        )
+                logger.info(
+                    "ingest: ticket %s — %d/%d initial attachments stored%s",
+                    ticket.external_id,
+                    stored,
+                    len(data.attachments),
+                    f" ({failed} failed — check warnings above)" if failed else "",
+                )
+
             await NotificationService(self._db).create_new_ticket_notifications(
                 ticket, source.name
             )

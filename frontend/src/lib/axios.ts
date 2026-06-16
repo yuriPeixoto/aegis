@@ -2,7 +2,6 @@ import axios from 'axios'
 
 export const api = axios.create({
   baseURL: '/v1',
-  headers: { 'Content-Type': 'application/json' },
 })
 
 // Attach JWT token from localStorage on every request
