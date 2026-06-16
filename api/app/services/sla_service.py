@@ -102,7 +102,9 @@ class SlaService:
         ticket.sla_paused_since = None
         
         holidays = await self._get_holidays()
-        ticket.sla_due_at = self._bh.add_business_hours(now, policy.resolution_hours, config, holidays)
+        ticket.sla_due_at = self._bh.add_business_hours(
+            now, policy.resolution_hours, config, holidays
+        )
         logger.info(
             "sla: started for ticket %s — due at %s (%dh business)",
             ticket.id,
