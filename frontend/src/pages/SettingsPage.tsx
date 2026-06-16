@@ -305,7 +305,7 @@ function CannedResponsesSection() {
                     className="w-full bg-slate-800 border border-brand-border rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-purple/40"
                   >
                     <option value="">{t('settings.cannedResponses.modal.noAction')}</option>
-                    {['open', 'in_progress', 'waiting_client', 'pending_closure', 'resolved', 'closed', 'cancelled'].map(s => (
+                    {['open', 'in_progress', 'pending_closure', 'resolved', 'closed', 'cancelled'].map(s => (
                       <option key={s} value={s}>{t('status.' + s.toUpperCase())}</option>
                     ))}
                   </select>
@@ -1549,7 +1549,7 @@ function TagsSection() {
 const TRIGGER_KEYS = ['sla_at_risk', 'sla_breach', 'no_update', 'unassigned_time'] as const
 const ACTION_KEYS = ['reassign_to_user', 'notify_admins', 'increase_priority', 'add_tag', 'notify_senior_agents'] as const
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
-const STATUS_OPTIONS = ['open', 'in_progress', 'waiting_client']
+const STATUS_OPTIONS = ['open', 'in_progress']
 
 const blankForm: EscalationRuleCreate = {
   name: '',

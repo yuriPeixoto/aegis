@@ -13,8 +13,7 @@ import TagSelector from './TagSelector'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open: ['in_progress', 'cancelled'],
-  in_progress: ['waiting_client', 'pending_closure', 'cancelled'],
-  waiting_client: ['in_progress', 'pending_closure', 'cancelled'],
+  in_progress: ['pending_closure', 'cancelled'],
   pending_closure: ['in_progress', 'closed'],
   resolved: ['open'],
   closed: [],
@@ -24,7 +23,6 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 const STATUS_ACTION_LABEL: Record<string, string> = {
   in_progress: 'status.action.startProgress',
-  waiting_client: 'status.action.waitClient',
   pending_closure: 'status.action.pendingClosure',
   resolved: 'status.action.resolve',
   cancelled: 'status.action.cancel',

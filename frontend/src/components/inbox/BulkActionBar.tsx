@@ -96,7 +96,7 @@ export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
                 </button>
                 <div className="absolute bottom-full left-0 mb-2 w-48 bg-brand-surface border border-brand-border shadow-xl rounded-lg overflow-hidden hidden group-hover:block group-focus-within:block animate-in fade-in slide-in-from-bottom-2">
                   <div className="p-1 space-y-0.5">
-                    {['in_progress', 'waiting_client', 'pending_closure', 'closed', 'cancelled'].map((s) => (
+                    {['in_progress', 'pending_closure', 'closed', 'cancelled'].map((s) => (
                       <button
                         key={s}
                         onClick={() => handleUpdate({ status: s })}

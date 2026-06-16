@@ -220,7 +220,6 @@
   "status": {
     "action": {
       "startProgress": "Start Progress",
-      "waitClient": "Await Client",
       "pendingClosure": "Awaiting Customer Validation",
       "resolve": "Resolve",
       "cancel": "Cancel",
@@ -229,7 +228,6 @@
     },
     "OPEN": "Open",
     "IN_PROGRESS": "In Progress",
-    "WAITING_CLIENT": "Awaiting Client",
     "PENDING_CLOSURE": "Awaiting Customer Validation",
     "WAITING_DEV": "Awaiting Dev",
     "IN_DEV": "In Development",
@@ -294,7 +292,7 @@
       "ofTotal": "of total",
       "unassigned": "Unassigned",
       "unassignedHint": "Requires immediate assignment",
-      "waitingClient": "Awaiting Client",
+      "pendingClosure": "Awaiting Customer Validation",
       "openedToday": "Opened Today",
       "resolvedToday": "Resolved Today",
       "slaCompliance": "SLA Compliance",

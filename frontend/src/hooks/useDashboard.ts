@@ -8,10 +8,9 @@ export interface AgentMonitorTicket {
   priority: string | null
   status: string
   sla_due_at: string | null
-  sla_status: 'ok' | 'at_risk' | 'overdue' | 'paused' | null
+  sla_status: 'ok' | 'at_risk' | 'overdue' | null
   has_unanswered_message: boolean
   last_message_at: string | null
-  waiting_since: string | null
 }
 
 export interface AgentMonitorEntry {
@@ -61,7 +60,7 @@ export interface UnassignedTicketItem {
 export interface DashboardStats {
   total_open: number
   overdue: number
-  waiting_client: number
+  pending_closure: number
   unassigned: number
   opened_today: number
   resolved_today: number
