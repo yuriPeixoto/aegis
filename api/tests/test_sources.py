@@ -11,9 +11,9 @@ def unique_slug(prefix: str = "test") -> str:
 
 
 @pytest.mark.asyncio
-async def test_create_source(client: AsyncClient) -> None:
+async def test_create_source(admin_client: AsyncClient) -> None:
     slug = unique_slug("gestao-frota")
-    response = await client.post(
+    response = await admin_client.post(
         "/v1/sources",
         json={"name": "gestao frota Cliente A", "slug": slug},
     )
@@ -25,20 +25,20 @@ async def test_create_source(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_source_duplicate_slug(client: AsyncClient) -> None:
+async def test_create_source_duplicate_slug(admin_client: AsyncClient) -> None:
     slug = unique_slug("source")
     payload = {"name": "Source X", "slug": slug}
-    r1 = await client.post("/v1/sources", json=payload)
+    r1 = await admin_client.post("/v1/sources", json=payload)
     assert r1.status_code == 201
-    r2 = await client.post("/v1/sources", json=payload)
+    r2 = await admin_client.post("/v1/sources", json=payload)
     assert r2.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_list_sources(client: AsyncClient) -> None:
-    await client.post("/v1/sources", json={"name": "Source A", "slug": unique_slug("a")})
-    await client.post("/v1/sources", json={"name": "Source B", "slug": unique_slug("b")})
-    response = await client.get("/v1/sources")
+async def test_list_sources(admin_client: AsyncClient) -> None:
+    await admin_client.post("/v1/sources", json={"name": "Source A", "slug": unique_slug("a")})
+    await admin_client.post("/v1/sources", json={"name": "Source B", "slug": unique_slug("b")})
+    response = await admin_client.get("/v1/sources")
     assert response.status_code == 200
     assert len(response.json()) >= 2
 
