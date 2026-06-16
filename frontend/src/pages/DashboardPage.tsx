@@ -174,11 +174,11 @@ function OverviewTab() {
           sub={t('dashboard.kpi.unassignedHint')}
         />
         <KpiCard
-          label={t('dashboard.kpi.waitingClient')}
-          value={stats.waiting_client}
-          valueClass="text-amber-400"
-          icon={<Users className="w-5 h-5 text-amber-400" />}
-          iconBg="bg-amber-500/10"
+          label={t('dashboard.kpi.pendingClosure')}
+          value={stats.pending_closure}
+          valueClass="text-emerald-400"
+          icon={<Users className="w-5 h-5 text-emerald-400" />}
+          iconBg="bg-emerald-500/10"
         />
       </div>
 
@@ -593,7 +593,6 @@ const SLA_BADGE: Record<string, string> = {
   ok:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   at_risk: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
   overdue: 'bg-red-500/15 text-red-400 border-red-500/30',
-  paused:  'bg-sky-500/15 text-sky-400 border-sky-500/30',
 }
 
 function formatTimeAgo(isoDate: string): string {
@@ -698,12 +697,6 @@ function AgentMonitorTicketRow({ ticket, t }: AgentMonitorTicketRowProps) {
           >
             <MessageSquare className="w-3 h-3" />
             {ticket.last_message_at && formatTimeAgo(ticket.last_message_at)}
-          </span>
-        )}
-
-        {ticket.status === 'waiting_client' && ticket.waiting_since && (
-          <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-            ⏸ {formatTimeAgo(ticket.waiting_since)}
           </span>
         )}
 

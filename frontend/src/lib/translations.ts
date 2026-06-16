@@ -7,7 +7,7 @@ type Translations = {
 const TRANSLATIONS: Record<string, Translations> = {
   en: {
     status: {
-      OPEN: 'Open', IN_PROGRESS: 'In Progress', WAITING_CLIENT: 'Awaiting Client',
+      OPEN: 'Open', IN_PROGRESS: 'In Progress',
       WAITING_DEV: 'Awaiting Dev', IN_DEV: 'In Development',
       PENDING_CLOSURE: 'Awaiting Customer Validation',
       RESOLVED: 'Resolved', CLOSED: 'Closed', CANCELLED: 'Cancelled', MERGED: 'Merged',
@@ -17,7 +17,7 @@ const TRANSLATIONS: Record<string, Translations> = {
   },
   'pt-BR': {
     status: {
-      OPEN: 'Aberto', IN_PROGRESS: 'Em Atendimento', WAITING_CLIENT: 'Ag. Cliente',
+      OPEN: 'Aberto', IN_PROGRESS: 'Em Atendimento',
       WAITING_DEV: 'Ag. Desenvolvimento', IN_DEV: 'Em Desenvolvimento',
       PENDING_CLOSURE: 'Ag. Validação',
       RESOLVED: 'Resolvido', CLOSED: 'Fechado', CANCELLED: 'Cancelado', MERGED: 'Mesclado',
