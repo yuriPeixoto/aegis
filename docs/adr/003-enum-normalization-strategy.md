@@ -19,7 +19,7 @@ O `SendTicketToAegis` job mapeia antes de enviar:
 |---|---|
 | `novo` | `open` |
 | `em_atendimento` / `aguardando_qualidade` | `in_progress` |
-| `aguardando_cliente` / `aguardando_validacao_cliente` | `waiting_client` |
+| `aguardando_cliente` / `aguardando_validacao_cliente` | `pending_closure` |
 | `resolvido` | `resolved` |
 | `fechado` | `closed` |
 | `cancelado` | `cancelled` |
@@ -39,7 +39,7 @@ O frontend normaliza para uppercase antes do lookup de tradução (`.toUpperCase
 ## Canonical Values Reference
 
 ```
-status:   open | in_progress | waiting_client | waiting_dev | in_dev |
+status:   open | in_progress | pending_closure | waiting_dev | in_dev |
           waiting_test | in_test | resolved | closed | cancelled
 
 priority: low | medium | high | urgent
