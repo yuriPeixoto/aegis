@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,11 +36,6 @@ class SlaService:
         if new_status == "in_progress":
             if ticket.sla_started_at is None:
                 await self._start(ticket, changed_at)
-            elif old_status == "waiting_client" and ticket.sla_paused_since:
-                self._resume(ticket, changed_at)
-
-        elif new_status == "waiting_client":
-            self._pause(ticket, changed_at)
 
         elif new_status in _TERMINAL:
             self._finalize(ticket, changed_at)
@@ -106,25 +101,8 @@ class SlaService:
             policy.resolution_hours,
         )
 
-    def _pause(self, ticket: Ticket, now: datetime) -> None:
-        if ticket.sla_paused_since is None and ticket.sla_due_at is not None:
-            ticket.sla_paused_since = now
-
-    def _resume(self, ticket: Ticket, now: datetime) -> None:
-        if ticket.sla_paused_since and ticket.sla_due_at:
-            paused_seconds = (now - ticket.sla_paused_since).total_seconds()
-            ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + int(paused_seconds)
-            ticket.sla_paused_since = None
-            # Extend the deadline by the wall-clock time spent waiting
-            ticket.sla_due_at = ticket.sla_due_at + timedelta(seconds=paused_seconds)
-
     def _finalize(self, ticket: Ticket, now: datetime) -> None:
-        """Flush any in-flight pause on terminal transition."""
         ticket.resolved_at = now
-        if ticket.sla_paused_since and ticket.sla_due_at:
-            paused_seconds = (now - ticket.sla_paused_since).total_seconds()
-            ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + int(paused_seconds)
-            ticket.sla_paused_since = None
 
     async def _get_config(self) -> BusinessHoursConfig | None:
         result = await self._db.execute(

@@ -43,15 +43,14 @@ class DashboardService:
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
-                Ticket.sla_paused_since.is_(None),
             )
         )
         overdue: int = r.scalar_one()
 
         r = await self._db.execute(
-            select(func.count()).where(_active_src, Ticket.status == 'waiting_client')
+            select(func.count()).where(_active_src, Ticket.status == 'pending_closure')
         )
-        waiting_client: int = r.scalar_one()
+        pending_closure: int = r.scalar_one()
 
         r = await self._db.execute(
             select(func.count()).where(
@@ -160,8 +159,7 @@ class DashboardService:
                     Ticket.assigned_to_user_id == agent.id,
                     Ticket.sla_due_at.is_not(None),
                     Ticket.sla_due_at < now,
-                    Ticket.sla_paused_since.is_(None),
-                )
+                    )
             )
             agent_overdue: int = r.scalar_one()
 
@@ -196,7 +194,6 @@ class DashboardService:
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.sla_due_at.is_not(None),
                 Ticket.sla_due_at < now,
-                Ticket.sla_paused_since.is_(None),
             )
             .options(selectinload(Ticket.source), selectinload(Ticket.assignee))
             .order_by(Ticket.sla_due_at.asc())
@@ -255,7 +252,7 @@ class DashboardService:
         return {
             'total_open': total_open,
             'overdue': overdue,
-            'waiting_client': waiting_client,
+            'pending_closure': pending_closure,
             'unassigned': unassigned,
             'opened_today': opened_today,
             'resolved_today': resolved_today,

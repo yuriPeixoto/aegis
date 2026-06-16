@@ -9,7 +9,6 @@ from .tag import TagResponse
 
 
 _TERMINAL_STATUSES = {"pending_closure", "resolved", "closed", "cancelled"}
-_PAUSED_STATUSES = {"waiting_client"}
 
 
 class TicketEventResponse(BaseModel):
@@ -66,8 +65,6 @@ class TicketResponse(BaseModel):
             return None
         if self.status in _TERMINAL_STATUSES:
             return "met"
-        if self.status in _PAUSED_STATUSES and self.sla_paused_since is not None:
-            return "paused"
         now = datetime.now(UTC)
         if now >= self.sla_due_at:
             return "overdue"
