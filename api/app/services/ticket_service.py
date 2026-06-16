@@ -54,7 +54,6 @@ class TicketService:
             # Filter tickets that have ALL specified tags (AND logic)
             # Or use ANY? Zendesk tags usually work as "has any of these" or "has all".
             # Let's start with "has any of these" for simpler filtering unless specified otherwise.
-            from app.models.tag import ticket_tags
             query = query.join(Ticket.tags).where(Tag.id.in_(tag_ids))
             # If we wanted AND logic, we'd need multiple joins or a subquery with count.
 
@@ -215,7 +214,7 @@ class TicketService:
         self._db.add(event)
 
         if new_status == "pending_closure" and deployment_scheduled_at is not None:
-            from app.models.calendar_event import CalendarEvent, EVENT_TYPE_DEPLOYMENT
+            from app.models.calendar_event import EVENT_TYPE_DEPLOYMENT, CalendarEvent
 
             ticket.deployment_scheduled_at = deployment_scheduled_at
             if pr_number:
@@ -339,9 +338,21 @@ class TicketService:
 
         if updated_tickets:
             await self._db.commit()
-            # Refresh to load relationships (source, assignee) for the response
-            for t in updated_tickets:
-                await self._db.refresh(t, ["source", "assignee"])
+            # Re-fetch with eager loading.  populate_existing=True forces SQLAlchemy
+            # to overwrite any stale identity-map cache with fresh DB data and load
+            # the declared relationships via selectin (avoids MissingGreenlet in async).
+            updated_ids = [t.id for t in updated_tickets]
+            result = await self._db.execute(
+                select(Ticket)
+                .where(Ticket.id.in_(updated_ids))
+                .options(
+                    selectinload(Ticket.source),
+                    selectinload(Ticket.assignee),
+                    selectinload(Ticket.tags),
+                )
+                .execution_options(populate_existing=True)
+            )
+            return list(result.scalars().all())
 
         return updated_tickets
 
@@ -360,8 +371,9 @@ class TicketService:
 
         if source is None:
             # Fallback to create the source if it doesn't exist, to prevent 500 errors
-            from app.core.security import generate_api_key, hash_api_key
             import secrets
+
+            from app.core.security import generate_api_key, hash_api_key
             plain_key = generate_api_key()
             webhook_secret = secrets.token_hex(32)
             source = Source(
