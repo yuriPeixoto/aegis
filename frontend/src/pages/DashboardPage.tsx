@@ -555,12 +555,17 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg border bg-orange-950/20 border-orange-500/15">
       <div className="shrink-0 mt-0.5">
-        <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
+        <Link
+          to={`/tickets/${ticket.id}`}
+          className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 transition-colors"
+        >
           {ticket.external_id}
-        </span>
+        </Link>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-200 truncate">{ticket.subject}</p>
+        <Link to={`/tickets/${ticket.id}`} className="text-sm font-medium text-slate-200 truncate hover:text-orange-300 transition-colors block">
+          {ticket.subject}
+        </Link>
         <div className="flex flex-wrap items-center gap-2 mt-1">
           <span className="text-xs text-slate-400">{ticket.source_name}</span>
           {ticket.priority && (

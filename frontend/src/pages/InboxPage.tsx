@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -35,10 +35,15 @@ export function InboxPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [showSaveModal, setShowSaveModal] = useState(false)
 
-  // When a view is active, derive filters from the view; otherwise use local state
+  // Reset offset whenever the active view changes (switching views via sidebar)
+  useEffect(() => {
+    setFilters((f) => ({ ...f, offset: 0 }))
+  }, [activeViewId])
+
+  // When a view is active, derive filters from the view but keep local offset for pagination
   const effectiveFilters = useMemo<TicketFilters>(() => {
     if (activeView && me) {
-      return applyViewFilters(activeView.filters, me.id)
+      return { ...applyViewFilters(activeView.filters, me.id), offset: filters.offset }
     }
     return filters
   }, [activeView, filters, me])
