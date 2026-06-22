@@ -69,7 +69,7 @@ export function AttachmentsPanel({ ticketId }: AttachmentsPanelProps) {
           ref={inputRef}
           type="file"
           className="hidden"
-          accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.docx,.doc"
+          accept="image/*,video/*,.pdf,.txt,.csv,.xlsx,.xls,.docx,.doc,.html,.htm"
           onChange={handleFileChange}
         />
       </div>

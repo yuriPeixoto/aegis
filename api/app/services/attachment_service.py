@@ -30,6 +30,9 @@ ALLOWED_CONTENT_TYPES = {
     "video/x-msvideo",      # .avi
     "video/webm",
     "video/x-matroska",     # .mkv
+    # HTML — always served as download (Content-Disposition: attachment), never rendered inline
+    "text/html",
+    "application/xhtml+xml",
 }
 
 
