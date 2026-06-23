@@ -25,7 +25,7 @@ async def upload_attachment(
     try:
         attachment = await AttachmentService(db).upload(ticket_id, file, current_user.id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
     return AttachmentResponse.model_validate(attachment)
 
 

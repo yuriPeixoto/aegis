@@ -52,13 +52,13 @@ async def update_my_profile(
         content_type = avatar.content_type or ""
         if content_type not in _AVATAR_ALLOWED_TYPES:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Avatar must be JPEG, PNG, or WebP",
             )
         content = await avatar.read()
         if len(content) > _AVATAR_MAX_BYTES:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Avatar file too large (max 5 MB)",
             )
         suffix = Path(avatar.filename).suffix.lower() or ".jpg"
@@ -88,7 +88,7 @@ async def change_password(
 ) -> UserResponse:
     if len(data.new_password) < 8:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Password must be at least 8 characters",
         )
     user = await UserService(db).change_password(current_user.id, data.new_password)

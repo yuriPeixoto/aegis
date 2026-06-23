@@ -94,7 +94,7 @@ def _parse_time(value: str) -> time:
         return time(int(h), int(m))
     except Exception as err:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Invalid time format '{value}' — expected HH:MM",
         ) from err
 
