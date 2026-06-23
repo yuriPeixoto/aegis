@@ -47,12 +47,12 @@ async def create_rule(
 ) -> EscalationRuleResponse:
     if data.trigger_type not in VALID_TRIGGER_TYPES:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Invalid trigger_type. Must be one of: {sorted(VALID_TRIGGER_TYPES)}",
         )
     if data.action_type not in VALID_ACTION_TYPES:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Invalid action_type. Must be one of: {sorted(VALID_ACTION_TYPES)}",
         )
     rule = await EscalationService(db).create_rule(data)
