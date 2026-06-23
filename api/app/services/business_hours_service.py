@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -101,7 +100,7 @@ class BusinessHoursService:
             if current == boundary and boundary.time() == (
                 config.lunch_start if config.lunch_start else config.work_end
             ):
-                if config.lunch_start and current.time() == config.lunch_start:
+                if config.lunch_start and config.lunch_end and current.time() == config.lunch_start:
                     current = current.replace(
                         hour=config.lunch_end.hour,
                         minute=config.lunch_end.minute,

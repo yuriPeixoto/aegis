@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 import logging
@@ -18,14 +17,14 @@ logger = logging.getLogger(__name__)
 class AutoCloseService:
     """Service to handle automatic ticket closure due to inactivity."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def get_settings(self) -> dict[str, str]:
         """Fetch all auto-close related settings from the database."""
         stmt = select(GlobalSetting).where(GlobalSetting.key.like("auto_close_%"))
         result = await self.db.execute(stmt)
-        return {row.key: row.value for row in result.scalars()}
+        return {row.key: row.value or "" for row in result.scalars()}
 
     async def process_auto_close(self) -> dict[str, int]:
         """Identifies and processes tickets that should be warned or closed."""

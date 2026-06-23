@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from datetime import date, time
@@ -241,12 +240,12 @@ async def delete_holiday(
 async def get_auto_close_settings(db: DbSession, _admin: AdminUser) -> AutoCloseSettingsOut:
     stmt = select(GlobalSetting).where(GlobalSetting.key.like("auto_close_%"))
     result = await db.execute(stmt)
-    settings = {row.key: row.value for row in result.scalars()}
+    settings = {row.key: row.value or "" for row in result.scalars()}
 
     return AutoCloseSettingsOut(
         enabled=settings.get("auto_close_enabled") == "true",
-        wait_days=int(settings.get("auto_close_wait_days", 5)),
-        warning_days=int(settings.get("auto_close_warning_days", 3)),
+        wait_days=int(settings.get("auto_close_wait_days", "5")),
+        warning_days=int(settings.get("auto_close_warning_days", "3")),
         close_message=settings.get("auto_close_message", ""),
         warning_message=settings.get("auto_close_warning_message", ""),
     )

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.source import Source
+    from app.models.user import User
 
 EVENT_TYPE_ON_CALL = "on_call"
 EVENT_TYPE_TRAINING = "training"
@@ -37,7 +42,7 @@ class CalendarEvent(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    agent: Mapped[object] = relationship("User", foreign_keys=[agent_id], lazy="selectin")
-    source: Mapped[object | None] = relationship(
+    agent: Mapped[User] = relationship("User", foreign_keys=[agent_id], lazy="selectin")
+    source: Mapped[Source | None] = relationship(
         "Source", foreign_keys=[source_id], lazy="selectin"
     )
