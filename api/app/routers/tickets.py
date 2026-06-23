@@ -194,7 +194,7 @@ async def update_ticket_status(
     if error == "not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
     if error:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=error)
     assert ticket is not None
 
     if ticket.source and ticket.source.webhook_url:
@@ -375,7 +375,7 @@ async def update_ticket_priority(
     """Override the priority of a ticket."""
     if body.priority not in _VALID_PRIORITIES:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Invalid priority. Must be one of: {', '.join(sorted(_VALID_PRIORITIES))}",
         )
 
@@ -415,7 +415,7 @@ async def bulk_update_tickets(
     """Update multiple tickets at once."""
     if body.priority and body.priority not in _VALID_PRIORITIES:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Invalid priority: {body.priority}",
         )
 
@@ -526,19 +526,19 @@ async def merge_ticket(
     )
     if error == "cannot_merge_into_self":
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Um ticket não pode ser mesclado nele mesmo.",
         )
     if error in ("source_not_found", "target_not_found"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket não encontrado.")
     if error == "source_already_merged":
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Este ticket já foi mesclado em outro.",
         )
     if error == "target_already_merged":
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="O ticket de destino já foi mesclado — escolha o ticket principal.",
         )
     if ticket is None:
