@@ -41,7 +41,7 @@ async def seed_responses():
             {
                 "title": "Solicitação de Logs/Evidências",
                 "body": "Olá {{ticket.requester.name}},\n\nPara analisarmos melhor o ocorrido no chamado {{ticket.external_id}}, por favor, poderia nos enviar os logs do servidor ou prints/vídeos da tela no momento do erro?\n\nIsso nos ajudará a identificar a causa raiz mais rapidamente.\n\nAguardamos seu retorno.",
-                "actions": CannedResponseActions(status="waiting_client")
+                "actions": CannedResponseActions(status="pending_closure")
             },
             {
                 "title": "Confirmação de Recebimento",

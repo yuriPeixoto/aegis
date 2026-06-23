@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import re
-from sqlalchemy import select, delete
+
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.canned_response import CannedResponse
 from app.models.ticket import Ticket
 from app.models.user import User
@@ -14,9 +16,7 @@ class CannedResponseService:
         self._db = db
 
     async def list_responses(self) -> list[CannedResponse]:
-        result = await self._db.execute(
-            select(CannedResponse).order_by(CannedResponse.title.asc())
-        )
+        result = await self._db.execute(select(CannedResponse).order_by(CannedResponse.title.asc()))
         return list(result.scalars().all())
 
     async def get_response(self, response_id: int) -> CannedResponse | None:
@@ -25,9 +25,7 @@ class CannedResponseService:
         )
         return result.scalar_one_or_none()
 
-    async def create_response(
-        self, body: CannedResponseCreate, user_id: int
-    ) -> CannedResponse:
+    async def create_response(self, body: CannedResponseCreate, user_id: int) -> CannedResponse:
         actions_dict = body.actions.model_dump() if body.actions else None
         response = CannedResponse(
             title=body.title,
@@ -70,8 +68,8 @@ class CannedResponseService:
         """
         Replaces variables in the text with ticket and user data.
         Supported variables:
-        {{ticket.id}}, {{ticket.external_id}}, {{ticket.subject}}, {{ticket.requester.name}} (if available in metadata)
-        {{user.name}} (current agent)
+        {{ticket.id}}, {{ticket.external_id}}, {{ticket.subject}},
+        {{ticket.requester.name}} (if available in metadata), {{user.name}} (current agent)
         """
         vars_map = {
             "ticket.id": str(ticket.id),
@@ -79,25 +77,25 @@ class CannedResponseService:
             "ticket.subject": ticket.subject,
             "user.name": user.name,
         }
-        
+
         # Try to extract requester name from source_metadata if present
         requester_name = ""
         if ticket.source_metadata:
             # Common patterns in metadata
             requester_name = (
-                ticket.source_metadata.get("user_name") or 
-                ticket.source_metadata.get("requester_name") or 
-                ticket.source_metadata.get("client_name") or
-                ticket.source_metadata.get("requester", {}).get("name") or
-                ""
+                ticket.source_metadata.get("user_name")
+                or ticket.source_metadata.get("requester_name")
+                or ticket.source_metadata.get("client_name")
+                or ticket.source_metadata.get("requester", {}).get("name")
+                or ""
             )
-        
+
         vars_map["ticket.requester.name"] = str(requester_name)
 
         def replace(match):
             var_name = match.group(1).strip()
-            # If the variable name is not in the map, we keep the original text {{var}}
-            # BUT if it is a known variable like ticket.requester.name and it's empty, we use empty string
+            # Unknown variables keep their original {{var}} text.
+            # Known variables that resolve to empty return empty string.
             if var_name in vars_map:
                 return vars_map[var_name]
             return match.group(0)

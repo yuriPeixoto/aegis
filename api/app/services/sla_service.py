@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,8 @@ from app.services.business_hours_service import BusinessHoursService
 
 logger = logging.getLogger(__name__)
 
-_TERMINAL = {"pending_closure", "resolved", "closed", "cancelled"}
+_PAUSED_STATUSES = frozenset({"pending_closure"})
+_TERMINAL = frozenset({"resolved", "closed", "cancelled"})
 
 
 class SlaService:
@@ -34,15 +35,18 @@ class SlaService:
         status change, before committing.  Mutates `ticket` in place.
         """
         if new_status == "in_progress":
-            if ticket.sla_started_at is None:
+            if old_status in _PAUSED_STATUSES:
+                await self._resume(ticket, changed_at)
+            elif ticket.sla_started_at is None:
                 await self._start(ticket, changed_at)
-            elif old_status == "waiting_client" and ticket.sla_paused_since:
-                self._resume(ticket, changed_at)
 
-        elif new_status == "waiting_client":
-            self._pause(ticket, changed_at)
+        elif new_status in _PAUSED_STATUSES:
+            if ticket.sla_started_at is not None:
+                self._pause(ticket, changed_at)
 
         elif new_status in _TERMINAL:
+            if ticket.sla_paused_since is not None:
+                ticket.sla_paused_since = None
             self._finalize(ticket, changed_at)
 
     async def override_due_at(
@@ -96,9 +100,11 @@ class SlaService:
         ticket.sla_started_at = now
         ticket.sla_paused_seconds = 0
         ticket.sla_paused_since = None
-        
+
         holidays = await self._get_holidays()
-        ticket.sla_due_at = self._bh.add_business_hours(now, policy.resolution_hours, config, holidays)
+        ticket.sla_due_at = self._bh.add_business_hours(
+            now, policy.resolution_hours, config, holidays
+        )
         logger.info(
             "sla: started for ticket %s — due at %s (%dh business)",
             ticket.id,
@@ -107,24 +113,30 @@ class SlaService:
         )
 
     def _pause(self, ticket: Ticket, now: datetime) -> None:
-        if ticket.sla_paused_since is None and ticket.sla_due_at is not None:
+        if ticket.sla_paused_since is None:
             ticket.sla_paused_since = now
 
-    def _resume(self, ticket: Ticket, now: datetime) -> None:
-        if ticket.sla_paused_since and ticket.sla_due_at:
-            paused_seconds = (now - ticket.sla_paused_since).total_seconds()
-            ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + int(paused_seconds)
-            ticket.sla_paused_since = None
-            # Extend the deadline by the wall-clock time spent waiting
-            ticket.sla_due_at = ticket.sla_due_at + timedelta(seconds=paused_seconds)
+    async def _resume(self, ticket: Ticket, now: datetime) -> None:
+        paused_since = ticket.sla_paused_since
+        if paused_since is None:
+            return
+        elapsed_secs = int((now - paused_since).total_seconds())
+        ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + elapsed_secs
+        ticket.sla_paused_since = None
+        if ticket.sla_due_at is not None:
+            config = await self._get_config()
+            holidays = await self._get_holidays()
+            if config is not None:
+                # Recompute due_at: how many business hours were left when paused?
+                remaining_bh = self._bh.remaining_business_hours(
+                    paused_since, ticket.sla_due_at, config, holidays
+                )
+                ticket.sla_due_at = self._bh.add_business_hours(
+                    now, max(remaining_bh, 0.0), config, holidays
+                )
 
     def _finalize(self, ticket: Ticket, now: datetime) -> None:
-        """Flush any in-flight pause on terminal transition."""
         ticket.resolved_at = now
-        if ticket.sla_paused_since and ticket.sla_due_at:
-            paused_seconds = (now - ticket.sla_paused_since).total_seconds()
-            ticket.sla_paused_seconds = (ticket.sla_paused_seconds or 0) + int(paused_seconds)
-            ticket.sla_paused_since = None
 
     async def _get_config(self) -> BusinessHoursConfig | None:
         result = await self._db.execute(

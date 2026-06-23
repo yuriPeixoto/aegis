@@ -287,7 +287,7 @@ export function OverviewTab() {
         <KpiCard label={t('dashboard.kpi.totalOpen')} value={stats.total_open} icon={<Inbox className="w-5 h-5 text-blue-400" />} iconBg="bg-blue-500/10" />
         <KpiCard label={t('dashboard.kpi.overdue')} value={stats.overdue} valueClass={stats.overdue > 0 ? 'text-red-400' : 'text-slate-200'} icon={<Clock className="w-5 h-5 text-red-400" />} iconBg="bg-red-500/10" pulse={stats.overdue > 0} sub={stats.total_open > 0 ? `${Math.round((stats.overdue / stats.total_open) * 100)}% ${t('dashboard.kpi.ofTotal')}` : undefined} />
         <KpiCard label={t('dashboard.kpi.unassigned')} value={stats.unassigned} valueClass={stats.unassigned > 0 ? 'text-orange-400' : 'text-slate-200'} icon={<UserX className="w-5 h-5 text-orange-400" />} iconBg="bg-orange-500/10" sub={t('dashboard.kpi.unassignedHint')} />
-        <KpiCard label={t('dashboard.kpi.waitingClient')} value={stats.waiting_client} valueClass="text-amber-400" icon={<Users className="w-5 h-5 text-amber-400" />} iconBg="bg-amber-500/10" />
+        <KpiCard label={t('dashboard.kpi.pendingClosure')} value={stats.pending_closure} valueClass="text-emerald-400" icon={<Users className="w-5 h-5 text-emerald-400" />} iconBg="bg-emerald-500/10" />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

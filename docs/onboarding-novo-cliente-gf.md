@@ -77,6 +77,7 @@ Criar os 4 jobs abaixo. Copiar de carvalima e ajustar apenas onde indicado.
 #### `SendTicketToAegis.php`
 - Mapeia enums locais → valores Aegis (`bug`, `melhoria`→`improvement`, `duvida`→`question`, `suporte`→`support`)
 - Mapeia prioridades (`baixa`→`low`, `media`→`medium`, `alta`→`high`, `urgente`→`urgent`)
+- Mapeia status: `aguardando_cliente` **e** `aguardando_validacao_cliente` → `pending_closure` (ambos o Aegis trata como pausa de SLA — aguardando validação do cliente)
 - POST para `/v1/ingest/tickets`
 - **Atenção:** verificar se o cliente tem campo `modulo`. Se não tiver, omitir do payload ou mapear para `null`
 
@@ -121,8 +122,9 @@ X-Aegis-Signature: sha256=<hmac-sha256 do body com webhook_secret>
 **Atenção por cliente:**
 - Se o cliente tem `BusinessHoursService` (carvalima): usar para inferir prioridade no `deadline_updated`
 - Se não tem (frigonorte): apenas atualizar `estimated_completion_date` diretamente
-- Se o cliente tem `AGUARDANDO_VALIDACAO_CLIENTE`: mapear `pending_closure` do Aegis para esse status
+- Se o cliente tem `AGUARDANDO_VALIDACAO_CLIENTE`: mapear `pending_closure` do Aegis → `AGUARDANDO_VALIDACAO_CLIENTE`
 - Se não tem (frigonorte): mapear `pending_closure` → `AGUARDANDO_CLIENTE`
+- **Nota:** ambos os status locais (`aguardando_cliente` e `aguardando_validacao_cliente`) chegam ao Aegis como `pending_closure`. No retorno (webhook Aegis→GF), usar o status nativo mais adequado ao cliente.
 
 ### 2.6 Models a modificar
 
