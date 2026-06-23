@@ -145,6 +145,7 @@ interface UnassignedRowProps {
 }
 
 function UnassignedRow({ ticket, t }: UnassignedRowProps) {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: users } = useUsers()
   const { mutate: assign, isPending } = useAssignTicket(ticket.id)
@@ -158,7 +159,10 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
   }
 
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg border bg-orange-950/20 border-orange-500/15">
+    <div
+      className="flex items-start gap-3 p-3 rounded-lg border bg-orange-950/20 border-orange-500/15 cursor-pointer hover:brightness-110 transition-[filter]"
+      onClick={() => navigate(`/tickets/${ticket.id}`)}
+    >
       <div className="shrink-0 mt-0.5">
         <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
           {ticket.external_id}
@@ -177,7 +181,7 @@ function UnassignedRow({ ticket, t }: UnassignedRowProps) {
           )}
         </div>
       </div>
-      <div className="shrink-0">
+      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
         <select
           defaultValue=""
           disabled={isPending}
