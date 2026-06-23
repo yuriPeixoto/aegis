@@ -33,10 +33,6 @@ module = "app.routers.settings"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "app.routers.sources"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = "app.routers.canned_responses"
 ignore_errors = true
 
