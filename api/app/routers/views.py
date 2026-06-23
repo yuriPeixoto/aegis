@@ -43,9 +43,7 @@ async def update_view(
 
 
 @router.delete("/{view_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_view(
-    view_id: int, db: DbSession, current_user: CurrentUser
-) -> None:
+async def delete_view(view_id: int, db: DbSession, current_user: CurrentUser) -> None:
     deleted = await SavedViewService(db).delete(
         view_id, current_user.id, current_user.role == "admin"
     )

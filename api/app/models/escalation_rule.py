@@ -38,7 +38,9 @@ class EscalationRule(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    action_user: Mapped[object] = relationship("User", foreign_keys=[action_user_id], lazy="selectin")
+    action_user: Mapped[object] = relationship(
+        "User", foreign_keys=[action_user_id], lazy="selectin"
+    )
 
 
 class TicketEscalation(Base):

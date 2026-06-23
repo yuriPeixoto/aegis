@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.escalation_rule import EscalationRule, TicketEscalation
 from app.models.tag import Tag, ticket_tags
@@ -42,15 +41,11 @@ class EscalationService:
     # ── CRUD ──────────────────────────────────────────────────────────────────
 
     async def list_rules(self) -> list[EscalationRule]:
-        result = await self._db.execute(
-            select(EscalationRule).order_by(EscalationRule.created_at)
-        )
+        result = await self._db.execute(select(EscalationRule).order_by(EscalationRule.created_at))
         return list(result.scalars().all())
 
     async def get_rule(self, rule_id: int) -> EscalationRule | None:
-        result = await self._db.execute(
-            select(EscalationRule).where(EscalationRule.id == rule_id)
-        )
+        result = await self._db.execute(select(EscalationRule).where(EscalationRule.id == rule_id))
         return result.scalar_one_or_none()
 
     async def create_rule(self, data: EscalationRuleCreate) -> EscalationRule:
@@ -71,9 +66,7 @@ class EscalationService:
         await self._db.refresh(rule)
         return rule
 
-    async def update_rule(
-        self, rule_id: int, data: EscalationRuleUpdate
-    ) -> EscalationRule | None:
+    async def update_rule(self, rule_id: int, data: EscalationRuleUpdate) -> EscalationRule | None:
         rule = await self.get_rule(rule_id)
         if rule is None:
             return None
@@ -95,7 +88,7 @@ class EscalationService:
 
     async def run(self) -> dict:
         """Evaluate all active rules against active tickets. Called by cron."""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         rules_result = await self._db.execute(
             select(EscalationRule).where(EscalationRule.is_active.is_(True))
         )
@@ -115,9 +108,7 @@ class EscalationService:
             "actions_taken": actions_taken,
         }
 
-    async def _run_rule(
-        self, rule: EscalationRule, now: datetime
-    ) -> tuple[int, list[str]]:
+    async def _run_rule(self, rule: EscalationRule, now: datetime) -> tuple[int, list[str]]:
         tickets = await self._fetch_candidate_tickets(rule, now)
         count = 0
         taken: list[str] = []
@@ -139,9 +130,7 @@ class EscalationService:
 
         return count, taken
 
-    async def _fetch_candidate_tickets(
-        self, rule: EscalationRule, now: datetime
-    ) -> list[Ticket]:
+    async def _fetch_candidate_tickets(self, rule: EscalationRule, now: datetime) -> list[Ticket]:
         stmt = select(Ticket).where(
             Ticket.status.notin_(_TERMINAL_STATUSES),
         )
@@ -175,9 +164,7 @@ class EscalationService:
         result = await self._db.execute(stmt)
         return list(result.scalars().all())
 
-    async def _should_trigger(
-        self, rule: EscalationRule, ticket: Ticket, now: datetime
-    ) -> bool:
+    async def _should_trigger(self, rule: EscalationRule, ticket: Ticket, now: datetime) -> bool:
         # Check cooldown: has this rule already fired for this ticket recently?
         cooldown_cutoff = now - timedelta(hours=rule.cooldown_hours)
         existing = await self._db.execute(
@@ -232,9 +219,7 @@ class EscalationService:
                 .where(Ticket.id == ticket.id)
                 .values(assigned_to_user_id=rule.action_user_id)
             )
-            user_result = await self._db.execute(
-                select(User).where(User.id == rule.action_user_id)
-            )
+            user_result = await self._db.execute(select(User).where(User.id == rule.action_user_id))
             user = user_result.scalar_one_or_none()
             user_name = user.name if user else f"user#{rule.action_user_id}"
             self._db.add(
@@ -252,9 +237,7 @@ class EscalationService:
             if new_priority == ticket.priority:
                 return None  # already at max
             await self._db.execute(
-                update(Ticket)
-                .where(Ticket.id == ticket.id)
-                .values(priority=new_priority)
+                update(Ticket).where(Ticket.id == ticket.id).values(priority=new_priority)
             )
             self._db.add(
                 TicketEvent(
@@ -268,14 +251,15 @@ class EscalationService:
                     occurred_at=now,
                 )
             )
-            return f"ticket#{ticket.id}: priority {ticket.priority} → {new_priority} (rule: {rule.name})"
+            return (
+                f"ticket#{ticket.id}: priority {ticket.priority} → {new_priority}"
+                f" (rule: {rule.name})"
+            )
 
         elif rule.action_type == "add_tag":
             if rule.action_tag_id is None:
                 return None
-            tag_result = await self._db.execute(
-                select(Tag).where(Tag.id == rule.action_tag_id)
-            )
+            tag_result = await self._db.execute(select(Tag).where(Tag.id == rule.action_tag_id))
             tag = tag_result.scalar_one_or_none()
             if tag is None:
                 return None
@@ -340,9 +324,7 @@ class EscalationService:
             )
         return list(result.scalars().all())
 
-    async def _log_escalation(
-        self, rule: EscalationRule, ticket_id: int, now: datetime
-    ) -> None:
+    async def _log_escalation(self, rule: EscalationRule, ticket_id: int, now: datetime) -> None:
         log = TicketEscalation(
             ticket_id=ticket_id,
             rule_id=rule.id,

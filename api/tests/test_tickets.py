@@ -60,8 +60,12 @@ async def test_list_tickets(admin_client: AsyncClient, ingested_ticket: dict) ->
 
 
 @pytest.mark.asyncio
-async def test_list_tickets_filter_by_source(admin_client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await admin_client.get("/v1/tickets", params={"source_id": ingested_ticket["source_id"]})
+async def test_list_tickets_filter_by_source(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    response = await admin_client.get(
+        "/v1/tickets", params={"source_id": ingested_ticket["source_id"]}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
@@ -70,7 +74,9 @@ async def test_list_tickets_filter_by_source(admin_client: AsyncClient, ingested
 
 
 @pytest.mark.asyncio
-async def test_list_tickets_filter_by_status(admin_client: AsyncClient, ingested_ticket: dict) -> None:
+async def test_list_tickets_filter_by_status(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
     response = await admin_client.get("/v1/tickets", params={"status": "open"})
     assert response.status_code == 200
     for item in response.json()["items"]:

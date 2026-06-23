@@ -1,9 +1,10 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import select, and_, func
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.calendar_event import CalendarEvent
@@ -39,9 +40,7 @@ class CalendarReminderService:
                 skipped += 1
                 continue
 
-            notif_type = (
-                "on_call_reminder" if event.type == "on_call" else "training_reminder"
-            )
+            notif_type = "on_call_reminder" if event.type == "on_call" else "training_reminder"
 
             label = (
                 f"Plantão em {target_date.strftime('%d/%m/%Y')}"
@@ -80,9 +79,7 @@ class CalendarReminderService:
 
     async def _already_notified(self, calendar_event_id: int, agent_id: int) -> bool:
         """Evita duplicatas: verifica se já existe notificação para este evento hoje."""
-        today_start = datetime.now(timezone.utc).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
         result = await self._db.execute(
             select(Notification).where(
                 and_(

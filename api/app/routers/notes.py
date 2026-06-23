@@ -15,7 +15,9 @@ router = APIRouter(prefix="/v1/tickets", tags=["notes"])
 
 
 @router.get("/{ticket_id}/notes", response_model=list[NoteResponse])
-async def list_notes(ticket_id: int, db: DbSession, _current_user: CurrentUser) -> list[NoteResponse]:
+async def list_notes(
+    ticket_id: int, db: DbSession, _current_user: CurrentUser
+) -> list[NoteResponse]:
     ticket_exists = await db.scalar(select(Ticket.id).where(Ticket.id == ticket_id))
     if ticket_exists is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
@@ -56,15 +58,15 @@ async def create_note(
     await db.refresh(note)
 
     result = await db.execute(
-        select(TicketNote)
-        .where(TicketNote.id == note.id)
-        .options(selectinload(TicketNote.author))
+        select(TicketNote).where(TicketNote.id == note.id).options(selectinload(TicketNote.author))
     )
     note = result.scalar_one()
     return NoteResponse(
         id=note.id,
         ticket_id=note.ticket_id,
         body=note.body,
-        author=NoteAuthorResponse(id=note.author.id, name=note.author.name) if note.author else None,
+        author=NoteAuthorResponse(id=note.author.id, name=note.author.name)
+        if note.author
+        else None,
         created_at=note.created_at,
     )
