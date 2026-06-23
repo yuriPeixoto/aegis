@@ -11,7 +11,15 @@ if TYPE_CHECKING:
     from app.models.ticket_message import TicketMessage
     from app.models.user import User
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func  # noqa: F401
+from sqlalchemy import (  # noqa: F401
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,26 +62,40 @@ class Ticket(Base):
     )
 
     # SLA deadline — computed in business hours when ticket enters in_progress
-    sla_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    sla_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     # When the SLA clock first started (first transition to in_progress)
     sla_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Accumulated wall-clock seconds the ticket spent in waiting_client (paused)
-    sla_paused_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    sla_paused_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     # Non-null while the ticket is currently paused (waiting_client)
-    sla_paused_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sla_paused_since: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # When the ticket was moved to a terminal status (resolved, closed, etc.)
-    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     # Deployment info — set when ticket moves to pending_closure
-    deployment_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    deployment_scheduled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     pr_number: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     # CSAT — satisfaction survey
     csat_rating: Mapped[int | None] = mapped_column(nullable=True)
     csat_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    csat_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    csat_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    csat_submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    csat_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Merge — set when this ticket is absorbed into another
     merged_into_ticket_id: Mapped[int | None] = mapped_column(
@@ -99,9 +121,7 @@ class Ticket(Base):
     attachments: Mapped[list[TicketAttachment]] = relationship(
         "TicketAttachment", back_populates="ticket", order_by="TicketAttachment.created_at"
     )
-    tags: Mapped[list[Tag]] = relationship(
-        "Tag", secondary=ticket_tags, back_populates="tickets"
-    )
+    tags: Mapped[list[Tag]] = relationship("Tag", secondary=ticket_tags, back_populates="tickets")
     assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to_user_id])
 
     __table_args__ = (

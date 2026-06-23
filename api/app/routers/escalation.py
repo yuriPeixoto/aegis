@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, status
 from app.core.auth import AdminUser
 from app.core.dependencies import DbSession
 from app.schemas.escalation import (
+    VALID_ACTION_TYPES,
+    VALID_TRIGGER_TYPES,
     EscalationRuleCreate,
     EscalationRuleResponse,
     EscalationRuleUpdate,
     EscalationRunResult,
-    VALID_ACTION_TYPES,
-    VALID_TRIGGER_TYPES,
 )
 from app.services.escalation_service import EscalationService
 

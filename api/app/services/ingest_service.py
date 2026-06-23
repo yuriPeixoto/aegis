@@ -18,12 +18,12 @@ from app.services.sla_service import SlaService
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 _GF_TO_AEGIS: dict[str, str] = {
-    "em_atendimento":              "in_progress",
-    "aguardando_cliente":           "pending_closure",
+    "em_atendimento": "in_progress",
+    "aguardando_cliente": "pending_closure",
     "aguardando_validacao_cliente": "pending_closure",
-    "resolvido":                   "resolved",
-    "fechado":                     "closed",
-    "cancelado":                   "cancelled",
+    "resolvido": "resolved",
+    "fechado": "closed",
+    "cancelado": "cancelled",
 }
 
 logger = logging.getLogger(__name__)
@@ -49,9 +49,7 @@ class IngestService:
         if ticket is None:
             ingested_at = datetime.now(UTC)
             sla_due_at = (
-                ingested_at + timedelta(hours=source.sla_hours)
-                if source.sla_hours
-                else None
+                ingested_at + timedelta(hours=source.sla_hours) if source.sla_hours else None
             )
             ticket = Ticket(
                 source_id=source.id,
@@ -111,9 +109,7 @@ class IngestService:
                     f" ({failed} failed — check warnings above)" if failed else "",
                 )
 
-            await NotificationService(self._db).create_new_ticket_notifications(
-                ticket, source.name
-            )
+            await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
             return ticket, True
 
         # Update existing ticket

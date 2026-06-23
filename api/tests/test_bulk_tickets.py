@@ -32,7 +32,9 @@ async def two_tickets(admin_client: AsyncClient) -> list[int]:
 
 
 @pytest.mark.asyncio
-async def test_bulk_update_status_and_priority(admin_client: AsyncClient, two_tickets: list[int]) -> None:
+async def test_bulk_update_status_and_priority(
+    admin_client: AsyncClient, two_tickets: list[int]
+) -> None:
     resp = await admin_client.post(
         "/v1/tickets/bulk-update",
         json={
@@ -77,7 +79,9 @@ async def test_bulk_update_assignee(admin_client: AsyncClient, two_tickets: list
 
 
 @pytest.mark.asyncio
-async def test_bulk_update_invalid_priority(admin_client: AsyncClient, two_tickets: list[int]) -> None:
+async def test_bulk_update_invalid_priority(
+    admin_client: AsyncClient, two_tickets: list[int]
+) -> None:
     resp = await admin_client.post(
         "/v1/tickets/bulk-update",
         json={"ticket_ids": two_tickets, "priority": "invalid-priority"},

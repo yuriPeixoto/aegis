@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 
 from app.core.dependencies import DbSession
 from app.models.tag import Tag
@@ -22,7 +21,11 @@ class TagService:
         return tag
 
     async def update(
-        self, tag_id: int, name: str | None = None, color: str | None = None, description: str | None = None
+        self,
+        tag_id: int,
+        name: str | None = None,
+        color: str | None = None,
+        description: str | None = None,
     ) -> Tag | None:
         tag = await self.db.get(Tag, tag_id)
         if not tag:
