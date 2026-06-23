@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
@@ -22,7 +21,8 @@ router = APIRouter(prefix="/v1/canned-responses", tags=["canned-responses"])
 
 @router.get("", response_model=list[CannedResponseResponse])
 async def list_canned_responses(db: DbSession, _user: CurrentUser) -> list[CannedResponseResponse]:
-    return await CannedResponseService(db).list_responses()
+    responses = await CannedResponseService(db).list_responses()
+    return [CannedResponseResponse.model_validate(r) for r in responses]
 
 
 @router.post(
@@ -35,7 +35,8 @@ async def create_canned_response(
     db: DbSession,
     user: CurrentUser,
 ) -> CannedResponseResponse:
-    return await CannedResponseService(db).create_response(body, user.id)
+    response = await CannedResponseService(db).create_response(body, user.id)
+    return CannedResponseResponse.model_validate(response)
 
 
 @router.get("/{response_id}", response_model=CannedResponseResponse)
@@ -47,7 +48,7 @@ async def get_canned_response(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Canned response not found"
         )
-    return response
+    return CannedResponseResponse.model_validate(response)
 
 
 @router.patch("/{response_id}", response_model=CannedResponseResponse)
@@ -62,7 +63,7 @@ async def update_canned_response(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Canned response not found"
         )
-    return response
+    return CannedResponseResponse.model_validate(response)
 
 
 @router.delete("/{response_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -113,6 +114,7 @@ async def apply_canned_response(
         )
         # Reload ticket to get updated state for webhook
         ticket = await ticket_svc.get_ticket(ticket.id)
+        assert ticket is not None
 
         # Dispatch status webhook if it changed
         new_status = actions.get("status")

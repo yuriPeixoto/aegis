@@ -16,10 +16,6 @@ strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 
-[[tool.mypy.overrides]]
-module = "app.routers.canned_responses"
-ignore_errors = true
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
