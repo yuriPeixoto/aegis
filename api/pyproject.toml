@@ -17,10 +17,6 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = "app.services.business_hours_service"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = "app.routers.settings"
 ignore_errors = true
 
