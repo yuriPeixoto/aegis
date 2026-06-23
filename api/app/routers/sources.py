@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
@@ -62,5 +61,5 @@ async def regenerate_source_key(
     result = await SourceService(db).regenerate_key(source_id)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
-    _, plain_key, webhook_secret = result
+    _source, plain_key, webhook_secret = result
     return SourceKeyRegeneratedResponse(api_key=plain_key, webhook_secret=webhook_secret)

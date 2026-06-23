@@ -16,30 +16,6 @@ strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 
-[[tool.mypy.overrides]]
-module = "app.services.business_hours_service"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "app.services.auto_close_service"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "app.services.calendar_reminder_service"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "app.routers.settings"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "app.routers.sources"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "app.routers.canned_responses"
-ignore_errors = true
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
