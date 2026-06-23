@@ -26,9 +26,7 @@ class SavedViewService:
         return list(result.scalars().all())
 
     async def get(self, view_id: int) -> SavedView | None:
-        result = await self._db.execute(
-            select(SavedView).where(SavedView.id == view_id)
-        )
+        result = await self._db.execute(select(SavedView).where(SavedView.id == view_id))
         return result.scalar_one_or_none()
 
     async def create(self, user_id: int, data: SavedViewCreate) -> SavedView:

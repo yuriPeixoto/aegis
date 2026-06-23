@@ -40,5 +40,7 @@ class TicketAttachment(Base):
     )
 
     ticket: Mapped[Ticket] = relationship("Ticket", back_populates="attachments")
-    message: Mapped[TicketMessage | None] = relationship("TicketMessage", back_populates="attachments")
+    message: Mapped[TicketMessage | None] = relationship(
+        "TicketMessage", back_populates="attachments"
+    )
     uploaded_by: Mapped[User | None] = relationship("User", foreign_keys=[uploaded_by_user_id])

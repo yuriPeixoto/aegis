@@ -15,13 +15,13 @@ from app.models.user import User  # noqa: F401 — loaded via selectinload
 from app.services.sla_service import SlaService
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
-    "open":            {"in_progress", "cancelled"},
-    "in_progress":     {"pending_closure", "cancelled"},
+    "open": {"in_progress", "cancelled"},
+    "in_progress": {"pending_closure", "cancelled"},
     "pending_closure": {"in_progress", "closed"},
-    "resolved":        {"open", "closed"},   # mantido por retrocompatibilidade
-    "closed":          set(),
-    "cancelled":       set(),
-    "merged":          set(),
+    "resolved": {"open", "closed"},  # mantido por retrocompatibilidade
+    "closed": set(),
+    "cancelled": set(),
+    "merged": set(),
 }
 
 
@@ -29,7 +29,7 @@ class TicketService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    _TERMINAL_STATUSES = ('resolved', 'closed', 'cancelled', 'merged')
+    _TERMINAL_STATUSES = ("resolved", "closed", "cancelled", "merged")
 
     async def list_tickets(
         self,
@@ -47,8 +47,12 @@ class TicketService:
         tag_ids: list[int] | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> tuple[list[Ticket], int]:
-        query = select(Ticket).join(Source, Ticket.source_id == Source.id).where(Source.is_active.is_(True))
+    ) -> tuple[list[Ticket], int, dict[int, datetime | None]]:
+        query = (
+            select(Ticket)
+            .join(Source, Ticket.source_id == Source.id)
+            .where(Source.is_active.is_(True))
+        )
 
         if tag_ids:
             # Filter tickets that have ALL specified tags (AND logic)
@@ -74,6 +78,7 @@ class TicketService:
         if search is not None:
             term = f"%{search}%"
             from sqlalchemy import or_
+
             query = query.where(or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term)))
         if created_after is not None:
             query = query.where(Ticket.first_ingested_at >= created_after)
@@ -99,7 +104,7 @@ class TicketService:
             query.options(
                 selectinload(Ticket.source),
                 selectinload(Ticket.assignee),
-                selectinload(Ticket.tags)
+                selectinload(Ticket.tags),
             )
             .order_by(_terminal_rank, _priority_rank, Ticket.first_ingested_at.desc())
             .limit(limit)
@@ -185,7 +190,7 @@ class TicketService:
         comment: str | None = None,
         deployment_scheduled_at: datetime | None = None,
         pr_number: str | None = None,
-    ) -> tuple[Ticket, None] | tuple[None, str]:
+    ) -> tuple[Ticket | None, str | None]:
         """Return (ticket, None) on success, or (None, error_message) on failure."""
         ticket = await self.get_ticket(ticket_id)
         if ticket is None:
@@ -225,23 +230,27 @@ class TicketService:
             if pr_number:
                 notes += f" — PR #{pr_number}"
 
-            self._db.add(CalendarEvent(
-                type=EVENT_TYPE_DEPLOYMENT,
-                agent_id=agent_id,
-                event_date=deployment_scheduled_at.date(),
-                start_time=deployment_scheduled_at.strftime("%H:%M"),
-                source_id=ticket.source_id,
-                ticket_id=ticket_id,
-                notes=notes,
-            ))
-            self._db.add(TicketEvent(
-                ticket_id=ticket_id,
-                event_type="deployment_scheduled",
-                payload={
-                    "deployment_at": deployment_scheduled_at.isoformat(),
-                    **({"pr_number": pr_number} if pr_number else {}),
-                },
-            ))
+            self._db.add(
+                CalendarEvent(
+                    type=EVENT_TYPE_DEPLOYMENT,
+                    agent_id=agent_id,
+                    event_date=deployment_scheduled_at.date(),
+                    start_time=deployment_scheduled_at.strftime("%H:%M"),
+                    source_id=ticket.source_id,
+                    ticket_id=ticket_id,
+                    notes=notes,
+                )
+            )
+            self._db.add(
+                TicketEvent(
+                    ticket_id=ticket_id,
+                    event_type="deployment_scheduled",
+                    payload={
+                        "deployment_at": deployment_scheduled_at.isoformat(),
+                        **({"pr_number": pr_number} if pr_number else {}),
+                    },
+                )
+            )
 
         await self._db.commit()
 
@@ -315,22 +324,22 @@ class TicketService:
                 )
                 changed = True
 
-            if assigned_to_user_id is not None:
-                # We use -1 or similar if we wanted to unassign, but schema says int | None
-                # If the user passed a specific ID or None, we apply it
-                if ticket.assigned_to_user_id != assigned_to_user_id:
-                    ticket.assigned_to_user_id = assigned_to_user_id
-                    self._db.add(
-                        TicketEvent(
-                            ticket_id=ticket.id,
-                            event_type="assigned",
-                            payload={
-                                "assigned_to_user_id": assigned_to_user_id,
-                                "changed_by": changed_by_user_name,
-                            },
-                        )
+            if (
+                assigned_to_user_id is not None
+                and ticket.assigned_to_user_id != assigned_to_user_id
+            ):  # noqa: E501
+                ticket.assigned_to_user_id = assigned_to_user_id
+                self._db.add(
+                    TicketEvent(
+                        ticket_id=ticket.id,
+                        event_type="assigned",
+                        payload={
+                            "assigned_to_user_id": assigned_to_user_id,
+                            "changed_by": changed_by_user_name,
+                        },
                     )
-                    changed = True
+                )
+                changed = True
 
             if changed:
                 self._db.add(ticket)
@@ -374,6 +383,7 @@ class TicketService:
             import secrets
 
             from app.core.security import generate_api_key, hash_api_key
+
             plain_key = generate_api_key()
             webhook_secret = secrets.token_hex(32)
             source = Source(
@@ -381,7 +391,7 @@ class TicketService:
                 slug="aegis",
                 api_key_hash=hash_api_key(plain_key),
                 webhook_secret=webhook_secret,
-                is_active=True
+                is_active=True,
             )
             self._db.add(source)
             await self._db.flush()
@@ -465,7 +475,7 @@ class TicketService:
 
         # Move all messages from source to target
         await self._db.execute(
-            TicketMessage.__table__.update()
+            TicketMessage.__table__.update()  # type: ignore[attr-defined]
             .where(TicketMessage.ticket_id == source_ticket_id)
             .values(ticket_id=target_ticket_id)
         )
@@ -498,18 +508,22 @@ class TicketService:
         self._db.add(merge_note_source)
 
         # Events on both tickets
-        self._db.add(TicketEvent(
-            ticket_id=target_ticket_id,
-            event_type="ticket_merged_in",
-            payload={"merged_from": source.external_id, "by": merged_by_name},
-            occurred_at=now,
-        ))
-        self._db.add(TicketEvent(
-            ticket_id=source_ticket_id,
-            event_type="merged",
-            payload={"merged_into": target.external_id, "by": merged_by_name},
-            occurred_at=now,
-        ))
+        self._db.add(
+            TicketEvent(
+                ticket_id=target_ticket_id,
+                event_type="ticket_merged_in",
+                payload={"merged_from": source.external_id, "by": merged_by_name},
+                occurred_at=now,
+            )
+        )
+        self._db.add(
+            TicketEvent(
+                ticket_id=source_ticket_id,
+                event_type="merged",
+                payload={"merged_into": target.external_id, "by": merged_by_name},
+                occurred_at=now,
+            )
+        )
 
         # Mark source as merged
         source.status = "merged"
@@ -532,7 +546,9 @@ class TicketService:
         )
         return result.scalar_one(), None
 
-    async def update_tags(self, ticket_id: int, tag_ids: list[int], changed_by: str) -> Ticket | None:
+    async def update_tags(
+        self, ticket_id: int, tag_ids: list[int], changed_by: str
+    ) -> Ticket | None:
         ticket = await self.get_ticket(ticket_id)
         if not ticket:
             return None
@@ -559,5 +575,5 @@ class TicketService:
             )
             await self._db.commit()
             await self._db.refresh(ticket, ["tags", "source", "assignee"])
-        
+
         return ticket

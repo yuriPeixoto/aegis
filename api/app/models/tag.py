@@ -24,7 +24,9 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
-    color: Mapped[str] = mapped_column(String(7), nullable=False, default="#6B7280")  # Default gray-500
+    color: Mapped[str] = mapped_column(
+        String(7), nullable=False, default="#6B7280"
+    )  # Default gray-500
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     tickets: Mapped[list[Ticket]] = relationship(

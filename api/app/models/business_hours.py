@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from datetime import time
 
-from sqlalchemy import Time
+from sqlalchemy import Integer, String, Time
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base

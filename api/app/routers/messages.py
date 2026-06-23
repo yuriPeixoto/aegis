@@ -98,7 +98,7 @@ async def send_message(
 
     try:
         parsed_mentions: list[int] = json.loads(mentioned_user_ids)
-    except (json.JSONDecodeError, ValueError):
+    except json.JSONDecodeError, ValueError:
         parsed_mentions = []
 
     message = await MessageService(db).create_outbound(
@@ -125,14 +125,18 @@ async def send_message(
             # Read bytes for webhook payload
             file_path = att_service.resolve_path(attachment)
             content = Path(file_path).read_bytes()
-            webhook_attachments = [{
-                "filename": attachment.original_filename,
-                "content_type": attachment.content_type,
-                "size_bytes": attachment.size_bytes,
-                "data": base64.b64encode(content).decode(),
-            }]
+            webhook_attachments = [
+                {
+                    "filename": attachment.original_filename,
+                    "content_type": attachment.content_type,
+                    "size_bytes": attachment.size_bytes,
+                    "data": base64.b64encode(content).decode(),
+                }
+            ]
         except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+            ) from e
 
     # Create mention notifications for internal notes
     if is_internal and parsed_mentions:

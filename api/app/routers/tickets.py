@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from contextlib import suppress
 from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile, status
@@ -16,6 +17,7 @@ from app.schemas.ticket import (
     MergeTicketRequest,
     OverrideSlaRequest,
     TicketDetailResponse,
+    TicketEventResponse,
     TicketListResponse,
     TicketResponse,
     TicketTagsUpdateRequest,
@@ -56,10 +58,7 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         sla_paused_seconds=ticket.sla_paused_seconds or 0,
         sla_paused_since=ticket.sla_paused_since,
         assigned_to=_assignee(ticket),
-        tags=[
-            TagResponse.model_validate(t)
-            for t in ticket.tags
-        ],
+        tags=[TagResponse.model_validate(t) for t in ticket.tags],
         merged_into_ticket_id=ticket.merged_into_ticket_id,
         merged_at=ticket.merged_at,
         csat_rating=ticket.csat_rating,
@@ -68,15 +67,7 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         csat_requested_at=ticket.csat_requested_at,
         deployment_scheduled_at=ticket.deployment_scheduled_at,
         pr_number=ticket.pr_number,
-        events=[
-            {
-                "id": e.id,
-                "event_type": e.event_type,
-                "payload": e.payload,
-                "occurred_at": e.occurred_at,
-            }
-            for e in ticket.events
-        ],
+        events=[TicketEventResponse.model_validate(e) for e in ticket.events],
     )
 
 
@@ -163,10 +154,8 @@ async def create_internal_ticket(
 ) -> TicketDetailResponse:
     meta_dict: dict | None = None
     if meta:
-        try:
+        with suppress(ValueError):
             meta_dict = json.loads(meta)
-        except ValueError:
-            pass
 
     ticket = await TicketService(db).create_internal_ticket(
         subject=subject,
@@ -180,10 +169,8 @@ async def create_internal_ticket(
     att_service = AttachmentService(db)
     for file in files:
         if file.filename:
-            try:
+            with suppress(ValueError):
                 await att_service.upload(ticket.id, file, current_user.id)
-            except ValueError:
-                pass  # tipo/tamanho inválido — ignora silenciosamente, ticket já criado
 
     return _detail(ticket)
 
@@ -208,6 +195,7 @@ async def update_ticket_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
     if error:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error)
+    assert ticket is not None
 
     if ticket.source and ticket.source.webhook_url:
         background_tasks.add_task(
@@ -261,7 +249,9 @@ async def assign_ticket(
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
 ) -> TicketDetailResponse:
-    ticket = await TicketService(db).assign_ticket(ticket_id, body.user_id, assigned_by_name=current_user.name)
+    ticket = await TicketService(db).assign_ticket(
+        ticket_id, body.user_id, assigned_by_name=current_user.name
+    )
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
@@ -363,13 +353,11 @@ async def update_ticket_tags(
 ) -> TicketDetailResponse:
     """Update tags for a ticket."""
     ticket = await TicketService(db).update_tags(
-        ticket_id=ticket_id,
-        tag_ids=body.tag_ids,
-        changed_by=current_user.name
+        ticket_id=ticket_id, tag_ids=body.tag_ids, changed_by=current_user.name
     )
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
-    
+
     return _detail(ticket)
 
 
@@ -537,17 +525,25 @@ async def merge_ticket(
         merged_by_name=current_user.name,
     )
     if error == "cannot_merge_into_self":
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail="Um ticket não pode ser mesclado nele mesmo.")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Um ticket não pode ser mesclado nele mesmo.",
+        )
     if error in ("source_not_found", "target_not_found"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket não encontrado.")
     if error == "source_already_merged":
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail="Este ticket já foi mesclado em outro.")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Este ticket já foi mesclado em outro.",
+        )
     if error == "target_already_merged":
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail="O ticket de destino já foi mesclado — escolha o ticket principal.")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="O ticket de destino já foi mesclado — escolha o ticket principal.",
+        )
     if ticket is None:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Merge failed.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Merge failed."
+        )
 
     return _detail(ticket)
