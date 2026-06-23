@@ -9,7 +9,7 @@ from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
 from app.services.analytics_service import AnalyticsService, Granularity
 
-router = APIRouter(prefix='/v1/analytics', tags=['analytics'])
+router = APIRouter(prefix="/v1/analytics", tags=["analytics"])
 
 # ── Agent profile analytics ──────────────────────────────────────────────────
 #
@@ -22,23 +22,23 @@ router = APIRouter(prefix='/v1/analytics', tags=['analytics'])
 # will call the same endpoint or extend AnalyticsService directly.
 
 
-@router.get('/agent/{user_id}')
+@router.get("/agent/{user_id}")
 async def get_agent_analytics(
     user_id: int,
     db: DbSession,
     current_user: CurrentUser,
-    from_date: Annotated[date | None, Query(alias='from')] = None,
-    to_date: Annotated[date | None, Query(alias='to')] = None,
-    granularity: Annotated[Granularity, Query()] = 'day',
+    from_date: Annotated[date | None, Query(alias="from")] = None,
+    to_date: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Annotated[Granularity, Query()] = "day",
 ) -> dict:
-    if current_user.role != 'admin' and current_user.id != user_id:
+    if current_user.role != "admin" and current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail='You can only view your own analytics',
+            detail="You can only view your own analytics",
         )
     data = await AnalyticsService(db).get_agent_stats(user_id, from_date, to_date, granularity)
     if data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return data
 
 
@@ -51,12 +51,12 @@ async def get_agent_analytics(
 # InsightsService called here) — no changes to this endpoint signature needed.
 
 
-@router.get('/overview')
+@router.get("/overview")
 async def get_overview_analytics(
     db: DbSession,
     _admin: AdminUser,
-    from_date: Annotated[date | None, Query(alias='from')] = None,
-    to_date: Annotated[date | None, Query(alias='to')] = None,
-    granularity: Annotated[Granularity, Query()] = 'day',
+    from_date: Annotated[date | None, Query(alias="from")] = None,
+    to_date: Annotated[date | None, Query(alias="to")] = None,
+    granularity: Annotated[Granularity, Query()] = "day",
 ) -> dict:
     return await AnalyticsService(db).get_overview(from_date, to_date, granularity)

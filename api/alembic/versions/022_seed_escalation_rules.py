@@ -36,7 +36,7 @@ RULES = [
     (
         "Sem atualização — 48h",
         True, "no_update", 48,
-        '[]', '["open","in_progress","waiting_client"]',
+        '[]', '["open","in_progress"]',
         "notify_senior_agents", "NULL", "NULL", 24,
     ),
 ]

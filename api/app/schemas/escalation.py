@@ -4,7 +4,6 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-
 VALID_TRIGGER_TYPES = {"sla_at_risk", "sla_breach", "no_update", "unassigned_time"}
 VALID_ACTION_TYPES = {
     "reassign_to_user",

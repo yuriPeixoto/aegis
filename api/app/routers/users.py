@@ -22,9 +22,7 @@ async def list_users(db: DbSession, current_user: CurrentUser) -> list[UserRespo
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
-async def create_user(
-    data: UserCreateRequest, db: DbSession, _: AdminUser
-) -> UserResponse:
+async def create_user(data: UserCreateRequest, db: DbSession, _: AdminUser) -> UserResponse:
     try:
         user = await UserService(db).create(
             email=data.email,
@@ -33,11 +31,11 @@ async def create_user(
             role=data.role,
             must_change_password=True,
         )
-    except IntegrityError:
+    except IntegrityError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"A user with email '{data.email}' already exists",
-        )
+        ) from err
     return UserResponse.model_validate(user)
 
 
@@ -55,11 +53,11 @@ async def update_user(
             is_active=data.is_active,
             is_senior=data.is_senior,
         )
-    except IntegrityError:
+    except IntegrityError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A user with that email already exists",
-        )
+        ) from err
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponse.model_validate(user)

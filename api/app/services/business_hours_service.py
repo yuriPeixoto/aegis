@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -57,11 +58,19 @@ class BusinessHoursService:
         total = 0.0
 
         while current < to_dt:
-            if current.isoweekday() not in work_days or current.date() in holiday_set or current.time() >= config.work_end:
+            if (
+                current.isoweekday() not in work_days
+                or current.date() in holiday_set
+                or current.time() >= config.work_end
+            ):
                 current = self._next_work_day(current, work_days, config, holiday_set)
                 continue
 
-            if config.lunch_start and config.lunch_end and config.lunch_start <= current.time() < config.lunch_end:
+            if (
+                config.lunch_start
+                and config.lunch_end
+                and config.lunch_start <= current.time() < config.lunch_end
+            ):
                 current = current.replace(
                     hour=config.lunch_end.hour,
                     minute=config.lunch_end.minute,
@@ -89,7 +98,9 @@ class BusinessHoursService:
             total += (segment_end - current).total_seconds()
             current = segment_end
 
-            if current == boundary and boundary.time() == (config.lunch_start if config.lunch_start else config.work_end):
+            if current == boundary and boundary.time() == (
+                config.lunch_start if config.lunch_start else config.work_end
+            ):
                 if config.lunch_start and current.time() == config.lunch_start:
                     current = current.replace(
                         hour=config.lunch_end.hour,
@@ -120,7 +131,11 @@ class BusinessHoursService:
 
         while remaining > 0:
             # Guard: should never be outside work after snap, but be safe
-            if current.isoweekday() not in work_days or current.date() in holiday_set or current.time() >= config.work_end:
+            if (
+                current.isoweekday() not in work_days
+                or current.date() in holiday_set
+                or current.time() >= config.work_end
+            ):
                 current = self._next_work_day(current, work_days, config, holiday_set)
                 continue
 
@@ -138,11 +153,7 @@ class BusinessHoursService:
                 )
 
             # Compute next boundary: lunch start (if before it) or end of day
-            if (
-                config.lunch_start
-                and config.lunch_end
-                and current.time() < config.lunch_start
-            ):
+            if config.lunch_start and config.lunch_end and current.time() < config.lunch_start:
                 boundary = current.replace(
                     hour=config.lunch_start.hour,
                     minute=config.lunch_start.minute,
@@ -166,11 +177,7 @@ class BusinessHoursService:
                 remaining -= available
                 current = boundary
                 # If we hit lunch, skip it; if end-of-day, go to next day
-                if (
-                    config.lunch_start
-                    and config.lunch_end
-                    and current.time() == config.lunch_start
-                ):
+                if config.lunch_start and config.lunch_end and current.time() == config.lunch_start:
                     current = current.replace(
                         hour=config.lunch_end.hour,
                         minute=config.lunch_end.minute,

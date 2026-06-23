@@ -7,7 +7,6 @@ const SLA_BADGE: Record<string, string> = {
   ok:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   at_risk: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
   overdue: 'bg-red-500/15 text-red-400 border-red-500/30',
-  paused:  'bg-sky-500/15 text-sky-400 border-sky-500/30',
 }
 
 const AVATAR_COLORS = [
@@ -125,12 +124,6 @@ function AgentMonitorTicketRow({ ticket, t }: AgentMonitorTicketRowProps) {
           >
             <MessageSquare className="w-3 h-3" />
             {ticket.last_message_at && formatTimeAgo(ticket.last_message_at)}
-          </span>
-        )}
-
-        {ticket.status === 'waiting_client' && ticket.waiting_since && (
-          <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-            ⏸ {formatTimeAgo(ticket.waiting_since)}
           </span>
         )}
 

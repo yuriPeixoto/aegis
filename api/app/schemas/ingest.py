@@ -5,6 +5,13 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class IngestAttachment(BaseModel):
+    filename: str
+    content_type: str
+    size_bytes: int
+    data: str  # base64-encoded content
+
+
 class TicketIngestPayload(BaseModel):
     """Payload sent by an external system when a ticket is created or updated."""
 
@@ -18,6 +25,7 @@ class TicketIngestPayload(BaseModel):
     source_created_at: datetime | None = None
     source_updated_at: datetime | None = None
     assigned_to_user_id: int | None = None
+    attachments: list[IngestAttachment] = Field(default_factory=list)
 
 
 class TicketEventPayload(BaseModel):

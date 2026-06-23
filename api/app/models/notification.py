@@ -4,10 +4,10 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.models.user import User
+    from app.models.calendar_event import CalendarEvent
     from app.models.ticket import Ticket
     from app.models.ticket_message import TicketMessage
-    from app.models.calendar_event import CalendarEvent
+    from app.models.user import User
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
