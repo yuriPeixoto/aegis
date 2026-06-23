@@ -21,10 +21,6 @@ module = "app.services.business_hours_service"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "app.services.auto_close_service"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = "app.services.calendar_reminder_service"
 ignore_errors = true
 
