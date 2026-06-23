@@ -21,7 +21,6 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
     { value: '__active__',     label: t('inbox.activeStatuses') },
     { value: 'open',           label: t('status.OPEN') },
     { value: 'in_progress',    label: t('status.IN_PROGRESS') },
-    { value: 'waiting_client', label: t('status.WAITING_CLIENT') },
     { value: 'waiting_dev',    label: t('status.WAITING_DEV') },
     { value: 'in_dev',         label: t('status.IN_DEV') },
     { value: 'pending_closure', label: t('status.PENDING_CLOSURE') },

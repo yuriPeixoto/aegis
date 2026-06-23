@@ -11,17 +11,28 @@ from app.core.config import settings
 from app.models.ticket_attachment import TicketAttachment
 
 ALLOWED_CONTENT_TYPES = {
+    # Images
     "image/jpeg",
     "image/png",
     "image/gif",
     "image/webp",
+    # Documents
     "application/pdf",
     "text/plain",
     "text/csv",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    # Video — accepted from source systems (e.g. gestão frota upload validation)
+    "video/mp4",
+    "video/quicktime",  # .mov
+    "video/x-msvideo",  # .avi
+    "video/webm",
+    "video/x-matroska",  # .mkv
+    # HTML — always served as download (Content-Disposition: attachment), never rendered inline
+    "text/html",
+    "application/xhtml+xml",
 }
 
 

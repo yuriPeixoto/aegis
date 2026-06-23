@@ -1,27 +1,27 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from app.core.auth import CurrentUser, AdminUser
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+
+from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
+from app.routers.messages import MessageResponse, _to_response
 from app.schemas.canned_response import (
-    CannedResponseCreate,
-    CannedResponseUpdate,
-    CannedResponseResponse,
     ApplyCannedResponseRequest,
+    CannedResponseCreate,
+    CannedResponseResponse,
+    CannedResponseUpdate,
 )
 from app.services.canned_response_service import CannedResponseService
-from app.services.ticket_service import TicketService
 from app.services.message_service import MessageService
+from app.services.ticket_service import TicketService
 from app.services.webhook_service import dispatch_webhook
-from app.routers.messages import MessageResponse, _to_response
 
 router = APIRouter(prefix="/v1/canned-responses", tags=["canned-responses"])
 
 
 @router.get("", response_model=list[CannedResponseResponse])
-async def list_canned_responses(
-    db: DbSession, _user: CurrentUser
-) -> list[CannedResponseResponse]:
+async def list_canned_responses(db: DbSession, _user: CurrentUser) -> list[CannedResponseResponse]:
     return await CannedResponseService(db).list_responses()
 
 
@@ -66,9 +66,7 @@ async def update_canned_response(
 
 
 @router.delete("/{response_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_canned_response(
-    response_id: int, db: DbSession, _user: AdminUser
-):
+async def delete_canned_response(response_id: int, db: DbSession, _user: AdminUser):
     success = await CannedResponseService(db).delete_response(response_id)
     if not success:
         raise HTTPException(
@@ -95,9 +93,7 @@ async def apply_canned_response(
 
     ticket = await ticket_svc.get_ticket(body.ticket_id)
     if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
     # 1. Substitute variables in body
     final_body = svc.substitute_variables(canned.body, ticket, current_user)

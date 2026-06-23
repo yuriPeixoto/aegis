@@ -3,15 +3,18 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, HTTPException, Query, status
-
 from pydantic import BaseModel
 
 from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
 from app.models.user import ROLE_ADMIN
-from app.schemas.calendar_event import CalendarEventCreate, CalendarEventResponse, CalendarEventUpdate
-from app.services.calendar_service import CalendarService
+from app.schemas.calendar_event import (
+    CalendarEventCreate,
+    CalendarEventResponse,
+    CalendarEventUpdate,
+)
 from app.services.calendar_reminder_service import CalendarReminderService
+from app.services.calendar_service import CalendarService
 
 router = APIRouter(prefix="/v1/calendar", tags=["calendar"])
 
@@ -44,16 +47,17 @@ async def create_event(
 ) -> CalendarEventResponse:
     # on_call: somente admin
     if data.type == "on_call" and current_user.role != ROLE_ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create on-call events")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can create on-call events"
+        )
 
     svc = CalendarService(db)
 
-    if data.type == "on_call":
-        if await svc.on_call_conflict(data.event_date):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An on-call event already exists for this date",
-            )
+    if data.type == "on_call" and await svc.on_call_conflict(data.event_date):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An on-call event already exists for this date",
+        )
 
     event = await svc.create(data)
     return CalendarEventResponse.model_validate(event)
@@ -73,20 +77,32 @@ async def update_event(
 
     # on_call: somente admin pode editar
     if event.type == "on_call" and current_user.role != ROLE_ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can edit on-call events")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can edit on-call events"
+        )
 
     # training: agent só edita o próprio
-    if event.type == "training" and current_user.role != ROLE_ADMIN and event.agent_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only edit your own training events")
+    if (
+        event.type == "training"
+        and current_user.role != ROLE_ADMIN
+        and event.agent_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only edit your own training events",
+        )
 
     # Verifica conflito de on_call se a data mudar
     new_date = data.event_date or event.event_date
-    if event.type == "on_call" and new_date != event.event_date:
-        if await svc.on_call_conflict(new_date, exclude_id=event_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An on-call event already exists for this date",
-            )
+    if (
+        event.type == "on_call"
+        and new_date != event.event_date
+        and await svc.on_call_conflict(new_date, exclude_id=event_id)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An on-call event already exists for this date",
+        )
 
     updated = await svc.update(event_id, data)
     return CalendarEventResponse.model_validate(updated)
@@ -118,9 +134,18 @@ async def delete_event(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
 
     if event.type == "on_call" and current_user.role != ROLE_ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can delete on-call events")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can delete on-call events"
+        )
 
-    if event.type == "training" and current_user.role != ROLE_ADMIN and event.agent_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own training events")
+    if (
+        event.type == "training"
+        and current_user.role != ROLE_ADMIN
+        and event.agent_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own training events",
+        )
 
     await svc.delete(event_id)

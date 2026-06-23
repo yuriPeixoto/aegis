@@ -220,7 +220,6 @@
   "status": {
     "action": {
       "startProgress": "Iniciar Atendimento",
-      "waitClient": "Aguardar Cliente",
       "pendingClosure": "Ag. Validação",
       "resolve": "Resolver",
       "cancel": "Cancelar",
@@ -229,7 +228,6 @@
     },
     "OPEN": "Aberto",
     "IN_PROGRESS": "Em Atendimento",
-    "WAITING_CLIENT": "Aguardando Cliente",
     "PENDING_CLOSURE": "Ag. Validação",
     "WAITING_DEV": "Ag. Desenvolvimento",
     "IN_DEV": "Em Desenvolvimento",
@@ -294,7 +292,7 @@
       "ofTotal": "do total",
       "unassigned": "Sem Atribuição",
       "unassignedHint": "Requer atribuição imediata",
-      "waitingClient": "Aguard. Cliente",
+      "pendingClosure": "Ag. Validação",
       "openedToday": "Abertos Hoje",
       "resolvedToday": "Resolvidos Hoje",
       "slaCompliance": "SLA Compliance",

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import select, func, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -23,7 +23,10 @@ class NotificationService:
         actor_name: str,
         mentioned_user_ids: list[int],
     ) -> None:
-        """Create a 'mention' notification for each mentioned user (skip the actor if they mentioned themselves)."""
+        """Create a 'mention' notification for each mentioned user.
+
+        Skips the actor when they mention themselves.
+        """
         if not mentioned_user_ids:
             return
 
@@ -61,14 +64,16 @@ class NotificationService:
 
         recipients = await self._resolve_ticket_recipients(ticket)
         for user in recipients:
-            self._db.add(Notification(
-                user_id=user.id,
-                type="new_ticket",
-                ticket_id=ticket.id,
-                actor_name=source_name,
-                ticket_subject=ticket.subject,
-                ticket_external_id=ticket.external_id,
-            ))
+            self._db.add(
+                Notification(
+                    user_id=user.id,
+                    type="new_ticket",
+                    ticket_id=ticket.id,
+                    actor_name=source_name,
+                    ticket_subject=ticket.subject,
+                    ticket_external_id=ticket.external_id,
+                )
+            )
         await self._db.commit()
 
     async def create_new_message_notifications(
@@ -79,14 +84,16 @@ class NotificationService:
         """Notify admins and the assigned agent when a client sends a new message."""
         recipients = await self._resolve_ticket_recipients(ticket)
         for user in recipients:
-            self._db.add(Notification(
-                user_id=user.id,
-                type="new_client_message",
-                ticket_id=ticket.id,
-                actor_name=author_name,
-                ticket_subject=ticket.subject,
-                ticket_external_id=ticket.external_id,
-            ))
+            self._db.add(
+                Notification(
+                    user_id=user.id,
+                    type="new_client_message",
+                    ticket_id=ticket.id,
+                    actor_name=author_name,
+                    ticket_subject=ticket.subject,
+                    ticket_external_id=ticket.external_id,
+                )
+            )
         await self._db.commit()
 
     async def _resolve_ticket_recipients(self, ticket: Ticket) -> list[User]:
@@ -136,7 +143,7 @@ class NotificationService:
                 Notification.user_id == user_id,
                 Notification.read_at.is_(None),
             )
-            .values(read_at=datetime.now(timezone.utc))
+            .values(read_at=datetime.now(UTC))
         )
         await self._db.commit()
 
@@ -157,7 +164,7 @@ class NotificationService:
                 Notification.user_id == user_id,
                 Notification.read_at.is_(None),
             )
-            .values(read_at=datetime.now(timezone.utc))
+            .values(read_at=datetime.now(UTC))
         )
         await self._db.commit()
 
@@ -168,7 +175,7 @@ class NotificationService:
                 Notification.user_id == user_id,
                 Notification.read_at.is_(None),
             )
-            .values(read_at=datetime.now(timezone.utc))
+            .values(read_at=datetime.now(UTC))
         )
         await self._db.commit()
 
@@ -181,6 +188,6 @@ class NotificationService:
                 Notification.ticket_id == ticket_id,
                 Notification.read_at.is_(None),
             )
-            .values(read_at=datetime.now(timezone.utc))
+            .values(read_at=datetime.now(UTC))
         )
         await self._db.commit()

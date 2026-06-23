@@ -84,9 +84,7 @@ async def unread_count(db: DbSession, current_user: CurrentUser) -> UnreadCountR
 
 
 @router.patch("/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT)
-async def mark_read(
-    notification_id: int, db: DbSession, current_user: CurrentUser
-) -> None:
+async def mark_read(notification_id: int, db: DbSession, current_user: CurrentUser) -> None:
     await NotificationService(db).mark_read(notification_id, current_user.id)
 
 
@@ -103,7 +101,5 @@ async def mark_selected_read(
 
 
 @router.post("/read-ticket/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def mark_ticket_read(
-    ticket_id: int, db: DbSession, current_user: CurrentUser
-) -> None:
+async def mark_ticket_read(ticket_id: int, db: DbSession, current_user: CurrentUser) -> None:
     await NotificationService(db).mark_ticket_notifications_read(current_user.id, ticket_id)

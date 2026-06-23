@@ -18,12 +18,12 @@ from app.services.sla_service import SlaService
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 _GF_TO_AEGIS: dict[str, str] = {
-    "em_atendimento":              "in_progress",
-    "aguardando_cliente":          "waiting_client",
+    "em_atendimento": "in_progress",
+    "aguardando_cliente": "pending_closure",
     "aguardando_validacao_cliente": "pending_closure",
-    "resolvido":                   "resolved",
-    "fechado":                     "closed",
-    "cancelado":                   "cancelled",
+    "resolvido": "resolved",
+    "fechado": "closed",
+    "cancelado": "cancelled",
 }
 
 logger = logging.getLogger(__name__)
@@ -49,9 +49,7 @@ class IngestService:
         if ticket is None:
             ingested_at = datetime.now(UTC)
             sla_due_at = (
-                ingested_at + timedelta(hours=source.sla_hours)
-                if source.sla_hours
-                else None
+                ingested_at + timedelta(hours=source.sla_hours) if source.sla_hours else None
             )
             ticket = Ticket(
                 source_id=source.id,
@@ -81,9 +79,37 @@ class IngestService:
             )
             await self._db.commit()
             await self._db.refresh(ticket)
-            await NotificationService(self._db).create_new_ticket_notifications(
-                ticket, source.name
-            )
+
+            if data.attachments:
+                att_service = AttachmentService(self._db)
+                stored, failed = 0, 0
+                for att in data.attachments:
+                    try:
+                        raw = base64.b64decode(att.data)
+                        await att_service.store_from_bytes(
+                            ticket_id=ticket.id,
+                            filename=att.filename,
+                            content_type=att.content_type,
+                            content=raw,
+                        )
+                        stored += 1
+                    except Exception:
+                        failed += 1
+                        logger.warning(
+                            "ingest: failed to store attachment '%s' for ticket %s",
+                            att.filename,
+                            ticket.id,
+                            exc_info=True,
+                        )
+                logger.info(
+                    "ingest: ticket %s — %d/%d initial attachments stored%s",
+                    ticket.external_id,
+                    stored,
+                    len(data.attachments),
+                    f" ({failed} failed — check warnings above)" if failed else "",
+                )
+
+            await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
             return ticket, True
 
         # Update existing ticket

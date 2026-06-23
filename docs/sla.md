@@ -23,9 +23,9 @@
 | Transição de status | Efeito no SLA |
 |---|---|
 | `open → in_progress` | Clock inicia; `sla_due_at` calculado em horas úteis a partir deste momento |
-| `in_progress → waiting_client` | Clock pausado (`sla_paused_since = now`) |
-| `waiting_client → in_progress` | Clock retomado; `sla_due_at` estendido pelo tempo pausado |
-| `→ pending_closure / resolved / closed / cancelled` | Clock finalizado; pausa pendente acumulada |
+| `in_progress → pending_closure` | Clock pausado (`sla_paused_since = now`) — equipe aguarda validação do cliente |
+| `pending_closure → in_progress` | Clock retomado; `sla_due_at` recomputado: horas úteis restantes quando pausou, projetadas a partir de agora |
+| `→ resolved / closed / cancelled` | Clock finalizado |
 
 **Regra de cálculo:** o prazo é calculado em horas úteis reais, ignorando fins de semana, período fora do expediente e intervalo de almoço. Um ticket urgente aberto às 16h30 de uma sexta recebe prazo para segunda às ~10h40.
 
@@ -34,7 +34,7 @@
 | Campo | Tipo | Descrição |
 |---|---|---|
 | `sla_started_at` | timestamptz | Quando o clock SLA iniciou (primeira transição para `in_progress`) |
-| `sla_paused_seconds` | int | Total acumulado de segundos em `waiting_client` |
+| `sla_paused_seconds` | int | Total acumulado de segundos em `pending_closure` |
 | `sla_paused_since` | timestamptz | Momento em que a pausa atual começou (null se não está pausado) |
 
 ### `sla_status` computado (API)
@@ -44,9 +44,9 @@
 | `null` | Sem `sla_due_at` (prioridade sem política configurada) |
 | `on_time` | Ativo, >20% do prazo restante |
 | `at_risk` | Ativo, ≤20% do prazo restante |
-| `paused` | Em `waiting_client` com pausa ativa |
+| `paused` | Em `pending_closure` — aguardando validação do cliente |
 | `overdue` | Deadline ultrapassado (e não pausado) |
-| `met` | Status terminal (`pending_closure`, `resolved`, `closed`, `cancelled`) |
+| `met` | Status terminal (`resolved`, `closed`, `cancelled`) |
 
 ### Override de prazo
 
@@ -62,8 +62,8 @@ Registra evento `sla_overridden` no histórico do ticket.
 
 ### Dashboard
 
-- `total_open` exclui `pending_closure` (SLA já encerrou)
-- `overdue` exclui tickets atualmente pausados (`waiting_client`)
+- `total_open` exclui `pending_closure` (aguardando cliente — fora da fila ativa)
+- `overdue` exclui `pending_closure` (SLA pausado — prazo não corre)
 - `resolved_today` conta `pending_closure + resolved + closed`
 - "Carga por Atendente" → coluna Resolvidos conta os mesmos três status
 

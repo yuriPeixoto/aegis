@@ -18,9 +18,7 @@ async def list_tags(db: DbSession, _: CurrentUser) -> list[TagResponse]:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=TagResponse)
-async def create_tag(
-    data: TagCreate, db: DbSession, _: AdminUser
-) -> TagResponse:
+async def create_tag(data: TagCreate, db: DbSession, _: AdminUser) -> TagResponse:
     try:
         tag = await TagService(db).create(
             name=data.name,
@@ -28,19 +26,17 @@ async def create_tag(
             description=data.description,
         )
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as err:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Tag with name '{data.name}' already exists",
-        )
+        ) from err
     return TagResponse.model_validate(tag)
 
 
 @router.patch("/{tag_id}", response_model=TagResponse)
-async def update_tag(
-    tag_id: int, data: TagUpdate, db: DbSession, _: AdminUser
-) -> TagResponse:
+async def update_tag(tag_id: int, data: TagUpdate, db: DbSession, _: AdminUser) -> TagResponse:
     try:
         tag = await TagService(db).update(
             tag_id,
@@ -51,12 +47,12 @@ async def update_tag(
         if tag is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as err:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Another tag with this name already exists",
-        )
+        ) from err
     return TagResponse.model_validate(tag)
 
 

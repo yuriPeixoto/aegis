@@ -15,8 +15,8 @@ def unique_external_id() -> str:
 
 
 @pytest.fixture
-async def source_with_key(client: AsyncClient) -> dict:
-    resp = await client.post(
+async def source_with_key(admin_client: AsyncClient) -> dict:
+    resp = await admin_client.post(
         "/v1/sources",
         json={"name": "Ticket Read Test Source", "slug": unique_slug()},
     )
@@ -50,8 +50,8 @@ async def ingested_ticket(client: AsyncClient, source_with_key: dict) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_list_tickets(client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await client.get("/v1/tickets")
+async def test_list_tickets(admin_client: AsyncClient, ingested_ticket: dict) -> None:
+    response = await admin_client.get("/v1/tickets")
     assert response.status_code == 200
     data = response.json()
     assert "items" in data
@@ -60,8 +60,12 @@ async def test_list_tickets(client: AsyncClient, ingested_ticket: dict) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_tickets_filter_by_source(client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await client.get("/v1/tickets", params={"source_id": ingested_ticket["source_id"]})
+async def test_list_tickets_filter_by_source(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    response = await admin_client.get(
+        "/v1/tickets", params={"source_id": ingested_ticket["source_id"]}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
@@ -70,16 +74,18 @@ async def test_list_tickets_filter_by_source(client: AsyncClient, ingested_ticke
 
 
 @pytest.mark.asyncio
-async def test_list_tickets_filter_by_status(client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await client.get("/v1/tickets", params={"status": "open"})
+async def test_list_tickets_filter_by_status(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    response = await admin_client.get("/v1/tickets", params={"status": "open"})
     assert response.status_code == 200
     for item in response.json()["items"]:
         assert item["status"] == "open"
 
 
 @pytest.mark.asyncio
-async def test_get_ticket_detail(client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await client.get(f"/v1/tickets/{ingested_ticket['ticket_id']}")
+async def test_get_ticket_detail(admin_client: AsyncClient, ingested_ticket: dict) -> None:
+    response = await admin_client.get(f"/v1/tickets/{ingested_ticket['ticket_id']}")
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == ingested_ticket["ticket_id"]
@@ -90,14 +96,14 @@ async def test_get_ticket_detail(client: AsyncClient, ingested_ticket: dict) -> 
 
 
 @pytest.mark.asyncio
-async def test_get_ticket_not_found(client: AsyncClient) -> None:
-    response = await client.get("/v1/tickets/999999")
+async def test_get_ticket_not_found(admin_client: AsyncClient) -> None:
+    response = await admin_client.get("/v1/tickets/999999")
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_list_tickets_pagination(client: AsyncClient, ingested_ticket: dict) -> None:
-    response = await client.get("/v1/tickets", params={"limit": 1, "offset": 0})
+async def test_list_tickets_pagination(admin_client: AsyncClient, ingested_ticket: dict) -> None:
+    response = await admin_client.get("/v1/tickets", params={"limit": 1, "offset": 0})
     assert response.status_code == 200
     data = response.json()
     assert len(data["items"]) <= 1

@@ -24,7 +24,7 @@ USER_IDS   = [1, 12]
 SOURCE_IDS = [1, 74, 75]
 NOW        = datetime.now(timezone.utc)
 
-STATUSES_ACTIVE   = ['open', 'in_progress', 'waiting_client', 'waiting_dev']
+STATUSES_ACTIVE   = ['open', 'in_progress', 'pending_closure', 'waiting_dev']
 STATUSES_TERMINAL = ['resolved', 'closed', 'pending_closure']
 PRIORITIES        = ['urgent', 'high', 'medium', 'low']
 TYPES             = ['bug', 'improvement', 'question', 'support']

@@ -146,7 +146,7 @@ export function CannedResponsesTab() {
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Status</label>
                   <select value={form.actions?.status || ''} onChange={(e) => setForm({ ...form, actions: { ...form.actions, status: e.target.value || undefined } })} className="w-full bg-slate-800 border border-brand-border rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-purple/40">
                     <option value="">{t('settings.cannedResponses.modal.noAction')}</option>
-                    {['open','in_progress','waiting_client','resolved','closed'].map((s) => (
+                    {['open','in_progress','pending_closure','resolved','closed'].map((s) => (
                       <option key={s} value={s}>{t('status.' + s.toUpperCase())}</option>
                     ))}
                   </select>
