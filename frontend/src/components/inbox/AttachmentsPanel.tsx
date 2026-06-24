@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Paperclip, Download, FileText, FileSpreadsheet, File, ImageIcon, Loader2 } from 'lucide-react'
 import { useAttachments, useUploadAttachment } from '../../hooks/useTickets'
-import { api } from '../../lib/axios'
 import type { TicketAttachment } from '../../types/ticket'
 
 interface AttachmentsPanelProps {
@@ -24,12 +23,19 @@ function FileIcon({ contentType }: { contentType: string }) {
 }
 
 async function triggerDownload(attachment: TicketAttachment) {
-  const { data } = await api.get(attachment.download_url, { responseType: 'blob' })
-  const url = URL.createObjectURL(data as Blob)
+  const token = localStorage.getItem('aegis_token')
+  const response = await fetch(attachment.download_url, {
+    headers: { Authorization: `Bearer ${token ?? ''}` },
+  })
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = attachment.original_filename
+  document.body.appendChild(a)
   a.click()
+  document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
 
