@@ -95,7 +95,8 @@
     "save": "Salvar",
     "saving": "Salvando...",
     "loading": "Carregando...",
-    "create": "Criar"
+    "create": "Criar",
+    "optional": "opcional"
   },
   "login": {
     "subtitle": "Central de Suporte",
@@ -218,7 +219,9 @@
       "priority": "Prioridade",
       "description": "Descrição",
       "descriptionPlaceholder": "Explique com detalhes o que aconteceu ou o que poderia melhorar...",
-      "attachFiles": "Anexar arquivos"
+      "attachFiles": "Anexar arquivos",
+      "client": "Cliente",
+      "clientPlaceholder": "— Aegis interno (padrão) —"
     }
   },
   "sla": {
