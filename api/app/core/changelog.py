@@ -14,6 +14,15 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.0.2",
+        "date": "2026-06-24",
+        "highlights": [
+            "Exibe 'Aberto por' na sidebar do ticket (GF, portal interno e MCP)",
+            "Correção: select 'Atribuído a' exigia dois cliques para confirmar",
+            "Correção: download de imagens em mensagens retornava 404",
+        ],
+    },
+    {
         "version": "1.0.1",
         "date": "2026-06-24",
         "highlights": [

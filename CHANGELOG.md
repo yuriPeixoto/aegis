@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] — 2026-06-24
+
+### Fixed
+- **"Aberto por" na view do ticket** — exibe o nome de quem abriu o chamado na sidebar (tickets do GF via `source_metadata.user_name`; tickets internos e do MCP agora também gravam o nome do criador)
+- **Select "Atribuído a" exigia dois cliques** — corrigido com estado local otimista; o select atualiza imediatamente ao selecionar
+- **Download de imagens em mensagens** — `SecureImage` e download inline em mensagens tinham o mesmo bug `/v1/v1/` do `AttachmentsPanel` (corrigido junto)
+
 ## [1.0.1] — 2026-06-24
 
 ### Fixed
