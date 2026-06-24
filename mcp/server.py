@@ -94,11 +94,6 @@ def _fmt_message(m: dict) -> str:
     return f"[{m['created_at'][:19]}] {direction} — {m['author_name']}{internal}\n{m['body']}"
 
 
-def _fmt_note(n: dict) -> str:
-    author = (n.get("author") or {}).get("name", "?")
-    return f"[{n['created_at'][:19]}] Nota — {author}\n{n['body']}"
-
-
 # ---------------------------------------------------------------------------
 # MCP Server
 # ---------------------------------------------------------------------------
@@ -220,6 +215,11 @@ async def _list_tools() -> list[types.Tool]:
                         "description": "Prioridade (default: medium)",
                         "default": "medium",
                     },
+                    "assign_to_me": {
+                        "type": "boolean",
+                        "description": "Se true, atribui o ticket ao usuário autenticado no MCP (default: false)",
+                        "default": False,
+                    },
                 },
                 "required": ["subject", "description"],
                 "additionalProperties": False,
@@ -265,28 +265,30 @@ async def _dispatch(name: str, args: dict) -> str:
         ticket_id = int(args["ticket_id"])
         msg_limit = int(args.get("messages_limit", 10))
 
-        ticket, messages, notes = await asyncio.gather(
+        ticket, all_messages = await asyncio.gather(
             _get(f"/tickets/{ticket_id}"),
             _get(f"/tickets/{ticket_id}/messages"),
-            _get(f"/tickets/{ticket_id}/notes"),
         )
+
+        public_msgs = [m for m in all_messages if not m.get("is_internal")]
+        internal_msgs = [m for m in all_messages if m.get("is_internal")]
 
         lines = ["=== TICKET ===", _fmt_ticket(ticket), ""]
 
         if ticket.get("description"):
             lines += ["=== DESCRIÇÃO ===", ticket["description"], ""]
 
-        recent_msgs = messages[-msg_limit:] if len(messages) > msg_limit else messages
-        if recent_msgs:
-            lines.append(f"=== CONVERSA (últimas {len(recent_msgs)} mensagens) ===")
-            for m in recent_msgs:
+        recent_public = public_msgs[-msg_limit:] if len(public_msgs) > msg_limit else public_msgs
+        if recent_public:
+            lines.append(f"=== CONVERSA (últimas {len(recent_public)} mensagens) ===")
+            for m in recent_public:
                 lines.append(_fmt_message(m))
                 lines.append("")
 
-        if notes:
+        if internal_msgs:
             lines.append("=== NOTAS INTERNAS ===")
-            for n in notes:
-                lines.append(_fmt_note(n))
+            for m in internal_msgs:
+                lines.append(_fmt_message(m))
                 lines.append("")
 
         return "\n".join(lines).strip()
@@ -309,6 +311,7 @@ async def _dispatch(name: str, args: dict) -> str:
             "description": args["description"],
             "type": args.get("type", "bug"),
             "priority": args.get("priority", "medium"),
+            "assign_to_me": str(args.get("assign_to_me", False)).lower(),
         }
         async with _httpx.AsyncClient(timeout=30) as client:
             r = await client.post(
