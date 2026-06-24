@@ -144,6 +144,7 @@
       "loading": "Carregando...",
       "createdAt": "Criado em",
       "updatedAt": "Atualizado",
+      "openedBy": "Aberto por",
       "assignedTo": "Atribuído a",
       "unassigned": "Sem atribuição",
       "unknownAuthor": "Desconhecido",

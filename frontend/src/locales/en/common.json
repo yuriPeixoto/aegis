@@ -144,6 +144,7 @@
       "loading": "Loading...",
       "createdAt": "Created at",
       "updatedAt": "Updated",
+      "openedBy": "Opened by",
       "assignedTo": "Assigned to",
       "unassigned": "Unassigned",
       "unknownAuthor": "Unknown",
