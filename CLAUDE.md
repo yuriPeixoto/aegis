@@ -83,6 +83,31 @@ mypy api/app/
 pytest api/tests/
 ```
 
+## Versionamento
+
+Seguimos [Semantic Versioning](https://semver.org/): PATCH para bugfix, MINOR para feature, MAJOR para breaking change.
+
+**A cada novo release, obrigatoriamente:**
+
+1. Atualizar `api/app/core/config.py` → `app_version` e `build_date`
+2. Adicionar entrada no topo de `CHANGELOG.md`
+3. Adicionar a mesma entrada em `api/app/core/changelog.py` → `APP_CHANGELOG` (mais recente primeiro)
+4. Criar tag git: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push --tags`
+
+**Formato da entrada em `APP_CHANGELOG`:**
+```python
+{
+    "version": "1.1.0",
+    "date": "2026-MM-DD",
+    "highlights": [
+        "Descrição curta da melhoria 1",
+        "Descrição curta da melhoria 2",
+    ],
+}
+```
+
+A entrada aparece automaticamente na página `/sobre`. Não incluir o v1.0.0 (lançamento inicial) — só versões incrementais.
+
 ## Key Docs
 
 - `docs/vision.md` — product vision and positioning

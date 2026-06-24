@@ -35,7 +35,8 @@
     "environment": "Environment",
     "links": "Links",
     "sourceCode": "Source code (GitHub)",
-    "roadmap": "Roadmap"
+    "roadmap": "Roadmap",
+    "changelog": "What's new"
   },
   "common": {
     "clear": "Clear",
@@ -221,7 +222,8 @@
       "descriptionPlaceholder": "Explain in detail what happened or what could be improved...",
       "attachFiles": "Attach files",
       "client": "Client",
-      "clientPlaceholder": "— Aegis internal (default) —"
+      "clientPlaceholder": "— Aegis internal (default) —",
+      "assignToMe": "Assign to me"
     }
   },
   "sla": {

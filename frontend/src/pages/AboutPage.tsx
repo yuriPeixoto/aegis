@@ -1,13 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Zap, Github, Calendar, Tag, ExternalLink } from 'lucide-react'
+import { Zap, Github, Calendar, Tag, ExternalLink, Sparkles } from 'lucide-react'
 import { api } from '../lib/axios'
+
+interface ChangelogEntry {
+  version: string
+  date: string
+  highlights: string[]
+}
 
 interface AboutInfo {
   version: string
   build_date: string
   env: string
   github_url: string
+  changelog: ChangelogEntry[]
 }
 
 function useAbout() {
@@ -74,6 +81,35 @@ export function AboutPage() {
           </div>
         </div>
       </div>
+
+      {data && data.changelog.length > 0 && (
+        <div className="bg-brand-dark/50 border border-brand-border rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-brand-border bg-brand-dark flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-brand-neon" />
+            <h2 className="font-semibold text-slate-200 uppercase tracking-wider text-xs">
+              {t('about.changelog')}
+            </h2>
+          </div>
+          <div className="divide-y divide-brand-border/50">
+            {data.changelog.map((entry) => (
+              <div key={entry.version} className="px-6 py-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-semibold text-brand-neon">v{entry.version}</span>
+                  <span className="text-xs text-slate-500">{entry.date}</span>
+                </div>
+                <ul className="space-y-1">
+                  {entry.highlights.map((item, i) => (
+                    <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                      <span className="text-brand-purple mt-0.5 shrink-0">•</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-brand-dark/50 border border-brand-border rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-brand-border bg-brand-dark">
