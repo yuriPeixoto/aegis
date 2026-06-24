@@ -151,6 +151,7 @@ async def create_internal_ticket(
     priority: str = Form(...),
     meta: str | None = Form(None),
     source_id: int | None = Form(None),
+    assign_to_me: bool = Form(False),
     files: list[UploadFile] = File(default=[]),
 ) -> TicketDetailResponse:
     meta_dict: dict | None = None
@@ -166,6 +167,7 @@ async def create_internal_ticket(
         user_id=current_user.id,
         meta=meta_dict,
         source_id=source_id,
+        assign_to_me=assign_to_me,
     )
 
     att_service = AttachmentService(db)

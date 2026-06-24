@@ -374,6 +374,7 @@ class TicketService:
         user_id: int,
         meta: dict | None = None,
         source_id: int | None = None,
+        assign_to_me: bool = False,
     ) -> Ticket:
         if source_id is not None:
             source_result = await self._db.execute(select(Source).where(Source.id == source_id, Source.is_active == True))  # noqa: E712
@@ -415,6 +416,7 @@ class TicketService:
             status="open",
             subject=subject,
             description=description,
+            assigned_to_user_id=user_id if assign_to_me else None,
             source_metadata={
                 **(meta or {}),
                 "reported_by_user_id": user_id,
