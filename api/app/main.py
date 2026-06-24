@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.routers import (
+    about,
     analytics,
     attachments,
     auth,
@@ -52,11 +53,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 app = FastAPI(
     title="Aegis API",
     description="Centralized ticket & incident management",
-    version="0.1.0",
+    version=settings.app_version,
     lifespan=lifespan,
 )
 
 
+app.include_router(about.router)
 app.include_router(auth.router)
 app.include_router(analytics.router)
 app.include_router(calendar.router)

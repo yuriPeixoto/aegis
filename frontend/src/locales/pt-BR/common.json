@@ -24,7 +24,18 @@
     "shortcutBulkStatus": "Mudar status (em lote)",
     "shortcutBulkPriority": "Mudar prioridade (em lote)",
     "calendar": "Agenda",
-    "shortcutCalendar": "Ir para Agenda"
+    "shortcutCalendar": "Ir para Agenda",
+    "about": "Sobre"
+  },
+  "about": {
+    "subtitle": "Gestão centralizada de tickets e incidentes",
+    "buildInfo": "Informações do Build",
+    "version": "Versão",
+    "buildDate": "Data do build",
+    "environment": "Ambiente",
+    "links": "Links",
+    "sourceCode": "Código-fonte (GitHub)",
+    "roadmap": "Roadmap"
   },
   "topbar": {
     "signOut": "Sair",
