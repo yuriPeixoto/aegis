@@ -46,7 +46,8 @@
     "save": "Save",
     "saving": "Saving...",
     "loading": "Loading...",
-    "create": "Create"
+    "create": "Create",
+    "optional": "optional"
   },
   "topbar": {
     "signOut": "Sign out",
@@ -218,7 +219,9 @@
       "priority": "Priority",
       "description": "Description",
       "descriptionPlaceholder": "Explain in detail what happened or what could be improved...",
-      "attachFiles": "Attach files"
+      "attachFiles": "Attach files",
+      "client": "Client",
+      "clientPlaceholder": "— Aegis internal (default) —"
     }
   },
   "sla": {

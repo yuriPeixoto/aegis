@@ -373,28 +373,35 @@ class TicketService:
         priority: str,
         user_id: int,
         meta: dict | None = None,
+        source_id: int | None = None,
     ) -> Ticket:
-        # Find the Aegis Internal source
-        source_result = await self._db.execute(select(Source).where(Source.slug == "aegis"))
-        source = source_result.scalar_one_or_none()
+        if source_id is not None:
+            source_result = await self._db.execute(select(Source).where(Source.id == source_id, Source.is_active == True))  # noqa: E712
+            source = source_result.scalar_one_or_none()
+            if source is None:
+                raise ValueError(f"Source {source_id} not found or inactive")
+        else:
+            # Default: Aegis Internal source
+            source_result = await self._db.execute(select(Source).where(Source.slug == "aegis"))
+            source = source_result.scalar_one_or_none()
 
-        if source is None:
-            # Fallback to create the source if it doesn't exist, to prevent 500 errors
-            import secrets
+            if source is None:
+                # Fallback to create the source if it doesn't exist, to prevent 500 errors
+                import secrets
 
-            from app.core.security import generate_api_key, hash_api_key
+                from app.core.security import generate_api_key, hash_api_key
 
-            plain_key = generate_api_key()
-            webhook_secret = secrets.token_hex(32)
-            source = Source(
-                name="Aegis Internal",
-                slug="aegis",
-                api_key_hash=hash_api_key(plain_key),
-                webhook_secret=webhook_secret,
-                is_active=True,
-            )
-            self._db.add(source)
-            await self._db.flush()
+                plain_key = generate_api_key()
+                webhook_secret = secrets.token_hex(32)
+                source = Source(
+                    name="Aegis Internal",
+                    slug="aegis",
+                    api_key_hash=hash_api_key(plain_key),
+                    webhook_secret=webhook_secret,
+                    is_active=True,
+                )
+                self._db.add(source)
+                await self._db.flush()
 
         # Generate external_id: AEGIS-<timestamp>
         now = datetime.now(UTC)

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { X, Send, AlertCircle, Loader2, Paperclip, XCircle } from 'lucide-react'
 import { useCreateInternalTicket } from '../../hooks/useTickets'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
+import { useSources } from '../../hooks/useSources'
 import { FormSelect } from '../common/FormSelect'
 
 interface InternalTicketModalProps {
@@ -13,12 +14,14 @@ interface InternalTicketModalProps {
 export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, onClose }: InternalTicketModalProps) {
   const { t } = useTranslation()
   const { mutate, isPending, error } = useCreateInternalTicket()
+  const { data: sources = [] } = useSources()
 
   const [form, setForm] = useState({
     subject: '',
     description: '',
     type: 'improvement',
     priority: 'medium',
+    source_id: null as number | null,
   })
   const [files, setFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -47,12 +50,12 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
       meta: {
         url: window.location.href,
         userAgent: navigator.userAgent,
-        version: '0.1.0',
+        version: '1.0.0',
       }
     }, {
       onSuccess: () => {
         onClose()
-        setForm({ subject: '', description: '', type: 'improvement', priority: 'medium' })
+        setForm({ subject: '', description: '', type: 'improvement', priority: 'medium', source_id: null })
         setFiles([])
       }
     })
@@ -123,6 +126,32 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
               onChange={(v) => setForm((prev) => ({ ...prev, priority: v }))}
             />
           </div>
+
+          {sources.filter((s) => s.slug !== 'aegis' && s.is_active).length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                {t('inbox.internalTicket.client')}
+                <span className="ml-1 normal-case font-normal text-slate-600">
+                  ({t('common.optional')})
+                </span>
+              </label>
+              <select
+                value={form.source_id ?? ''}
+                onChange={(e) => setForm((prev) => ({
+                  ...prev,
+                  source_id: e.target.value ? Number(e.target.value) : null,
+                }))}
+                className="w-full bg-slate-800/50 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple/60 transition-all"
+              >
+                <option value="">{t('inbox.internalTicket.clientPlaceholder')}</option>
+                {sources
+                  .filter((s) => s.slug !== 'aegis' && s.is_active)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
