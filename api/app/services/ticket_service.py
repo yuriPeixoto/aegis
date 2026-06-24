@@ -372,6 +372,7 @@ class TicketService:
         type: str,
         priority: str,
         user_id: int,
+        user_name: str | None = None,
         meta: dict | None = None,
         source_id: int | None = None,
         assign_to_me: bool = False,
@@ -420,6 +421,7 @@ class TicketService:
             source_metadata={
                 **(meta or {}),
                 "reported_by_user_id": user_id,
+                **({"user_name": user_name} if user_name else {}),
             },
             source_created_at=now,
             source_updated_at=now,
