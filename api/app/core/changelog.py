@@ -13,14 +13,11 @@ O v1.0.0 (lançamento inicial) não entra aqui — está documentado no CHANGELO
 from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
-    # Exemplo de entrada (descomente e edite ao lançar uma nova versão):
-    # {
-    #     "version": "1.1.0",
-    #     "date": "2026-07-01",
-    #     "highlights": [
-    #         "Select de cliente ao reportar problema interno",
-    #         "Auto-assumir ticket ao criar chamado",
-    #         "Changelog na página /sobre",
-    #     ],
-    # },
+    {
+        "version": "1.0.1",
+        "date": "2026-06-24",
+        "highlights": [
+            "Correção: download de anexos enviados pelo GF retornava 404 (URL duplicada /v1/v1)",
+        ],
+    },
 ]
