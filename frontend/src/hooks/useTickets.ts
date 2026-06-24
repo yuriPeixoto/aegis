@@ -281,6 +281,7 @@ export interface InternalTicketPayload {
   priority: string
   meta?: Record<string, any>
   source_id?: number | null
+  assign_to_me?: boolean
 }
 
 export function useMergeTicket(ticketId: number) {
@@ -331,6 +332,7 @@ export function useCreateInternalTicket() {
       form.append('priority', payload.priority)
       if (payload.meta) form.append('meta', JSON.stringify(payload.meta))
       if (payload.source_id != null) form.append('source_id', String(payload.source_id))
+      if (payload.assign_to_me) form.append('assign_to_me', 'true')
       files?.forEach((f) => form.append('files', f))
       const { data } = await api.post<TicketDetail>('/tickets/internal', form, {
         headers: { 'Content-Type': 'multipart/form-data' },

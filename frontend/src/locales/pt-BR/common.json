@@ -35,7 +35,8 @@
     "environment": "Ambiente",
     "links": "Links",
     "sourceCode": "Código-fonte (GitHub)",
-    "roadmap": "Roadmap"
+    "roadmap": "Roadmap",
+    "changelog": "O que há de novo"
   },
   "topbar": {
     "signOut": "Sair",
@@ -221,7 +222,8 @@
       "descriptionPlaceholder": "Explique com detalhes o que aconteceu ou o que poderia melhorar...",
       "attachFiles": "Anexar arquivos",
       "client": "Cliente",
-      "clientPlaceholder": "— Aegis interno (padrão) —"
+      "clientPlaceholder": "— Aegis interno (padrão) —",
+      "assignToMe": "Atribuir a mim"
     }
   },
   "sla": {
