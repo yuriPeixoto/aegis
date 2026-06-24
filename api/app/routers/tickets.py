@@ -165,6 +165,7 @@ async def create_internal_ticket(
         type=type,
         priority=priority,
         user_id=current_user.id,
+        user_name=current_user.name,
         meta=meta_dict,
         source_id=source_id,
         assign_to_me=assign_to_me,
