@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell, Info } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 import { useTickets } from '../../hooks/useTickets'
 import { useUnreadCount } from '../../hooks/useNotifications'
@@ -99,6 +99,11 @@ export function Sidebar() {
           {t('nav.shortcuts')}
         </NavLink>
 
+        <NavLink to="/sobre" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+          <Info className="w-4 h-4 shrink-0" />
+          {t('nav.about')}
+        </NavLink>
+
         {/* Views section */}
         {views.length > 0 && (
           <div className="pt-4 mt-2">
@@ -158,7 +163,9 @@ export function Sidebar() {
       </nav>
 
       <div className="px-4 py-3 border-t border-brand-border">
-        <p className="text-[10px] text-slate-600 font-mono">v0.1.0</p>
+        <NavLink to="/sobre" className="text-[10px] text-slate-600 font-mono hover:text-slate-400 transition-colors">
+          v1.0.0
+        </NavLink>
       </div>
 
       <InternalTicketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
