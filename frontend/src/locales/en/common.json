@@ -24,7 +24,18 @@
     "shortcutBulkStatus": "Change status (bulk)",
     "shortcutBulkPriority": "Change priority (bulk)",
     "calendar": "Agenda",
-    "shortcutCalendar": "Go to Agenda"
+    "shortcutCalendar": "Go to Agenda",
+    "about": "About"
+  },
+  "about": {
+    "subtitle": "Centralized ticket & incident management",
+    "buildInfo": "Build Info",
+    "version": "Version",
+    "buildDate": "Build date",
+    "environment": "Environment",
+    "links": "Links",
+    "sourceCode": "Source code (GitHub)",
+    "roadmap": "Roadmap"
   },
   "common": {
     "clear": "Clear",

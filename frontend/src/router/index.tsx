@@ -9,6 +9,7 @@ import { ProfilePage } from '../pages/ProfilePage'
 import { AgentProfilePage } from '../pages/AgentProfilePage'
 import { CalendarPage } from '../pages/CalendarPage'
 import { NotificationsPage } from '../pages/NotificationsPage'
+import { AboutPage } from '../pages/AboutPage'
 
 import { DashboardLayout } from '../pages/dashboard/DashboardLayout'
 import { OverviewTab } from '../pages/dashboard/OverviewTab'
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
       {
         path: '/profile',
         element: <ProfilePage />,
+      },
+      {
+        path: '/sobre',
+        element: <AboutPage />,
       },
       // Legacy redirect for old /agent/:id links
       {
