@@ -5,7 +5,6 @@ import {
   ArrowLeft, Clock, RefreshCw, ExternalLink, UserCircle, Send,
   ImageIcon, FileText, FileSpreadsheet, File, Download, Paperclip, X, Pencil, Lock, GitMerge, CalendarClock
 } from 'lucide-react'
-import { api } from '../lib/axios'
 import type { TicketMessage } from '../types/ticket'
 import {
   useTicket,
@@ -98,9 +97,14 @@ function SecureImage({ url, alt, className }: { url: string; alt: string; classN
 
   useEffect(() => {
     let objectUrl: string | null = null
-    api.get(url, { responseType: 'blob' })
-      .then(res => {
-        objectUrl = URL.createObjectURL(res.data)
+    const token = localStorage.getItem('aegis_token')
+    fetch(url, { headers: { Authorization: `Bearer ${token ?? ''}` } })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed')
+        return res.blob()
+      })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
         setSrc(objectUrl)
       })
       .catch(() => setError(true))
@@ -120,12 +124,19 @@ function MessageAttachments({ attachments }: { attachments: TicketMessage['attac
   if (!attachments || attachments.length === 0) return null
 
   const triggerDownload = async (att: { download_url: string; filename: string }) => {
-    const { data } = await api.get(att.download_url, { responseType: 'blob' })
-    const url = URL.createObjectURL(data as Blob)
+    const token = localStorage.getItem('aegis_token')
+    const response = await fetch(att.download_url, {
+      headers: { Authorization: `Bearer ${token ?? ''}` },
+    })
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`)
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = att.filename
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
 
@@ -291,6 +302,12 @@ export function TicketDetailPage() {
   const { mutate: sendMessage, isPending: sendPending } = useSendMessage(ticketId)
   const { data: canned = [] } = useCannedResponses()
   const applyCanned = useApplyCannedResponse()
+
+  const [localAssignee, setLocalAssignee] = useState<number | ''>(ticket?.assigned_to?.id ?? '')
+
+  useEffect(() => {
+    setLocalAssignee(ticket?.assigned_to?.id ?? '')
+  }, [ticket?.assigned_to?.id])
 
   const [replyBody, setReplyBody] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
@@ -679,12 +696,12 @@ export function TicketDetailPage() {
               <span className="shrink-0">{t('inbox.detail.assignedTo')}:</span>
               <select
                 disabled={assignTicket.isPending}
-                value={ticket.assigned_to?.id ?? ''}
-                onChange={(e) =>
-                  assignTicket.mutate({
-                    user_id: e.target.value === '' ? null : Number(e.target.value),
-                  })
-                }
+                value={localAssignee}
+                onChange={(e) => {
+                  const userId = e.target.value === '' ? null : Number(e.target.value)
+                  setLocalAssignee(userId ?? '')
+                  assignTicket.mutate({ user_id: userId })
+                }}
                 className="flex-1 bg-brand-surface border border-white/15 rounded px-2 py-0.5 text-xs text-slate-200 cursor-pointer focus:outline-none focus:border-brand-purple disabled:opacity-50"
               >
                 <option value="">{t('inbox.detail.unassigned')}</option>
@@ -695,6 +712,19 @@ export function TicketDetailPage() {
                 ))}
               </select>
             </div>
+
+            {/* Opener */}
+            {ticket.source_metadata?.user_name && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <UserCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  {t('inbox.detail.openedBy')}:{' '}
+                  <span className="text-slate-200 font-medium">
+                    {String(ticket.source_metadata.user_name)}
+                  </span>
+                </span>
+              </div>
+            )}
 
             {/* Priority */}
             <div className="flex items-center gap-2 text-xs text-slate-400">
