@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] — 2026-06-29
+
+### Fixed
+- **Download de anexos PNG em mensagens** — `download_url` de anexos de mensagem apontava para `/attachments/{id}/download` sem o prefixo `/v1/`, fazendo o Apache servir o `index.html` do SPA (200 OK com HTML) em vez do arquivo real; corrigido para `/v1/attachments/{id}/download`
+
 ## [1.0.2] — 2026-06-24
 
 ### Fixed

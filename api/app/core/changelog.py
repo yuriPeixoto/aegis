@@ -14,6 +14,13 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.0.3",
+        "date": "2026-06-29",
+        "highlights": [
+            "Correção: download de anexos .png em mensagens baixava HTML em vez da imagem (URL /attachments/ sem prefixo /v1/)",
+        ],
+    },
+    {
         "version": "1.0.2",
         "date": "2026-06-24",
         "highlights": [

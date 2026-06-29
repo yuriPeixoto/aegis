@@ -64,7 +64,7 @@ def _to_response(m: TicketMessage) -> MessageResponse:
                 filename=a.original_filename,
                 content_type=a.content_type,
                 size_bytes=a.size_bytes,
-                download_url=f"/attachments/{a.id}/download",
+                download_url=f"/v1/attachments/{a.id}/download",
             )
             for a in (m.attachments or [])
         ],
