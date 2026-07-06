@@ -14,6 +14,16 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.1.0",
+        "date": "2026-07-06",
+        "highlights": [
+            "Checklist de subitens por chamado — progresso (%) sempre derivado, nunca manual",
+            "GF pode pré-preencher a checklist e recebe o progresso sincronizado de volta",
+            "MCP: create_ticket aceita tag de projeto; novas tools list_tags e set_tag_color",
+            "Correção: nome de arquivo com acentos corrompido no download de anexos",
+        ],
+    },
+    {
         "version": "1.0.3",
         "date": "2026-06-29",
         "highlights": [
