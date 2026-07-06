@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, ListChecks } from 'lucide-react'
 import { useAgentMonitor, type AgentMonitorEntry, type AgentMonitorTicket } from '../../hooks/useDashboard'
 
 const SLA_BADGE: Record<string, string> = {
@@ -117,6 +117,16 @@ function AgentMonitorTicketRow({ ticket, t }: AgentMonitorTicketRowProps) {
       </span>
 
       <div className="flex items-center gap-1.5 shrink-0">
+        {ticket.checklist_progress && ticket.checklist_progress.total > 0 && (
+          <span
+            className="flex items-center gap-1 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded"
+            title={t('dashboard.monitor.checklist')}
+          >
+            <ListChecks className="w-3 h-3" />
+            {ticket.checklist_progress.done}/{ticket.checklist_progress.total}
+          </span>
+        )}
+
         {ticket.has_unanswered_message && (
           <span
             className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded"

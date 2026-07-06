@@ -8,6 +8,7 @@ import type {
   TicketAttachment,
   Tag,
   Note,
+  ChecklistItem,
 } from '../types/ticket'
 
 export function useTickets(filters: TicketFilters = {}) {
@@ -317,6 +318,50 @@ export function useCreateNote(ticketId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', ticketId] })
+    },
+  })
+}
+
+export function useCreateChecklistItem(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<ChecklistItem, Error, { text: string }>({
+    mutationFn: async (body) => {
+      const { data } = await api.post<ChecklistItem>(`/tickets/${ticketId}/checklist`, body)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
+export function useUpdateChecklistItem(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<ChecklistItem, Error, { itemId: number; text?: string; is_done?: boolean }>({
+    mutationFn: async ({ itemId, ...body }) => {
+      const { data } = await api.patch<ChecklistItem>(
+        `/tickets/${ticketId}/checklist/${itemId}`,
+        body,
+      )
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
+export function useDeleteChecklistItem(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, number>({
+    mutationFn: async (itemId) => {
+      await api.delete(`/tickets/${ticketId}/checklist/${itemId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
     },
   })
 }

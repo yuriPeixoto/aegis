@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import { Clock, ShieldCheck, Star, Inbox, TrendingUp, Users, CalendarDays, BookOpen } from 'lucide-react'
+import { Clock, ShieldCheck, Star, Inbox, TrendingUp, Users, CalendarDays, BookOpen, ListChecks } from 'lucide-react'
 
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
@@ -418,7 +418,7 @@ export function AgentProfilePage() {
       </div>
 
       {/* ── KPI strip ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <KpiCard
           label={t('agentProfile.kpi.totalPeriod')}
           value={kpis.total_period}
@@ -459,6 +459,12 @@ export function AgentProfilePage() {
           sub={kpis.avg_csat !== null ? '/ 5.0' : undefined}
           icon={<Star className="w-4 h-4" />}
           accent="text-amber-400"
+        />
+        <KpiCard
+          label={t('agentProfile.kpi.checklistCompleted')}
+          value={analytics.features.checklist_items_completed_period ?? 0}
+          icon={<ListChecks className="w-4 h-4" />}
+          accent="text-cyan-400"
         />
       </div>
 

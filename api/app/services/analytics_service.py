@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.source import Source
 from app.models.ticket import Ticket
+from app.models.ticket_checklist_item import TicketChecklistItem
 from app.models.user import User
 
 _TERMINAL = ("pending_closure", "resolved", "closed", "cancelled", "merged")
@@ -164,6 +165,16 @@ class AnalyticsService:
         csat_raw = r.scalar_one()
         avg_csat: float | None = round(float(csat_raw), 2) if csat_raw is not None else None
 
+        # Checklist items this agent personally marked done in the period —
+        # independent of current ticket assignment (done_by is the acting user).
+        r = await self._db.execute(
+            select(func.count()).where(
+                TicketChecklistItem.done_by == user_id,
+                TicketChecklistItem.done_at.between(start, end),
+            )
+        )
+        checklist_items_completed_period: int = r.scalar_one()
+
         # ── Volume trend ──────────────────────────────────────────────────────
 
         r = await self._db.execute(
@@ -215,6 +226,7 @@ class AnalyticsService:
             "avg_csat": avg_csat,
             "resolution_count_period": resolved_period,
             "currently_open": currently_open,
+            "checklist_items_completed_period": checklist_items_completed_period,
             # Granular MTTR and volume by type/priority will be added here
             # when Phase 7 models are trained — same data, different aggregation.
         }
@@ -370,6 +382,12 @@ class AnalyticsService:
             round((sla_total - sla_overdue) / sla_total * 100, 1) if sla_total > 0 else None
         )
 
+        # Team-wide checklist throughput in the period (see ADR-010 Fase 3)
+        r = await self._db.execute(
+            select(func.count()).where(TicketChecklistItem.done_at.between(start, end))
+        )
+        checklist_items_completed: int = r.scalar_one()
+
         # By agent: KPIs for each active agent in the period
         agents_r = await self._db.execute(
             select(User)
@@ -439,6 +457,7 @@ class AnalyticsService:
             "by_agent": by_agent,
             "by_source": by_source,
             "sla_rate": sla_rate,
+            "checklist_items_completed": checklist_items_completed,
             # ML extension point: Phase 4.7 injects anomaly signals here.
             # Shape will be: insights: [{type, message, severity, affected}]
             "insights": [],

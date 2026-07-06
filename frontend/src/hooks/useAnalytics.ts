@@ -77,6 +77,7 @@ export interface OverviewAnalytics {
   by_agent: OverviewAgentRow[]
   by_source: OverviewSourceRow[]
   sla_rate: number | null
+  checklist_items_completed: number
   // ML extension: Phase 4.7 will populate this array with anomaly signals.
   insights: unknown[]
   meta: Record<string, unknown>

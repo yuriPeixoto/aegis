@@ -30,6 +30,22 @@ export interface Tag {
   description: string | null
 }
 
+export interface ChecklistItem {
+  id: number
+  text: string
+  is_done: boolean
+  position: number
+  created_by: number | null
+  done_by: number | null
+  done_at: string | null
+  created_at: string
+}
+
+export interface ChecklistProgress {
+  done: number
+  total: number
+}
+
 export interface Ticket {
   id: number
   source_id: number
@@ -56,10 +72,12 @@ export interface Ticket {
   merged_at: string | null
   deployment_scheduled_at: string | null
   pr_number: string | null
+  checklist_progress: ChecklistProgress | null
 }
 
 export interface TicketDetail extends Ticket {
   events: TicketEvent[]
+  checklist_items: ChecklistItem[]
 }
 
 export interface TicketListResponse {

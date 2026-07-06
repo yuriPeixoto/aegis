@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, ComposedChart, PieChart, Pie, Cell,
   Legend, CartesianGrid,
 } from 'recharts'
-import { Inbox, CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
+import { Inbox, CheckCircle2, Clock, ShieldCheck, ListChecks } from 'lucide-react'
 
 import { useOverviewAnalytics, type OverviewSourceRow } from '../../hooks/useAnalytics'
 import { useDateRange } from '../../hooks/useDateRange'
@@ -158,7 +158,7 @@ export function ReportsTab() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiCard
           label={t('dashboard.reports.kpi.opened')}
           value={isLoading ? '…' : totalOpened}
@@ -186,6 +186,12 @@ export function ReportsTab() {
             : data.sla_rate >= 80 ? 'text-emerald-400'
             : 'text-red-400'
           }
+        />
+        <KpiCard
+          label={t('dashboard.reports.kpi.checklistCompleted')}
+          value={isLoading ? '…' : data?.checklist_items_completed ?? 0}
+          icon={<ListChecks className="w-4 h-4" />}
+          accent="text-cyan-400"
         />
       </div>
 

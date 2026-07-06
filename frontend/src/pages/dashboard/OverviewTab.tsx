@@ -11,6 +11,7 @@ import {
   Timer,
   ShieldCheck,
   Trash2,
+  ListChecks,
 } from 'lucide-react'
 import {
   useDashboardStats,
@@ -294,7 +295,7 @@ export function OverviewTab() {
         <KpiCard label={t('dashboard.kpi.pendingClosure')} value={stats.pending_closure} valueClass="text-emerald-400" icon={<Users className="w-5 h-5 text-emerald-400" />} iconBg="bg-emerald-500/10" />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <KpiCard label={t('dashboard.kpi.openedToday')} value={stats.opened_today} valueClass="text-brand-accent" icon={<CalendarDays className="w-5 h-5 text-brand-accent" />} iconBg="bg-brand-accent/10" />
         <KpiCard label={t('dashboard.kpi.resolvedToday')} value={stats.resolved_today} valueClass="text-emerald-400" icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} iconBg="bg-emerald-500/10" />
         <KpiCard
@@ -312,6 +313,7 @@ export function OverviewTab() {
         />
         <KpiCard label={t('dashboard.kpi.mttr')} value={stats.mttr_hours !== null ? `${stats.mttr_hours}h` : '—'} valueClass={stats.mttr_hours !== null ? 'text-slate-200' : 'text-slate-500'} icon={<Timer className="w-5 h-5 text-slate-400" />} iconBg="bg-slate-500/10" sub={t('dashboard.kpi.mttrPeriod')} />
         <KpiCard label={t('dashboard.kpi.autoClosed')} value={stats.auto_closed_30d} valueClass="text-slate-400" icon={<Trash2 className="w-5 h-5 text-slate-500" />} iconBg="bg-slate-500/10" sub={t('dashboard.kpi.autoClosedHint')} />
+        <KpiCard label={t('dashboard.kpi.openChecklist')} value={stats.tickets_with_open_checklist} valueClass="text-cyan-400" icon={<ListChecks className="w-5 h-5 text-cyan-400" />} iconBg="bg-cyan-500/10" sub={t('dashboard.kpi.openChecklistHint')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
