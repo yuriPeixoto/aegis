@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] — 2026-07-06
+
+### Added
+- **Vista com seleção fixa de chamados** — salvar uma vista com uma lista fixa de tickets (selecionados via checkbox na inbox), em vez de critérios de filtro. Útil para sprints semanais enviadas por clientes: a vista mostra exatamente aqueles chamados, independente do status atual. `GET /v1/tickets` aceita `ticket_ids` como override exclusivo dos demais filtros.
+
 ## [1.1.0] — 2026-07-06
 
 ### Added

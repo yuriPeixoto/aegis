@@ -99,6 +99,7 @@ async def list_tickets(
     resolved_after: datetime | None = Query(None),
     resolved_before: datetime | None = Query(None),
     tag_ids: list[int] | None = Query(None),
+    ticket_ids: list[int] | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> TicketListResponse:
@@ -116,6 +117,7 @@ async def list_tickets(
         resolved_after=resolved_after,
         resolved_before=resolved_before,
         tag_ids=tag_ids,
+        ticket_ids=ticket_ids,
         limit=limit,
         offset=offset,
     )

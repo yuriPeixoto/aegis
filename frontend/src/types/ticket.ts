@@ -138,6 +138,7 @@ export interface TicketFilters {
   assigned_to_user_id?: number
   unassigned?: boolean
   tag_ids?: number[]
+  ticket_ids?: number[]
   limit?: number
   offset?: number
 }

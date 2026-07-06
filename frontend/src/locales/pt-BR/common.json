@@ -129,7 +129,9 @@
       "priority": "Prioridade",
       "shortcutAssign": "Atribuir (A)",
       "shortcutStatus": "Mudar Status (S)",
-      "shortcutPriority": "Mudar Prioridade (P)"
+      "shortcutPriority": "Mudar Prioridade (P)",
+      "saveAsView": "Salvar como vista",
+      "saveAsViewHint": "Salva exatamente estes chamados como uma vista fixa (ex: sprint semanal)"
     },
     "empty": "Nenhum ticket encontrado",
     "loading": "Carregando...",

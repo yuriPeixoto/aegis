@@ -14,6 +14,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.2.0",
+        "date": "2026-07-06",
+        "highlights": [
+            "Vista com seleção fixa de chamados — salva uma lista fixa em vez de filtros",
+            "Útil para sprints semanais: mostra exatamente os chamados escolhidos",
+        ],
+    },
+    {
         "version": "1.1.0",
         "date": "2026-07-06",
         "highlights": [

@@ -12,6 +12,8 @@ export interface ViewFilters {
   assigned_to?: string | null
   tag_ids?: number[]
   search?: string
+  /** Fixed set of ticket IDs (e.g. a weekly sprint) — overrides all other criteria. */
+  ticket_ids?: number[]
 }
 
 export interface SavedView {
@@ -73,6 +75,12 @@ export function applyViewFilters(
   viewFilters: ViewFilters,
   currentUserId: number,
 ): TicketFilters {
+  // Fixed ticket list overrides every other criterion — the point is showing
+  // exactly these tickets (e.g. a weekly sprint), regardless of current state.
+  if (viewFilters.ticket_ids?.length) {
+    return { ticket_ids: viewFilters.ticket_ids }
+  }
+
   const result: TicketFilters = {}
 
   if (viewFilters.status)      result.status = viewFilters.status

@@ -47,6 +47,7 @@ class TicketService:
         resolved_after: datetime | None = None,
         resolved_before: datetime | None = None,
         tag_ids: list[int] | None = None,
+        ticket_ids: list[int] | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Ticket], int, dict[int, datetime | None]]:
@@ -56,40 +57,47 @@ class TicketService:
             .where(Source.is_active.is_(True))
         )
 
-        if tag_ids:
-            # Filter tickets that have ALL specified tags (AND logic)
-            # Or use ANY? Zendesk tags usually work as "has any of these" or "has all".
-            # Let's start with "has any of these" for simpler filtering unless specified otherwise.
-            query = query.join(Ticket.tags).where(Tag.id.in_(tag_ids))
-            # If we wanted AND logic, we'd need multiple joins or a subquery with count.
+        if ticket_ids is not None:
+            # Saved view with a fixed ticket list (e.g. a weekly sprint) — this is an
+            # exclusive membership criterion, not combined with status/priority/etc.
+            # filters, since the whole point is showing exactly these tickets
+            # regardless of their current state.
+            query = query.where(Ticket.id.in_(ticket_ids))
+        else:
+            if tag_ids:
+                # Filter tickets that have ANY of the specified tags.
+                # (AND logic would need multiple joins or a subquery with count.)
+                query = query.join(Ticket.tags).where(Tag.id.in_(tag_ids))
 
-        if source_id is not None:
-            query = query.where(Ticket.source_id == source_id)
-        if active_only:
-            query = query.where(Ticket.status.notin_(self._TERMINAL_STATUSES))
-        elif status is not None:
-            query = query.where(Ticket.status == status)
-        if priority is not None:
-            query = query.where(Ticket.priority == priority)
-        if type is not None:
-            query = query.where(Ticket.type == type)
-        if unassigned:
-            query = query.where(Ticket.assigned_to_user_id.is_(None))
-        elif assigned_to_user_id is not None:
-            query = query.where(Ticket.assigned_to_user_id == assigned_to_user_id)
-        if search is not None:
-            term = f"%{search}%"
-            from sqlalchemy import or_
+            if source_id is not None:
+                query = query.where(Ticket.source_id == source_id)
+            if active_only:
+                query = query.where(Ticket.status.notin_(self._TERMINAL_STATUSES))
+            elif status is not None:
+                query = query.where(Ticket.status == status)
+            if priority is not None:
+                query = query.where(Ticket.priority == priority)
+            if type is not None:
+                query = query.where(Ticket.type == type)
+            if unassigned:
+                query = query.where(Ticket.assigned_to_user_id.is_(None))
+            elif assigned_to_user_id is not None:
+                query = query.where(Ticket.assigned_to_user_id == assigned_to_user_id)
+            if search is not None:
+                term = f"%{search}%"
+                from sqlalchemy import or_
 
-            query = query.where(or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term)))
-        if created_after is not None:
-            query = query.where(Ticket.first_ingested_at >= created_after)
-        if created_before is not None:
-            query = query.where(Ticket.first_ingested_at <= created_before)
-        if resolved_after is not None:
-            query = query.where(Ticket.resolved_at >= resolved_after)
-        if resolved_before is not None:
-            query = query.where(Ticket.resolved_at <= resolved_before)
+                query = query.where(
+                    or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term))
+                )
+            if created_after is not None:
+                query = query.where(Ticket.first_ingested_at >= created_after)
+            if created_before is not None:
+                query = query.where(Ticket.first_ingested_at <= created_before)
+            if resolved_after is not None:
+                query = query.where(Ticket.resolved_at >= resolved_after)
+            if resolved_before is not None:
+                query = query.where(Ticket.resolved_at <= resolved_before)
 
         count_result = await self._db.execute(select(func.count()).select_from(query.subquery()))
         total = count_result.scalar_one()
