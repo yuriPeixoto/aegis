@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] — 2026-07-06
+
+### Added
+- **Checklist de subitens por chamado** — dev pode quebrar chamados complexos em itens marcáveis (padrão ClickUp/GitHub Issues, sem workflow próprio); o progresso (%) é sempre derivado (`done/total`), nunca setado manualmente. O GF pode pré-preencher a checklist na abertura do chamado e recebe o progresso atualizado de volta em modo somente leitura. Impacto em Dashboard Overview, Monitor de Equipe, Perfil do Agente e Relatórios. Ver [ADR-010](docs/adr/010-ticket-checklist-progress.md).
+- **MCP — tags por projeto** — `create_ticket` aceita `project` opcional (aplica a tag correspondente, mesma cor do Google Calendar); novas tools `list_tags` e `set_tag_color`.
+
+### Fixed
+- **Download de anexos** — nome de arquivo com acentos corrompido no `Content-Disposition` (agora usa `filename*=UTF-8''`).
+
 ## [1.0.3] — 2026-06-29
 
 ### Fixed
