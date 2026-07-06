@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from fastapi import APIRouter, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
@@ -47,7 +49,7 @@ async def download_attachment(
     attachment_id: int,
     db: DbSession,
     _: CurrentUser,
-) -> FileResponse:
+) -> Response:
     service = AttachmentService(db)
     attachment = await service.get(attachment_id)
     if attachment is None:
@@ -57,8 +59,13 @@ async def download_attachment(
     if not file_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found on disk")
 
-    return FileResponse(
-        path=str(file_path),
-        media_type=attachment.content_type,
-        filename=attachment.original_filename,
+    # Apache mod_xsendfile serves the file directly — worker is freed immediately after headers.
+    # XSendFilePath must cover this path in the Apache vhost config.
+    filename_encoded = quote(attachment.original_filename, safe="")
+    return Response(
+        headers={
+            "X-Sendfile": str(file_path.resolve()),
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}",
+            "Content-Type": attachment.content_type,
+        },
     )

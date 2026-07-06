@@ -121,7 +121,7 @@ X-Aegis-Signature: sha256=<hmac-sha256 do body com webhook_secret>
 
 **Atenção por cliente:**
 - Se o cliente tem `BusinessHoursService` (carvalima): usar para inferir prioridade no `deadline_updated`
-- Se não tem (frigonorte): apenas atualizar `estimated_completion_date` diretamente
+- Se não tem (frigonorte): apenas atualizar `estimated_completion_date` diretamente — ver [ADR-009](adr/009-technical-due-at-vs-estimated-completion-date.md) pra entender a diferença entre `technical_due_at` (motor de SLA/atraso) e `estimated_completion_date` (só exibição), e quais clientes usam cada perfil
 - Se o cliente tem `AGUARDANDO_VALIDACAO_CLIENTE`: mapear `pending_closure` do Aegis → `AGUARDANDO_VALIDACAO_CLIENTE`
 - Se não tem (frigonorte): mapear `pending_closure` → `AGUARDANDO_CLIENTE`
 - **Nota:** ambos os status locais (`aguardando_cliente` e `aguardando_validacao_cliente`) chegam ao Aegis como `pending_closure`. No retorno (webhook Aegis→GF), usar o status nativo mais adequado ao cliente.
@@ -672,3 +672,5 @@ DELETE FROM failed_jobs WHERE exception LIKE '%C:\\Users\\%';
 | carvalima | 2026-03 | Referência. Tem `BusinessHoursService`, `AGUARDANDO_VALIDACAO_CLIENTE`, campo `modulo`. Servidor externo — sem colocalização. |
 | frigonorte | 2026-03-31 | Sem `modulo`, sem `BusinessHoursService`, sem `AGUARDANDO_VALIDACAO_CLIENTE`. `pending_closure` → `AGUARDANDO_CLIENTE`. Mesmo servidor que o Aegis — aplicar Parte 4. Foram encontradas e documentadas 9 armadilhas na seção 2.11 — ler antes do próximo cliente. |
 | sorpan | 2026-03-31 | Tem `AGUARDANDO_VALIDACAO_CLIENTE`. Mesmo servidor que o Aegis — aplicar Parte 4. Armadilhas adicionais: `is_ativo=null` impede login; `QUEUE_CONNECTION` não alinhado com supervisor (usava `redis`, worker escuta `database`); `user_notification_settings` ausente abortava transação de criação de ticket; campo `modulo` em `TicketService` sem `?? null` causava crash quando não enviado pelo form. |
+| 5s | 2026-07-01 | Código já existia (onboarding anterior incompleto — credenciais nunca ativadas no `.env`). Perfil Carvalima (tem `technical_due_at`, `AGUARDANDO_VALIDACAO_CLIENTE`). Auditoria encontrou 17 correções da Carvalima nunca portadas (segurança do webhook, SLA, dispatch timing, etc.) — todas corrigidas. Mesmo servidor que o Aegis, mas **sem** app Lumen em `/api` (diferente de carvalima) — `AliasMatch` não se aplica, só o fix do `Redirect permanent` incondicional no vhost `:80`. |
+| jsp | 2026-07-01 | Onboarding do zero. Perfil frigonorte (sem `technical_due_at`, sem `BusinessHoursService`, sem `AGUARDANDO_VALIDACAO_CLIENTE`) — ver [ADR-009](adr/009-technical-due-at-vs-estimated-completion-date.md). Mesmo servidor que o Aegis; tem app Lumen real em `/var/www/gestaofrotas-jsp/api`, mas **sem `Alias /api` configurado no vhost ainda** — sem conflito ativo hoje, mas se alguém adicionar o Alias no futuro, precisa ser `AliasMatch` com exclusão de `aegis/`. Slug da source: `gf-jsp`. |

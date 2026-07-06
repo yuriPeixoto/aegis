@@ -38,10 +38,13 @@ Cliente (browser) → POST /v1/tickets/{id}/attachments
 
 ```
 Cliente (browser) → GET /v1/attachments/{id}/download
-    → gunicorn → FastAPI FileResponse → lê do disco e envia ao cliente
+    → Apache → gunicorn → FastAPI valida JWT (CurrentUser)
+    → FastAPI emite header X-Sendfile com path absoluto + Content-Disposition
+    → Apache intercepta X-Sendfile, lê o arquivo do disco e envia ao cliente
+    → worker Gunicorn liberado imediatamente após os headers
 ```
 
-> **Atenção:** downloads passam pelo processo Python (gunicorn). Com 2 workers configurados, um download de arquivo grande ocupa um worker inteiro durante a transferência.
+O worker Python **não participa da transferência de bytes** — é liberado assim que os headers são emitidos. O Apache serve o arquivo diretamente do disco.
 
 ---
 
@@ -56,63 +59,61 @@ Cliente (browser) → GET /v1/attachments/{id}/download
 
 ---
 
-## Problema identificado — workers bloqueados por transferência de arquivo
+## Apache ↔ FastAPI — Contrato de serving (implementado em 30/06/2026)
 
-Gunicorn está configurado com **2 workers**. O endpoint de download usa `FileResponse`, que envia o arquivo byte a byte pelo processo Python. Para imagens de ~200 KB isso é imperceptível. Para vídeos de 5–10 MB, a transferência pode levar vários segundos — bloqueando o worker durante todo o período.
+O download de anexos usa **`mod_xsendfile`** do Apache. É fundamental entender o contrato para não quebrar silenciosamente em manutenções futuras.
 
-**Cenário de risco:** 2 usuários fazendo download de vídeo simultâneo = todos os workers ocupados = API sem resposta para os demais.
+### Como funciona
 
-O Apache já serve arquivos estáticos diretamente (sem passar pelo Python) para avatars:
+1. O browser faz `GET /v1/attachments/{id}/download` com JWT no header `Authorization`
+2. Apache encaminha para Gunicorn via `ProxyPass /v1/`
+3. FastAPI resolve a dependência `CurrentUser` — se o token for inválido, retorna 401 **antes** do handler executar
+4. O handler valida existência do arquivo em disco; se não encontrar, retorna 404
+5. FastAPI retorna `Response` com os headers:
+   - `X-Sendfile: /opt/aegis/api/uploads/{ticket_id}/{uuid}.ext` (path absoluto)
+   - `Content-Disposition: attachment; filename*=UTF-8''nome-original.pdf`
+   - `Content-Type: application/pdf` (ou o MIME correto)
+6. Apache intercepta o header `X-Sendfile`, lê o arquivo do disco e envia os bytes ao cliente
+7. O header `X-Sendfile` é **removido** da resposta antes de chegar ao browser
 
-```apache
-Alias /media/avatars/ /opt/aegis/api/uploads/avatars/
+O worker Gunicorn é liberado no passo 5 — não participa da transferência de bytes.
+
+### Dependências no servidor
+
+| Componente | Configuração |
+|---|---|
+| Módulo Apache | `libapache2-mod-xsendfile` instalado + `a2enmod xsendfile` |
+| VirtualHost | `XSendFile On` + `XSendFilePath /opt/aegis/api/uploads/` |
+| Path no header | Deve ser **absoluto** e começar com o `XSendFilePath` configurado |
+
+### Falha silenciosa — o risco mais importante
+
+Se `mod_xsendfile` não estiver instalado ou ativo, o Apache **não retorna erro** — ele passa o header `X-Sendfile` para o browser como texto no body com status 200. O arquivo não é entregue, mas nenhum log de erro é gerado.
+
+**Como detectar:** `apache2ctl -M 2>/dev/null | grep xsendfile` deve retornar `xsendfile_module`.
+
+**Como testar o fluxo completo:**
+
+```bash
+# 1. Obter um token válido
+TOKEN=$(curl -sf -X POST https://aegis.unitopconsultoria.com.br/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"seu@email.com","password":"senha"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+# 2. Baixar um anexo e inspecionar headers (não deve aparecer X-Sendfile na resposta)
+curl -I -H "Authorization: Bearer $TOKEN" \
+  https://aegis.unitopconsultoria.com.br/v1/attachments/1/download
+
+# Saída esperada: Content-Disposition com filename original, Content-Type correto, sem X-Sendfile
+# Se X-Sendfile aparecer nos headers de resposta, o módulo não está funcionando
 ```
 
-O mesmo padrão pode ser aplicado para todos os uploads.
+### O que NÃO fazer
 
----
-
-## Melhoria planejada — Apache servir uploads diretamente
-
-**Objetivo:** eliminar o bloqueio de workers durante download de arquivos, especialmente vídeos.
-
-### 1. Adicionar Alias no vhost do Apache
-
-No arquivo `/etc/apache2/sites-enabled/aegis.unitopconsultoria.com.br.conf`, antes do bloco `ProxyPass`:
-
-```apache
-Alias /uploads/ /opt/aegis/api/uploads/
-<Directory /opt/aegis/api/uploads/>
-    Options -Indexes
-    Require all granted
-    Header set Content-Disposition "attachment"
-</Directory>
-```
-
-Recarregar Apache: `systemctl reload apache2`
-
-### 2. Ajustar endpoint de download no backend
-
-Em vez de `FileResponse` (que lê e reenvia o arquivo), retornar um **redirect 302** para a URL estática:
-
-```python
-# app/routers/attachments.py
-from fastapi.responses import RedirectResponse
-
-@router.get("/v1/attachments/{attachment_id}/download")
-async def download_attachment(...) -> RedirectResponse:
-    ...
-    static_url = f"/uploads/{attachment.stored_path}"
-    return RedirectResponse(url=static_url, status_code=302)
-```
-
-O Apache entrega o arquivo diretamente ao browser sem passar pelo Python.
-
-### 3. Ajuste de segurança
-
-O diretório `uploads/` ficará acessível publicamente via URL se o usuário adivinhar o path `/{ticket_id}/{uuid}.ext`. Os UUIDs tornam isso praticamente impossível de adivinhar — mas para maior segurança, pode-se adicionar uma verificação de autenticação via `mod_auth` ou manter a rota Python apenas para validar o token JWT e depois fazer o redirect.
-
-**Opção recomendada para agora:** manter a rota Python (valida autenticação) e fazer redirect para URL interna via `X-Accel-Redirect` (nginx) ou equivalente Apache (`mod_xsendfile`). Isso preserva a autenticação sem bloquear o worker.
+- **Não adicionar** `Alias /uploads/` com `Require all granted` no vhost — isso tornaria os arquivos publicamente acessíveis sem autenticação via URL direta
+- **Não remover** a dependência `CurrentUser` do endpoint — sem ela, o Apache serviria arquivos para qualquer request sem validação de JWT
+- **Não usar path relativo** no header `X-Sendfile` — o Apache rejeita; o endpoint usa `file_path.resolve()` para garantir path absoluto
 
 ---
 
@@ -120,6 +121,8 @@ O diretório `uploads/` ficará acessível publicamente via URL se o usuário ad
 
 O limite atual de 10 MB permite gravações de tela de ~1–3 minutos (dependendo do codec/resolução), adequado para a maioria dos casos de suporte. Usuários que tentarem enviar vídeos maiores receberão erro 422.
 
+Com `mod_xsendfile`, o tamanho do arquivo **não impacta workers** — o Apache faz o streaming diretamente. O limite de 10 MB é agora questão de disco, não de performance.
+
 Se o volume de vídeos crescer, avaliar:
-- Reduzir o limite específico para vídeo (ex: 5 MB) via validação por MIME type no `AttachmentService`
+- Limite separado por MIME type no `AttachmentService` (ex: 5 MB para vídeo, 10 MB para demais) — implementar quando houver casos de uso reais, não antes
 - Migrar para object storage externo (Cloudflare R2 ou MinIO self-hosted) para desacoplar o armazenamento do servidor de aplicação
