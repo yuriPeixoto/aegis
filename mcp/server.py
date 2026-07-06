@@ -220,8 +220,49 @@ async def _list_tools() -> list[types.Tool]:
                         "description": "Se true, atribui o ticket ao usuário autenticado no MCP (default: false)",
                         "default": False,
                     },
+                    "project": {
+                        "type": "string",
+                        "enum": [
+                            "Gestão de Frotas",
+                            "Checklist Suite",
+                            "Jornada Cliente",
+                            "Telemetria",
+                            "Aegis",
+                            "Painel de Motoristas",
+                        ],
+                        "description": (
+                            "Projeto ao qual a tarefa pertence — anexa a tag correspondente "
+                            "(já cadastrada no Aegis com a mesma cor usada no Google Calendar). "
+                            "Usado pelo weekly-report pra agrupar o relatório por projeto."
+                        ),
+                    },
                 },
                 "required": ["subject", "description"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="list_tags",
+            description="Lista as tags cadastradas no Aegis (nome, cor, descrição).",
+            inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
+        ),
+        types.Tool(
+            name="set_tag_color",
+            description=(
+                "Cria ou atualiza a cor de uma tag (ex: um novo projeto). "
+                "Requer conta admin no Aegis."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Nome exato da tag"},
+                    "color": {
+                        "type": "string",
+                        "description": "Cor em hex (ex: #46d6db). Se a tag não existir, é criada.",
+                    },
+                    "description": {"type": "string", "description": "Descrição opcional"},
+                },
+                "required": ["name", "color"],
                 "additionalProperties": False,
             },
         ),
@@ -313,6 +354,8 @@ async def _dispatch(name: str, args: dict) -> str:
             "priority": args.get("priority", "medium"),
             "assign_to_me": str(args.get("assign_to_me", False)).lower(),
         }
+        if args.get("project"):
+            form["project"] = args["project"]
         async with _httpx.AsyncClient(timeout=30) as client:
             r = await client.post(
                 f"{BASE_URL}/v1/tickets/internal",
@@ -321,11 +364,36 @@ async def _dispatch(name: str, args: dict) -> str:
             )
             r.raise_for_status()
             ticket = r.json()
+        tags = ", ".join(tag["name"] for tag in ticket.get("tags", [])) or "—"
         return (
             f"Ticket criado com sucesso!\n"
             f"ID: {ticket['id']}  |  Ref: {ticket['external_id']}\n"
-            f"Assunto: {ticket['subject']}"
+            f"Assunto: {ticket['subject']}\n"
+            f"Tags: {tags}"
         )
+
+    if name == "list_tags":
+        tags = await _get("/tags")
+        if not tags:
+            return "Nenhuma tag cadastrada."
+        lines = [f"{t['id']:>3}  {t['color']}  {t['name']}" for t in tags]
+        return "\n".join(lines)
+
+    if name == "set_tag_color":
+        tags = await _get("/tags")
+        existing = next((t for t in tags if t["name"] == args["name"]), None)
+
+        body = {"color": args["color"]}
+        if args.get("description"):
+            body["description"] = args["description"]
+
+        if existing:
+            tag = await _patch(f"/tags/{existing['id']}", body)
+            return f"Tag '{tag['name']}' atualizada: cor = {tag['color']}."
+
+        body["name"] = args["name"]
+        tag = await _post("/tags", body)
+        return f"Tag '{tag['name']}' criada: cor = {tag['color']}."
 
     return f"Ferramenta desconhecida: {name}"
 
