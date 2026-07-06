@@ -11,7 +11,12 @@ import { SaveViewModal } from '../components/inbox/SaveViewModal'
 import { useMe } from '../hooks/useAuth'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 import { useTickets } from '../hooks/useTickets'
-import { useSavedViews, applyViewFilters, filtersToViewFilters } from '../hooks/useSavedViews'
+import {
+  useSavedViews,
+  applyViewFilters,
+  filtersToViewFilters,
+  type ViewFilters,
+} from '../hooks/useSavedViews'
 
 const PAGE_SIZE = 20
 
@@ -33,7 +38,7 @@ export function InboxPage() {
   const [filters, setFilters] = useState<TicketFilters>({ offset: 0, active_only: true })
   const [selectedIndex, setSelectedIndex] = useState<number>(-1)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
-  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [saveModalFilters, setSaveModalFilters] = useState<ViewFilters | null>(null)
 
   // Reset offset whenever the active view changes (switching views via sidebar)
   useEffect(() => {
@@ -168,7 +173,7 @@ export function InboxPage() {
           {/* Save as view button — shown when there are active filters */}
           {hasFilters && !activeView && (
             <button
-              onClick={() => setShowSaveModal(true)}
+              onClick={() => setSaveModalFilters(filtersForSave)}
               className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-400 hover:text-slate-200 border border-brand-border hover:border-slate-600 rounded-lg transition-colors"
               title={t('inbox.views.saveTitle')}
             >
@@ -194,12 +199,16 @@ export function InboxPage() {
         />
       </div>
 
-      <BulkActionBar selectedIds={selectedIds} onClear={() => setSelectedIds([])} />
+      <BulkActionBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        onSaveAsView={() => setSaveModalFilters({ ticket_ids: selectedIds })}
+      />
 
-      {showSaveModal && (
+      {saveModalFilters && (
         <SaveViewModal
-          filters={filtersForSave}
-          onClose={() => setShowSaveModal(false)}
+          filters={saveModalFilters}
+          onClose={() => setSaveModalFilters(null)}
         />
       )}
     </div>

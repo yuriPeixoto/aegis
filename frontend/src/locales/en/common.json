@@ -129,7 +129,9 @@
       "priority": "Priority",
       "shortcutAssign": "Assign (A)",
       "shortcutStatus": "Change Status (S)",
-      "shortcutPriority": "Change Priority (P)"
+      "shortcutPriority": "Change Priority (P)",
+      "saveAsView": "Save as view",
+      "saveAsViewHint": "Saves exactly these tickets as a fixed view (e.g. a weekly sprint)"
     },
     "empty": "No tickets found",
     "loading": "Loading...",

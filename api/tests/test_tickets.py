@@ -108,3 +108,39 @@ async def test_list_tickets_pagination(admin_client: AsyncClient, ingested_ticke
     data = response.json()
     assert len(data["items"]) <= 1
     assert data["limit"] == 1
+
+
+@pytest.mark.asyncio
+async def test_list_tickets_by_fixed_ticket_ids(
+    admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """A saved view with a fixed ticket list (e.g. a weekly sprint) should return
+    exactly those tickets, ignoring status/priority/etc — even a resolved one."""
+    ticket_ids = []
+    for status in ("open", "resolved"):
+        resp = await admin_client.post(
+            "/v1/ingest/tickets",
+            headers={"X-Aegis-Key": source_with_key["api_key"]},
+            json={
+                "external_id": unique_external_id(),
+                "status": status,
+                "subject": f"Sprint ticket ({status})",
+            },
+        )
+        ticket_ids.append(resp.json()["ticket_id"])
+
+    # Ticket that should NOT appear even though it matches nothing about ticket_ids
+    other = await admin_client.post(
+        "/v1/ingest/tickets",
+        headers={"X-Aegis-Key": source_with_key["api_key"]},
+        json={"external_id": unique_external_id(), "status": "open", "subject": "Not in sprint"},
+    )
+    other_id = other.json()["ticket_id"]
+
+    response = await admin_client.get("/v1/tickets", params={"ticket_ids": ticket_ids})
+    assert response.status_code == 200
+    data = response.json()
+    returned_ids = {item["id"] for item in data["items"]}
+    assert returned_ids == set(ticket_ids)
+    assert other_id not in returned_ids
+    assert data["total"] == 2

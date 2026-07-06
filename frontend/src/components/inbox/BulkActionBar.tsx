@@ -1,13 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import { X, UserPlus, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { X, UserPlus, CheckCircle2, AlertTriangle, Loader2, Bookmark } from 'lucide-react'
 import { useBulkUpdateTickets, useUsers } from '../../hooks/useTickets'
 
 interface BulkActionBarProps {
   selectedIds: number[]
   onClear: () => void
+  onSaveAsView?: () => void
 }
 
-export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
+export function BulkActionBar({ selectedIds, onClear, onSaveAsView }: BulkActionBarProps) {
   const { t } = useTranslation()
   const { data: users } = useUsers()
   const { mutate: bulkUpdate, isPending } = useBulkUpdateTickets()
@@ -132,6 +133,18 @@ export function BulkActionBar({ selectedIds, onClear }: BulkActionBarProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Save selection as view */}
+              {onSaveAsView && (
+                <button
+                  onClick={onSaveAsView}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors focus:ring-2 focus:ring-brand-purple focus:outline-none"
+                  title={t('inbox.bulk.saveAsViewHint')}
+                >
+                  <Bookmark className="w-4 h-4" />
+                  {t('inbox.bulk.saveAsView')}
+                </button>
+              )}
             </>
           )}
         </div>
