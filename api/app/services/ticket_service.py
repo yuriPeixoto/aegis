@@ -44,6 +44,8 @@ class TicketService:
         search: str | None = None,
         created_after: datetime | None = None,
         created_before: datetime | None = None,
+        resolved_after: datetime | None = None,
+        resolved_before: datetime | None = None,
         tag_ids: list[int] | None = None,
         limit: int = 50,
         offset: int = 0,
@@ -84,6 +86,10 @@ class TicketService:
             query = query.where(Ticket.first_ingested_at >= created_after)
         if created_before is not None:
             query = query.where(Ticket.first_ingested_at <= created_before)
+        if resolved_after is not None:
+            query = query.where(Ticket.resolved_at >= resolved_after)
+        if resolved_before is not None:
+            query = query.where(Ticket.resolved_at <= resolved_before)
 
         count_result = await self._db.execute(select(func.count()).select_from(query.subquery()))
         total = count_result.scalar_one()
@@ -105,6 +111,7 @@ class TicketService:
                 selectinload(Ticket.source),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
             .order_by(_terminal_rank, _priority_rank, Ticket.first_ingested_at.desc())
             .limit(limit)
@@ -138,6 +145,7 @@ class TicketService:
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
         )
         return result.scalar_one_or_none()
@@ -178,6 +186,7 @@ class TicketService:
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
         )
         return result.scalar_one_or_none()
@@ -262,6 +271,7 @@ class TicketService:
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
         )
         return result.scalar_one_or_none(), None
@@ -358,6 +368,7 @@ class TicketService:
                     selectinload(Ticket.source),
                     selectinload(Ticket.assignee),
                     selectinload(Ticket.tags),
+                    selectinload(Ticket.checklist_items),
                 )
                 .execution_options(populate_existing=True)
             )
@@ -376,7 +387,13 @@ class TicketService:
         meta: dict | None = None,
         source_id: int | None = None,
         assign_to_me: bool = False,
+        tag_names: list[str] | None = None,
     ) -> Ticket:
+        tags: list[Tag] = []
+        if tag_names:
+            tags_result = await self._db.execute(select(Tag).where(Tag.name.in_(tag_names)))
+            tags = list(tags_result.scalars().all())
+
         if source_id is not None:
             source_result = await self._db.execute(select(Source).where(Source.id == source_id, Source.is_active == True))  # noqa: E712
             source = source_result.scalar_one_or_none()
@@ -418,6 +435,7 @@ class TicketService:
             subject=subject,
             description=description,
             assigned_to_user_id=user_id if assign_to_me else None,
+            tags=tags,
             source_metadata={
                 **(meta or {}),
                 "reported_by_user_id": user_id,
@@ -452,6 +470,7 @@ class TicketService:
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
         )
         return result.scalar_one()
@@ -553,6 +572,7 @@ class TicketService:
                 selectinload(Ticket.events),
                 selectinload(Ticket.assignee),
                 selectinload(Ticket.tags),
+                selectinload(Ticket.checklist_items),
             )
         )
         return result.scalar_one(), None

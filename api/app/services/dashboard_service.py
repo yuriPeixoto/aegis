@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.source import Source
 from app.models.ticket import Ticket
+from app.models.ticket_checklist_item import TicketChecklistItem
 from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.models.user import User
@@ -113,6 +114,20 @@ class DashboardService:
             )
         )
         auto_closed_30d: int = r.scalar_one()
+
+        # Active tickets with at least one pending (not done) checklist item —
+        # surfaces "work still being tracked" the way GitHub's issue list shows
+        # open task counts (see ADR-010).
+        r = await self._db.execute(
+            select(func.count(func.distinct(Ticket.id)))
+            .join(TicketChecklistItem, TicketChecklistItem.ticket_id == Ticket.id)
+            .where(
+                _active_src,
+                ~Ticket.status.in_(_INACTIVE),
+                TicketChecklistItem.is_done.is_(False),
+            )
+        )
+        tickets_with_open_checklist: int = r.scalar_one()
 
         # ── By priority (active tickets) ──────────────────────────────────────
 
@@ -261,6 +276,7 @@ class DashboardService:
             "sla_compliance_pct": sla_compliance_pct,
             "mttr_hours": mttr_hours,
             "auto_closed_30d": auto_closed_30d,
+            "tickets_with_open_checklist": tickets_with_open_checklist,
             "by_priority": by_priority,
             "by_client": by_client,
             "by_agent": by_agent,
@@ -298,7 +314,7 @@ class DashboardService:
                 ~Ticket.status.in_(_INACTIVE),
                 Ticket.assigned_to_user_id.is_not(None),
             )
-            .options(selectinload(Ticket.assignee))
+            .options(selectinload(Ticket.assignee), selectinload(Ticket.checklist_items))
             .order_by(Ticket.sla_due_at.asc().nulls_last())
         )
         rows = r.all()
@@ -316,6 +332,13 @@ class DashboardService:
 
             sla_status = _compute_sla_status(ticket, now)
 
+            checklist_progress = None
+            if ticket.checklist_items:
+                checklist_progress = {
+                    "done": sum(1 for i in ticket.checklist_items if i.is_done),
+                    "total": len(ticket.checklist_items),
+                }
+
             tickets_by_agent[agent.id].append(
                 {
                     "id": ticket.id,
@@ -330,6 +353,7 @@ class DashboardService:
                     "waiting_since": ticket.sla_paused_since.isoformat()
                     if ticket.sla_paused_since
                     else None,
+                    "checklist_progress": checklist_progress,
                 }
             )
 

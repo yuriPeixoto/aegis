@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, computed_field
 
+from .checklist import ChecklistItemResponse, ChecklistProgress
 from .tag import TagResponse
 
 _TERMINAL_STATUSES = {"resolved", "closed", "cancelled"}
@@ -44,6 +45,7 @@ class TicketResponse(BaseModel):
     sla_started_at: datetime | None = None
     sla_paused_seconds: int = 0
     sla_paused_since: datetime | None = None
+    resolved_at: datetime | None = None
     last_inbound_at: datetime | None = None
     assigned_to: AssigneeResponse | None = None
     tags: list[TagResponse] = []
@@ -55,6 +57,7 @@ class TicketResponse(BaseModel):
     csat_requested_at: datetime | None = None
     deployment_scheduled_at: datetime | None = None
     pr_number: str | None = None
+    checklist_progress: ChecklistProgress | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -125,6 +128,7 @@ class MergeTicketRequest(BaseModel):
 
 class TicketDetailResponse(TicketResponse):
     events: list[TicketEventResponse]
+    checklist_items: list[ChecklistItemResponse] = []
 
 
 class TicketListResponse(BaseModel):

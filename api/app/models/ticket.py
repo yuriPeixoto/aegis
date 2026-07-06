@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from app.models.source import Source
     from app.models.tag import Tag
     from app.models.ticket_attachment import TicketAttachment
+    from app.models.ticket_checklist_item import TicketChecklistItem
     from app.models.ticket_event import TicketEvent
     from app.models.ticket_message import TicketMessage
     from app.models.user import User
@@ -120,6 +121,9 @@ class Ticket(Base):
     )
     attachments: Mapped[list[TicketAttachment]] = relationship(
         "TicketAttachment", back_populates="ticket", order_by="TicketAttachment.created_at"
+    )
+    checklist_items: Mapped[list[TicketChecklistItem]] = relationship(
+        "TicketChecklistItem", back_populates="ticket", order_by="TicketChecklistItem.position"
     )
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=ticket_tags, back_populates="tickets")
     assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to_user_id])

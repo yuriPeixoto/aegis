@@ -27,6 +27,7 @@ import { PriorityBadge } from '../components/inbox/PriorityBadge'
 import { TypeBadge } from '../components/inbox/TypeBadge'
 import { SlaBadge } from '../components/inbox/SlaBadge'
 import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
+import { ChecklistPanel } from '../components/inbox/ChecklistPanel'
 import { MergeTicketModal } from '../components/inbox/MergeTicketModal'
 import TagSelector from '../components/inbox/TagSelector'
 
@@ -851,6 +852,9 @@ export function TicketDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Checklist */}
+          <ChecklistPanel ticketId={ticket.id} items={ticket.checklist_items} />
 
           {/* Attachments */}
           <div className="border-b border-brand-border/50">

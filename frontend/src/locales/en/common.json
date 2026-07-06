@@ -77,7 +77,8 @@
       "mttr": "Avg time",
       "slaRate": "SLA rate",
       "slaTarget": "Target: 80%",
-      "csat": "Avg CSAT"
+      "csat": "Avg CSAT",
+      "checklistCompleted": "Checklist Items Completed"
     },
     "upcomingAgenda": "Upcoming Agenda"
   },
@@ -192,7 +193,14 @@
         "manage": "Manage tags"
       },
       "addTag": "Add Tag",
-      "noTagsFound": "No tags available"
+      "noTagsFound": "No tags available",
+      "checklist": {
+        "title": "Checklist",
+        "empty": "No items yet.",
+        "addPlaceholder": "Add item...",
+        "add": "Add",
+        "remove": "Remove item"
+      }
     },
     "views": {
       "section": "Views",
@@ -279,7 +287,8 @@
         "opened": "Tickets Opened",
         "resolved": "Resolved",
         "mttr": "Avg. MTTR",
-        "slaRate": "SLA Rate"
+        "slaRate": "SLA Rate",
+        "checklistCompleted": "Checklist Items Completed"
       },
       "volumeTrend": "Ticket Volume",
       "resolutionTrend": "Resolution Time",
@@ -317,7 +326,9 @@
       "mttr": "Avg. Resolution",
       "mttrPeriod": "Last 30 days",
       "autoClosed": "Auto-closed",
-      "autoClosedHint": "Inactivity (30d)"
+      "autoClosedHint": "Inactivity (30d)",
+      "openChecklist": "Pending Checklist",
+      "openChecklistHint": "Active tickets with open items"
     },
     "agents": {
       "title": "Agent Workload",
@@ -350,7 +361,8 @@
       "subtitle": "Active tickets per agent — refreshes every 30s",
       "empty": "No agents with active tickets",
       "unanswered": "Awaiting agent reply",
-      "waitingSince": "Waiting for"
+      "waitingSince": "Waiting for",
+      "checklist": "Checklist progress"
     }
   },
   "changePassword": {

@@ -65,7 +65,8 @@
       "mttr": "Tempo Médio",
       "slaRate": "Taxa de SLA",
       "slaTarget": "Meta: 80%",
-      "csat": "CSAT Médio"
+      "csat": "CSAT Médio",
+      "checklistCompleted": "Itens de Checklist Concluídos"
     },
     "upcomingAgenda": "Agenda"
   },
@@ -192,7 +193,14 @@
         "manage": "Gerenciar tags"
       },
       "addTag": "Adicionar Tag",
-      "noTagsFound": "Nenhuma tag disponível"
+      "noTagsFound": "Nenhuma tag disponível",
+      "checklist": {
+        "title": "Checklist",
+        "empty": "Nenhum item ainda.",
+        "addPlaceholder": "Adicionar item...",
+        "add": "Adicionar",
+        "remove": "Remover item"
+      }
     },
     "views": {
       "section": "Vistas",
@@ -279,7 +287,8 @@
         "opened": "Chamados Abertos",
         "resolved": "Resolvidos",
         "mttr": "MTTR Médio",
-        "slaRate": "Taxa de SLA"
+        "slaRate": "Taxa de SLA",
+        "checklistCompleted": "Itens de Checklist Concluídos"
       },
       "volumeTrend": "Volume de Chamados",
       "resolutionTrend": "Tempo de Resolução",
@@ -317,7 +326,9 @@
       "mttr": "Tempo Médio",
       "mttrPeriod": "Últimos 30 dias",
       "autoClosed": "Auto-fechados",
-      "autoClosedHint": "Inatividade (30d)"
+      "autoClosedHint": "Inatividade (30d)",
+      "openChecklist": "Checklist Pendente",
+      "openChecklistHint": "Chamados ativos com itens em aberto"
     },
     "agents": {
       "title": "Carga por Atendente",
@@ -350,7 +361,8 @@
       "subtitle": "Chamados em andamento por atendente — atualizado a cada 30s",
       "empty": "Nenhum atendente com chamados ativos",
       "unanswered": "Cliente aguardando resposta",
-      "waitingSince": "Aguardando há"
+      "waitingSince": "Aguardando há",
+      "checklist": "Progresso da checklist"
     }
   },
   "changePassword": {

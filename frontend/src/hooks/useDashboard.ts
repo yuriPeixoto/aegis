@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/axios'
 
+export interface ChecklistProgress {
+  done: number
+  total: number
+}
+
 export interface AgentMonitorTicket {
   id: number
   external_id: string
@@ -12,6 +17,7 @@ export interface AgentMonitorTicket {
   has_unanswered_message: boolean
   last_message_at: string | null
   waiting_since: string | null
+  checklist_progress: ChecklistProgress | null
 }
 
 export interface AgentMonitorEntry {
@@ -68,6 +74,7 @@ export interface DashboardStats {
   sla_compliance_pct: number | null
   mttr_hours: number | null
   auto_closed_30d: number
+  tickets_with_open_checklist: number
   by_priority: { priority: string; count: number }[]
   by_client: ClientStat[]
   by_agent: AgentStat[]

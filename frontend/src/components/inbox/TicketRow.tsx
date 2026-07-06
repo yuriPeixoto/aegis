@@ -1,3 +1,4 @@
+import { CheckSquare } from 'lucide-react'
 import type { Ticket } from '../../types/ticket'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
@@ -119,6 +120,12 @@ export function TicketRow({
           {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
           <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
+          {ticket.checklist_progress && ticket.checklist_progress.total > 0 && (
+            <span className="flex items-center gap-1 text-[10px] font-mono text-slate-400 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
+              <CheckSquare className="w-3 h-3" />
+              {ticket.checklist_progress.done}/{ticket.checklist_progress.total}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {ticket.assigned_to && (

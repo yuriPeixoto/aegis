@@ -26,6 +26,7 @@ class TicketIngestPayload(BaseModel):
     source_updated_at: datetime | None = None
     assigned_to_user_id: int | None = None
     attachments: list[IngestAttachment] = Field(default_factory=list)
+    checklist_items: list[str] = Field(default_factory=list)
 
 
 class TicketEventPayload(BaseModel):

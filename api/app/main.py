@@ -16,6 +16,7 @@ from app.routers import (
     auth,
     calendar,
     canned_responses,
+    checklist,
     dashboard,
     escalation,
     ingest,
@@ -66,6 +67,7 @@ app.include_router(calendar.router)
 app.include_router(sources.router)
 app.include_router(ingest.router)
 app.include_router(tickets.router)
+app.include_router(checklist.router)
 app.include_router(tags.router)
 app.include_router(users.router)
 app.include_router(messages.router)

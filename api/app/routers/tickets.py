@@ -9,6 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query
 
 from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
+from app.schemas.checklist import ChecklistItemResponse, ChecklistProgress
 from app.schemas.tag import TagResponse
 from app.schemas.ticket import (
     AssigneeResponse,
@@ -37,6 +38,11 @@ def _assignee(ticket) -> AssigneeResponse | None:  # type: ignore[no-untyped-def
     return AssigneeResponse(id=ticket.assignee.id, name=ticket.assignee.name)
 
 
+def _checklist_progress(ticket) -> ChecklistProgress:  # type: ignore[no-untyped-def]
+    items = ticket.checklist_items or []
+    return ChecklistProgress(done=sum(1 for i in items if i.is_done), total=len(items))
+
+
 def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
     return TicketDetailResponse(
         id=ticket.id,
@@ -57,6 +63,7 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         sla_started_at=ticket.sla_started_at,
         sla_paused_seconds=ticket.sla_paused_seconds or 0,
         sla_paused_since=ticket.sla_paused_since,
+        resolved_at=ticket.resolved_at,
         assigned_to=_assignee(ticket),
         tags=[TagResponse.model_validate(t) for t in ticket.tags],
         merged_into_ticket_id=ticket.merged_into_ticket_id,
@@ -67,7 +74,12 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
         csat_requested_at=ticket.csat_requested_at,
         deployment_scheduled_at=ticket.deployment_scheduled_at,
         pr_number=ticket.pr_number,
+        checklist_progress=_checklist_progress(ticket),
         events=[TicketEventResponse.model_validate(e) for e in ticket.events],
+        checklist_items=[
+            ChecklistItemResponse.model_validate(i)
+            for i in sorted(ticket.checklist_items, key=lambda i: i.position)
+        ],
     )
 
 
@@ -84,6 +96,8 @@ async def list_tickets(
     search: str | None = Query(None),
     created_after: datetime | None = Query(None),
     created_before: datetime | None = Query(None),
+    resolved_after: datetime | None = Query(None),
+    resolved_before: datetime | None = Query(None),
     tag_ids: list[int] | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -99,6 +113,8 @@ async def list_tickets(
         search=search,
         created_after=created_after,
         created_before=created_before,
+        resolved_after=resolved_after,
+        resolved_before=resolved_before,
         tag_ids=tag_ids,
         limit=limit,
         offset=offset,
@@ -123,9 +139,11 @@ async def list_tickets(
                 first_ingested_at=t.first_ingested_at,
                 last_synced_at=t.last_synced_at,
                 sla_due_at=t.sla_due_at,
+                resolved_at=t.resolved_at,
                 last_inbound_at=inbound_map.get(t.id),
                 assigned_to=_assignee(t),
                 tags=[TagResponse.model_validate(tag) for tag in t.tags],
+                checklist_progress=_checklist_progress(t),
             )
         )
 
@@ -152,6 +170,7 @@ async def create_internal_ticket(
     meta: str | None = Form(None),
     source_id: int | None = Form(None),
     assign_to_me: bool = Form(False),
+    project: str | None = Form(None),
     files: list[UploadFile] = File(default=[]),
 ) -> TicketDetailResponse:
     meta_dict: dict | None = None
@@ -169,6 +188,7 @@ async def create_internal_ticket(
         meta=meta_dict,
         source_id=source_id,
         assign_to_me=assign_to_me,
+        tag_names=[project] if project else None,
     )
 
     att_service = AttachmentService(db)
@@ -509,6 +529,7 @@ async def bulk_update_tickets(
             csat_requested_at=t.csat_requested_at,
             deployment_scheduled_at=t.deployment_scheduled_at,
             pr_number=t.pr_number,
+            checklist_progress=_checklist_progress(t),
         )
         for t in updated_tickets
     ]

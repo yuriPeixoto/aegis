@@ -11,6 +11,7 @@ from app.models.source import Source
 from app.models.tag import Tag, ticket_tags
 from app.models.ticket import Ticket
 from app.models.ticket_attachment import TicketAttachment
+from app.models.ticket_checklist_item import TicketChecklistItem
 from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.models.user import User
@@ -29,6 +30,7 @@ __all__ = [
     "ticket_tags",
     "Ticket",
     "TicketAttachment",
+    "TicketChecklistItem",
     "SavedView",
     "TicketEscalation",
     "TicketEvent",

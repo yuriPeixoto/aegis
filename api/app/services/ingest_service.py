@@ -13,6 +13,7 @@ from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
 from app.services.attachment_service import AttachmentService
+from app.services.checklist_service import ChecklistService
 from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
 
@@ -108,6 +109,12 @@ class IngestService:
                     len(data.attachments),
                     f" ({failed} failed — check warnings above)" if failed else "",
                 )
+
+            if data.checklist_items:
+                await ChecklistService(self._db).create_items_bulk(
+                    ticket.id, data.checklist_items
+                )
+                await self._db.commit()
 
             await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
             return ticket, True
