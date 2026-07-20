@@ -40,12 +40,25 @@ CurrentSource = Annotated[Source, Depends(get_current_source)]
 # ── Dashboard (user) auth ─────────────────────────────────────────────────────
 
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login", auto_error=False)
+_user_api_key_header = APIKeyHeader(name="X-Aegis-Key", auto_error=False)
 
 
 async def get_current_user(
     db: DbSession,
     token: Annotated[str | None, Depends(_oauth2_scheme)] = None,
+    api_key: Annotated[str | None, Security(_user_api_key_header)] = None,
 ) -> User:
+    # Personal API key (long-lived, for integrations like the MCP server) takes
+    # precedence when present — it never expires until rotated/revoked.
+    if api_key:
+        user = await UserService(db).get_by_api_key(api_key)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or inactive API key",
+            )
+        return user
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

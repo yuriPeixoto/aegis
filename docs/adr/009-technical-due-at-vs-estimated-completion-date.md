@@ -32,13 +32,13 @@ Os dois campos recebem o **mesmo valor**, ao mesmo tempo, mas com papéis difere
 - **`technical_due_at`** — campo "motor". É o que `SupportTicket::scopeOverdue()`, `isOverdue()` e `slaPercentUsed()` consultam pra decidir se o chamado está atrasado e calcular a barra de progresso do SLA. Calculado em horas úteis via `BusinessHoursService`.
 - **`estimated_completion_date`** — campo "vitrine". É o que aparece pro cliente final (ex: notificação "tem previsão de conclusão em dd/mm"). Voltado pra comunicação, não entra em nenhum cálculo.
 
-Instâncias com esse perfil: **Carvalima**, **5S**.
+Instâncias com esse perfil: **Carvalima**, **5S**, **JSP** (upgrade em 2026-07-07 — ver adendo no fim deste documento).
 
 ### Perfil "frigonorte" (schema enxuto)
 
 Não tem `technical_due_at` nem `BusinessHoursService`. `scopeOverdue()`/`isOverdue()`/`slaPercentUsed()` usam só `slaDeadline()` — uma fórmula pura (`created_at + horas de SLA da prioridade`, via `TicketPriority::slaHours()`), sem depender de nenhuma coluna de deadline persistida. O único campo de prazo que existe é `estimated_completion_date`, e ele é puramente informativo — não alimenta o motor de atraso.
 
-Instâncias com esse perfil: **frigonorte**, **sorpan**, **JSP**.
+Instâncias com esse perfil: **frigonorte**, **sorpan**.
 
 ## Decision
 
@@ -54,3 +54,9 @@ Isso não é uma limitação a ser corrigida — é intencional. Adicionar `tech
 - **Positivo:** cada instância GF mantém seu próprio nível de sofisticação de SLA sem forçar um schema comum. A integração Aegis se adapta ao que já existe, em vez de exigir migração de schema como pré-requisito de onboarding.
 - **Negativo:** clientes do perfil frigonorte (incluindo JSP) têm um SLA "mais fraco" — o prazo que o atendente define no Aegis não afeta se o chamado aparece como atrasado na listagem do GF, só o que é mostrado ao cliente. Se um cliente desse perfil pedir SLA por horas úteis de verdade, é preciso planejar a adição de `technical_due_at`/`BusinessHoursService` como projeto separado, não incluir isso "de graça" numa integração pontual do Aegis.
 - **Se questionarem:** comunicar que é decisão deliberada (este ADR), não bug. Se o cliente quiser upgrade de perfil, tratar como novo escopo.
+
+## Adendo — 2026-07-07: JSP migrou de "frigonorte" para "Carvalima"
+
+Ao testar o onboarding do Aegis no JSP (perfil frigonorte original), o cliente considerou o módulo de chamados do JSP defasado demais em relação ao 5S e pediu paridade total, incluindo o motor de SLA completo — não só a integração Aegis. Decisão consciente de assumir o custo do upgrade de perfil (novo schema: `modulo`, `technical_estimated_hours`, `technical_due_at`, `estimated_by`, `estimated_at` + status `aguardando_validacao_cliente`; nova classe `BusinessHoursService`) em vez de manter o JSP no perfil enxuto.
+
+Isso não invalida a decisão original deste ADR (perfis diferentes continuam sendo uma opção legítima) — só documenta que, neste caso específico, o cliente preferiu pagar o custo do upgrade a conviver com a limitação. Frigonorte e sorpan continuam no perfil enxuto até que apareça pedido equivalente.

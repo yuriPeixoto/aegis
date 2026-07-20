@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import hash_password, verify_password
+from app.core.security import generate_api_key, hash_api_key, hash_password, verify_api_key, verify_password
 from app.models.user import User
 
 
@@ -105,6 +105,35 @@ class UserService:
         if user is None or not verify_password(password, user.password_hash):
             return None
         return user
+
+    async def generate_api_key(self, user_id: int) -> str | None:
+        """Generate (or rotate) a personal API key. Returns the plaintext key once."""
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+        plain_key = generate_api_key()
+        user.api_key_hash = hash_api_key(plain_key)
+        await self._db.commit()
+        return plain_key
+
+    async def revoke_api_key(self, user_id: int) -> User | None:
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+        user.api_key_hash = None
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def get_by_api_key(self, plain_key: str) -> User | None:
+        """Validate a personal API key and return the active user, or None."""
+        result = await self._db.execute(
+            select(User).where(User.is_active.is_(True), User.api_key_hash.is_not(None))
+        )
+        for user in result.scalars().all():
+            if verify_api_key(plain_key, user.api_key_hash):
+                return user
+        return None
 
     async def get_by_id(self, user_id: int) -> User | None:
         result = await self._db.execute(
