@@ -10,7 +10,7 @@ from app.core.auth import CurrentUser
 from app.core.config import settings
 from app.core.dependencies import DbSession
 from app.core.security import create_access_token
-from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
+from app.schemas.auth import ApiKeyResponse, LoginRequest, TokenResponse, UserResponse
 from app.services.user_service import UserService
 
 _AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -92,6 +92,27 @@ async def change_password(
             detail="Password must be at least 8 characters",
         )
     user = await UserService(db).change_password(current_user.id, data.new_password)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return UserResponse.model_validate(user)
+
+
+@router.post("/api-key", response_model=ApiKeyResponse)
+async def generate_api_key(db: DbSession, current_user: CurrentUser) -> ApiKeyResponse:
+    """Generate (or rotate) a personal API key for integrations (MCP, scripts).
+
+    The plaintext key is shown once — only its hash is stored. Rotating
+    invalidates any previously issued key for this user.
+    """
+    key = await UserService(db).generate_api_key(current_user.id)
+    if key is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return ApiKeyResponse(api_key=key)
+
+
+@router.delete("/api-key", response_model=UserResponse)
+async def revoke_api_key(db: DbSession, current_user: CurrentUser) -> UserResponse:
+    user = await UserService(db).revoke_api_key(current_user.id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponse.model_validate(user)

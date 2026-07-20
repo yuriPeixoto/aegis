@@ -12,15 +12,22 @@ from mcp.server.stdio import stdio_server
 from mcp import types
 
 BASE_URL = os.environ.get("AEGIS_BASE_URL", "http://localhost:8000").rstrip("/")
-TOKEN: str | None = None  # preenchido no startup
+API_KEY: str | None = os.environ.get("AEGIS_API_KEY")  # preferido: chave pessoal, não expira
+TOKEN: str | None = None  # fallback (AEGIS_TOKEN ou login), preenchido no startup
 
 
 # ---------------------------------------------------------------------------
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
+def _auth_header() -> dict[str, str]:
+    if API_KEY:
+        return {"X-Aegis-Key": API_KEY}
+    return {"Authorization": f"Bearer {TOKEN}"}
+
+
 def _headers() -> dict[str, str]:
-    return {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+    return {**_auth_header(), "Content-Type": "application/json"}
 
 
 async def _get(path: str, params: dict | None = None) -> Any:
@@ -45,8 +52,13 @@ async def _patch(path: str, body: dict) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Auth: token from env ou login com credenciais
+# Auth: AEGIS_API_KEY (recomendado) > AEGIS_TOKEN (JWT, expira) > login com senha
 # ---------------------------------------------------------------------------
+#
+# AEGIS_API_KEY é o caminho recomendado: gere em POST /v1/auth/api-key (ou pela
+# UI, se disponível) e nunca expira até ser rotacionada/revogada. Não requer
+# guardar a senha da conta em lugar nenhum. AEGIS_TOKEN e AEGIS_EMAIL+
+# AEGIS_PASSWORD seguem funcionando como fallback para compatibilidade.
 
 async def _resolve_token() -> str:
     env_token = os.environ.get("AEGIS_TOKEN")
@@ -57,7 +69,8 @@ async def _resolve_token() -> str:
     password = os.environ.get("AEGIS_PASSWORD")
     if not email or not password:
         raise RuntimeError(
-            "Configure AEGIS_TOKEN ou (AEGIS_EMAIL + AEGIS_PASSWORD) nas variáveis de ambiente."
+            "Configure AEGIS_API_KEY (recomendado), AEGIS_TOKEN, ou "
+            "(AEGIS_EMAIL + AEGIS_PASSWORD) nas variáveis de ambiente."
         )
 
     async with httpx.AsyncClient(timeout=15) as client:
@@ -359,7 +372,7 @@ async def _dispatch(name: str, args: dict) -> str:
         async with _httpx.AsyncClient(timeout=30) as client:
             r = await client.post(
                 f"{BASE_URL}/v1/tickets/internal",
-                headers={"Authorization": f"Bearer {TOKEN}"},
+                headers=_auth_header(),
                 data=form,
             )
             r.raise_for_status()
@@ -404,7 +417,8 @@ async def _dispatch(name: str, args: dict) -> str:
 
 async def main() -> None:
     global TOKEN
-    TOKEN = await _resolve_token()
+    if not API_KEY:
+        TOKEN = await _resolve_token()
 
     async with stdio_server() as (read_stream, write_stream):
         await server.run(

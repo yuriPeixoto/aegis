@@ -37,6 +37,10 @@ class UserCreateRequest(BaseModel):
     role: str = "agent"
 
 
+class ApiKeyResponse(BaseModel):
+    api_key: str
+
+
 class UserUpdateRequest(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
