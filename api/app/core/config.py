@@ -10,8 +10,8 @@ _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 class Settings(BaseSettings):
     # Application
     app_name: str = "Aegis"
-    app_version: str = "1.2.0"
-    build_date: str = "2026-07-06"
+    app_version: str = "1.2.1"
+    build_date: str = "2026-07-20"
     github_url: str = "https://github.com/yuriPeixoto/aegis"
     debug: bool = False
 
@@ -25,7 +25,12 @@ class Settings(BaseSettings):
     # JWT
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 480  # 8 hours
+    # Was 480 (8h) — a login at 08:30 expired at 16:30, right in the middle of
+    # the 13:00-17:30 work block, causing an unexplained mid-shift logout.
+    # 720 (12h) comfortably covers a full 08:30-17:30 day (9h span incl. lunch)
+    # plus slack for early logins/late work, without introducing sliding-session
+    # refresh logic in this hotfix.
+    access_token_expire_minutes: int = 720  # 12 hours
 
     model_config = {
         "env_prefix": "AEGIS_",

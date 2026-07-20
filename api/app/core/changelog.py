@@ -10,9 +10,19 @@ Formato obrigatório:
 
 O v1.0.0 (lançamento inicial) não entra aqui — está documentado no CHANGELOG.md do repo.
 """
+
 from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
+    {
+        "version": "1.2.1",
+        "date": "2026-07-20",
+        "highlights": [
+            "Correção: Histórico de Eventos exibia base64 completo em chamados criados com anexos",
+            'Correção: status "em_atendimento" do cliente no GF não sobrescreve mais o do Aegis',
+            "Correção: logout automático no meio do expediente — sessão expirava em 8h, agora 12h",
+        ],
+    },
     {
         "version": "1.2.0",
         "date": "2026-07-06",
