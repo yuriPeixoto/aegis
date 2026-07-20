@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -18,8 +19,18 @@ from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
+#
+# NOTE: "em_atendimento" is deliberately NOT mapped here. Per
+# docs/gf-ticket-client-refactor.md §3.4, the GF client portal still lets the
+# client themselves flip a ticket to "em_atendimento" (known issue, pending a
+# GF-side fix that removes that control from the client). Until that lands,
+# Aegis must not treat an inbound "em_atendimento" event as authoritative for
+# starting work — the transition into in_progress is an Aegis-agent decision,
+# made explicitly via the dashboard (PATCH /{ticket_id}/status), not something
+# a client action on the source system should trigger. The event is still
+# recorded in the ticket's history for visibility; it just doesn't move the
+# actual status.
 _GF_TO_AEGIS: dict[str, str] = {
-    "em_atendimento": "in_progress",
     "aguardando_cliente": "pending_closure",
     "aguardando_validacao_cliente": "pending_closure",
     "resolvido": "resolved",
@@ -28,6 +39,19 @@ _GF_TO_AEGIS: dict[str, str] = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+def _cleanse_attachments_for_event(payload: dict | None) -> dict | None:
+    """Strip base64 blobs from attachment payloads before storing in ticket_events —
+    keeps a size hint but drops the `data` field, which otherwise buries the
+    Histórico de Eventos sidebar under a wall of base64."""
+    if not payload or "attachments" not in payload:
+        return payload
+    cleansed = copy.deepcopy(payload)
+    for att in cleansed["attachments"]:
+        if "data" in att:
+            att["data"] = f"[base64 removed, length: {len(att['data'])}]"
+    return cleansed
 
 
 class IngestService:
@@ -74,7 +98,7 @@ class IngestService:
                 TicketEvent(
                     ticket_id=ticket.id,
                     event_type="created",
-                    payload=data.model_dump(mode="json"),
+                    payload=_cleanse_attachments_for_event(data.model_dump(mode="json")),
                     occurred_at=data.source_created_at or datetime.now(UTC),
                 )
             )
@@ -111,9 +135,7 @@ class IngestService:
                 )
 
             if data.checklist_items:
-                await ChecklistService(self._db).create_items_bulk(
-                    ticket.id, data.checklist_items
-                )
+                await ChecklistService(self._db).create_items_bulk(ticket.id, data.checklist_items)
                 await self._db.commit()
 
             await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
@@ -139,7 +161,7 @@ class IngestService:
             TicketEvent(
                 ticket_id=ticket.id,
                 event_type="synced",
-                payload=data.model_dump(mode="json"),
+                payload=_cleanse_attachments_for_event(data.model_dump(mode="json")),
                 occurred_at=data.source_updated_at or datetime.now(UTC),
             )
         )
@@ -173,16 +195,7 @@ class IngestService:
             await self._db.flush()
 
         # Cleanse payload for storage in events table (remove huge base64 strings)
-        cleansed_payload = None
-        if data.payload:
-            import copy
-
-            cleansed_payload = copy.deepcopy(data.payload)
-            if "attachments" in cleansed_payload:
-                for att in cleansed_payload["attachments"]:
-                    if "data" in att:
-                        # Keep a hint of size but remove the blob
-                        att["data"] = f"[base64 removed, length: {len(att['data'])}]"
+        cleansed_payload = _cleanse_attachments_for_event(data.payload)
 
         event = TicketEvent(
             ticket_id=ticket.id,

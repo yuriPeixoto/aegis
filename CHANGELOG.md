@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] — 2026-07-20
+
+### Fixed
+- **Histórico de Eventos com base64 gigante** — chamados que já nascem com anexos (via `POST /v1/ingest/tickets`) gravavam o payload de criação/sincronização com o base64 completo dos anexos no evento; a limpeza que já existia para eventos avulsos (`record_event`) não cobria esses dois caminhos. Extraída pra um helper compartilhado (`_cleanse_attachments_for_event`), agora aplicada nos três pontos — o evento passa a exibir só `filename`/`size_bytes`/`content_type`.
+- **Status "em_atendimento" do cliente sobrescrevia o status do Aegis** — evento `status_changed` vindo do GF aplicava `em_atendimento → in_progress` automaticamente no ticket do Aegis, mesmo quando a mudança partiu do próprio cliente no portal do GF (issue conhecida, ver `docs/gf-ticket-client-refactor.md` §3.4 — correção definitiva é do lado do GF, ainda pendente). Removido esse mapeamento de `_GF_TO_AEGIS`: o evento continua registrado na timeline pra visibilidade, mas iniciar o atendimento (`in_progress`) volta a ser decisão exclusiva do agente via dashboard.
+- **Logout automático no meio do expediente** — token JWT expirava em 8h a partir do login; um login às 08:30 expirava às 16:30, no meio do bloco de trabalho da tarde (13:00–17:30). `access_token_expire_minutes` ajustado de 480 pra 720 (12h).
+
 ## [1.2.0] — 2026-07-06
 
 ### Added
