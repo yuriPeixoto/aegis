@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] — 2026-07-22
+
+### Added
+- **Markdown em mensagens, notas internas e descrição de tickets** — negrito, itálico, listas, links (abrem em nova aba) e blocos de código, renderizados via `react-markdown` + `remark-gfm`. Quebra de linha simples (Enter) preservada com `remark-breaks`, já que os campos são chat-style. `@menção` continua com destaque próprio (âmbar), agora via nó mdast dedicado em vez de reaproveitar negrito.
+- **Toggle Escrever / Pré-visualizar** — no campo de resposta do ticket (público/nota interna) e na descrição do chamado interno, no padrão GitHub.
+- **Campo de resposta mais alto** — de `rows={3}` (~72px) para `min-h-[140px]`.
+
+Ticket Aegis #901 (`AEGIS-1784032873`).
+
 ## [1.2.1] — 2026-07-20
 
 ### Fixed

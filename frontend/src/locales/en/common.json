@@ -38,6 +38,10 @@
     "roadmap": "Roadmap",
     "changelog": "What's new"
   },
+  "whatsNew": {
+    "title": "What's new",
+    "dismiss": "Got it"
+  },
   "common": {
     "clear": "Clear",
     "processing": "Processing",
@@ -137,6 +141,9 @@
     "loading": "Loading...",
     "cancel": "Cancel",
     "send": "Send",
+    "markdownWrite": "Write",
+    "markdownPreview": "Preview",
+    "markdownEmptyPreview": "Nothing to preview yet.",
     "queue": {
       "mine": "My queue",
       "unassigned": "Unassigned",
@@ -157,8 +164,8 @@
       "internalNote": "Internal note",
       "replyPlaceholder": "Type a reply to the client...",
       "internalNotePlaceholder": "Note visible only to the team... use @ to mention someone",
-      "replyHint": "Ctrl+Enter to send",
-      "internalNoteHint": "Visible only to the team — never sent to the client",
+      "replyHint": "Ctrl+Enter to send · Markdown supported (bold, italic, lists, links, code)",
+      "internalNoteHint": "Visible only to the team — never sent to the client · Markdown supported",
       "processing": "Processing",
       "send": "Send",
       "eventHistory": "Event History",
@@ -231,6 +238,7 @@
       "priority": "Priority",
       "description": "Description",
       "descriptionPlaceholder": "Explain in detail what happened or what could be improved...",
+      "descriptionMarkdownHint": "Supports Markdown: **bold**, *italic*, lists, links and `code`.",
       "attachFiles": "Attach files",
       "client": "Client",
       "clientPlaceholder": "— Aegis internal (default) —",

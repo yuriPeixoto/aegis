@@ -6,6 +6,7 @@ import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { useSources } from '../../hooks/useSources'
 import { useMe } from '../../hooks/useAuth'
 import { FormSelect } from '../common/FormSelect'
+import { MarkdownEditor } from '../common/MarkdownEditor'
 
 interface InternalTicketModalProps {
   isOpen: boolean
@@ -27,6 +28,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
     assign_to_me: false,
   })
   const [files, setFiles] = useState<File[]>([])
+  const [descriptionMode, setDescriptionMode] = useState<'write' | 'preview'>('write')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen, ignoreInputs: false })
@@ -45,7 +47,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.subject.trim()) return
+    if (!form.subject.trim() || !form.description.trim()) return
 
     mutate({
       ...form,
@@ -60,6 +62,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
         onClose()
         setForm({ subject: '', description: '', type: 'improvement', priority: 'medium', source_id: null, assign_to_me: false })
         setFiles([])
+        setDescriptionMode('write')
       }
     })
   }
@@ -166,14 +169,19 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               {t('inbox.internalTicket.description')}
             </label>
-            <textarea
-              required
-              rows={4}
+            <MarkdownEditor
               value={form.description}
               onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              className="w-full bg-slate-800/50 border border-brand-border rounded-lg px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple/60 transition-all resize-none"
+              mode={descriptionMode}
+              setMode={setDescriptionMode}
               placeholder={t('inbox.internalTicket.descriptionPlaceholder')}
+              minHeightClassName="min-h-[110px]"
+              surfaceClassName="bg-slate-800/50 border border-brand-border focus-within:ring-2 focus-within:ring-brand-purple/40 focus-within:border-brand-purple/60"
+              writeLabel={t('inbox.markdownWrite')}
+              previewLabel={t('inbox.markdownPreview')}
+              emptyPreviewLabel={t('inbox.markdownEmptyPreview')}
             />
+            <p className="text-[10px] text-slate-600">{t('inbox.internalTicket.descriptionMarkdownHint')}</p>
           </div>
 
           {/* Attachments */}
