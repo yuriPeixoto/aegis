@@ -10,7 +10,7 @@ _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 class Settings(BaseSettings):
     # Application
     app_name: str = "Aegis"
-    app_version: str = "1.3.0"
+    app_version: str = "1.3.1"
     build_date: str = "2026-07-22"
     github_url: str = "https://github.com/yuriPeixoto/aegis"
     debug: bool = False

@@ -15,6 +15,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.3.1",
+        "date": "2026-07-22",
+        "highlights": [
+            "Correção: versão no rodapé da sidebar estava travada em v1.0.0 — agora busca dinamicamente do /v1/about",
+            "Cor da versão no rodapé trocada de cinza pra verde (mesma da página Sobre)",
+        ],
+    },
+    {
         "version": "1.3.0",
         "date": "2026-07-22",
         "highlights": [
