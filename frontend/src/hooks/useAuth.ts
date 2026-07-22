@@ -11,6 +11,7 @@ export interface User {
   is_senior: boolean
   must_change_password: boolean
   avatar: string | null
+  last_seen_version: string | null
   created_at: string
 }
 
@@ -64,6 +65,19 @@ export function useUpdateProfile() {
       const { data } = await api.patch<User>('/auth/me', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+  })
+}
+
+export function useMarkChangelogSeen() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (version: string) => {
+      const { data } = await api.post<User>('/auth/me/changelog-seen', { version })
       return data
     },
     onSuccess: () => {

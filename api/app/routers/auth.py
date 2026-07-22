@@ -10,7 +10,7 @@ from app.core.auth import CurrentUser
 from app.core.config import settings
 from app.core.dependencies import DbSession
 from app.core.security import create_access_token
-from app.schemas.auth import ApiKeyResponse, LoginRequest, TokenResponse, UserResponse
+from app.schemas.auth import ApiKeyResponse, ChangelogSeenRequest, LoginRequest, TokenResponse, UserResponse
 from app.services.user_service import UserService
 
 _AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -73,6 +73,16 @@ async def update_my_profile(
         email=email,
         avatar_filename=avatar_filename,
     )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return UserResponse.model_validate(user)
+
+
+@router.post("/me/changelog-seen", response_model=UserResponse)
+async def mark_changelog_seen(
+    data: ChangelogSeenRequest, db: DbSession, current_user: CurrentUser
+) -> UserResponse:
+    user = await UserService(db).mark_changelog_seen(current_user.id, data.version)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return UserResponse.model_validate(user)
