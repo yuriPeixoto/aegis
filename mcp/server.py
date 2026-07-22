@@ -239,6 +239,7 @@ async def _list_tools() -> list[types.Tool]:
                             "Gestão de Frotas",
                             "Checklist Suite",
                             "Jornada Cliente",
+                            "Jornada Acme",
                             "Telemetria",
                             "Aegis",
                             "Painel de Motoristas",
