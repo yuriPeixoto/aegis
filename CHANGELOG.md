@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] — 2026-07-22
+
+### Fixed
+- **Versão no rodapé da sidebar travada em v1.0.0** — texto hardcoded em `Sidebar.tsx`; agora busca dinamicamente via `useAbout()` (`GET /v1/about`). Cor trocada de cinza (`text-slate-600`) pra verde (`text-brand-neon`), mesma cor usada na página Sobre.
+
+Achado por um colega. Sem ticket Aegis (mini hotfix).
+
 ## [1.3.0] — 2026-07-22
 
 ### Added

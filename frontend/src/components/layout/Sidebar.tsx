@@ -3,6 +3,7 @@ import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell, Info } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
+import { useAbout } from '../../hooks/useAbout'
 import { useTickets } from '../../hooks/useTickets'
 import { useUnreadCount } from '../../hooks/useNotifications'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
@@ -35,6 +36,7 @@ export function Sidebar() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { data: user } = useMe()
+  const { data: about } = useAbout()
   const { data: views = [] } = useSavedViews()
   const deleteView = useDeleteSavedView()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -163,8 +165,8 @@ export function Sidebar() {
       </nav>
 
       <div className="px-4 py-3 border-t border-brand-border">
-        <NavLink to="/sobre" className="text-[10px] text-slate-600 font-mono hover:text-slate-400 transition-colors">
-          v1.0.0
+        <NavLink to="/sobre" className="text-[10px] text-brand-neon font-mono hover:text-brand-neon/70 transition-colors">
+          {about ? `v${about.version}` : '…'}
         </NavLink>
       </div>
 
