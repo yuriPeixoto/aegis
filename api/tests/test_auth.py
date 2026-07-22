@@ -68,3 +68,40 @@ async def test_me_authenticated(client: AsyncClient, test_user: dict) -> None:
 async def test_me_unauthenticated(client: AsyncClient) -> None:
     response = await client.get("/v1/auth/me")
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_new_user_defaults_last_seen_version_to_current(
+    client: AsyncClient, test_user: dict
+) -> None:
+    login = await client.post(
+        "/v1/auth/login",
+        json={"email": test_user["email"], "password": test_user["password"]},
+    )
+    token = login.json()["access_token"]
+    response = await client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.json()["last_seen_version"] is not None
+
+
+@pytest.mark.asyncio
+async def test_mark_changelog_seen(client: AsyncClient, test_user: dict) -> None:
+    login = await client.post(
+        "/v1/auth/login",
+        json={"email": test_user["email"], "password": test_user["password"]},
+    )
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    response = await client.post(
+        "/v1/auth/me/changelog-seen", json={"version": "9.9.9"}, headers=headers
+    )
+    assert response.status_code == 200
+    assert response.json()["last_seen_version"] == "9.9.9"
+
+    me = await client.get("/v1/auth/me", headers=headers)
+    assert me.json()["last_seen_version"] == "9.9.9"
+
+
+@pytest.mark.asyncio
+async def test_mark_changelog_seen_unauthenticated(client: AsyncClient) -> None:
+    response = await client.post("/v1/auth/me/changelog-seen", json={"version": "9.9.9"})
+    assert response.status_code == 401

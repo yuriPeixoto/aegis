@@ -2,6 +2,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
+import { WhatsNewModal } from './WhatsNewModal'
 import { useMe } from '../../hooks/useAuth'
 import { useInboundNotifications } from '../../hooks/useInboundNotifications'
 import type { TFunction } from 'i18next'
@@ -87,6 +88,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <WhatsNewModal />
     </div>
   )
 }

@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
     is_senior: bool
     must_change_password: bool
     avatar: str | None = None
+    last_seen_version: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -39,6 +40,10 @@ class UserCreateRequest(BaseModel):
 
 class ApiKeyResponse(BaseModel):
     api_key: str
+
+
+class ChangelogSeenRequest(BaseModel):
+    version: str
 
 
 class UserUpdateRequest(BaseModel):

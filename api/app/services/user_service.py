@@ -28,6 +28,7 @@ class UserService:
             name=name,
             role=role,
             must_change_password=must_change_password,
+            last_seen_version=settings.app_version,
         )
         self._db.add(user)
         await self._db.commit()
@@ -83,6 +84,15 @@ class UserService:
                 old_path = Path(settings.upload_dir) / "avatars" / user.avatar
                 old_path.unlink(missing_ok=True)
             user.avatar = avatar_filename
+        await self._db.commit()
+        await self._db.refresh(user)
+        return user
+
+    async def mark_changelog_seen(self, user_id: int, version: str) -> User | None:
+        user = await self.get_by_id(user_id)
+        if user is None:
+            return None
+        user.last_seen_version = version
         await self._db.commit()
         await self._db.refresh(user)
         return user

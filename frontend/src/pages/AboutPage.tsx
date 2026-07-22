@@ -1,29 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Zap, Github, Calendar, Tag, ExternalLink, Sparkles } from 'lucide-react'
-import { api } from '../lib/axios'
-
-interface ChangelogEntry {
-  version: string
-  date: string
-  highlights: string[]
-}
-
-interface AboutInfo {
-  version: string
-  build_date: string
-  env: string
-  github_url: string
-  changelog: ChangelogEntry[]
-}
-
-function useAbout() {
-  return useQuery<AboutInfo>({
-    queryKey: ['about'],
-    queryFn: () => api.get<AboutInfo>('/about').then((r) => r.data),
-    staleTime: Infinity,
-  })
-}
+import { useAbout } from '../hooks/useAbout'
 
 export function AboutPage() {
   const { t } = useTranslation()
