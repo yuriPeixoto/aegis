@@ -30,6 +30,8 @@ import { AttachmentsPanel } from '../components/inbox/AttachmentsPanel'
 import { ChecklistPanel } from '../components/inbox/ChecklistPanel'
 import { MergeTicketModal } from '../components/inbox/MergeTicketModal'
 import TagSelector from '../components/inbox/TagSelector'
+import { Markdown } from '../components/common/Markdown'
+import { MarkdownEditor } from '../components/common/MarkdownEditor'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open:            ['in_progress', 'cancelled'],
@@ -313,6 +315,7 @@ export function TicketDetailPage() {
   const [replyBody, setReplyBody] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
   const [isInternal, setIsInternal] = useState(false)
+  const [replyMode, setReplyMode] = useState<'write' | 'preview'>('write')
   const [showMergeModal, setShowMergeModal] = useState(false)
   const [showDeploymentModal, setShowDeploymentModal] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
@@ -326,7 +329,8 @@ export function TicketDetailPage() {
   const replyRef = useRef<HTMLTextAreaElement>(null)
 
   useKeyboardShortcut('r', () => {
-    replyRef.current?.focus()
+    setReplyMode('write')
+    setTimeout(() => replyRef.current?.focus(), 0)
   }, { enabled: !!ticket })
 
   const markTicketRead = useMarkTicketRead()
@@ -474,13 +478,7 @@ export function TicketDetailPage() {
                             {t('inbox.detail.internalNote')}
                           </span>
                         </div>
-                        <span className="whitespace-pre-wrap break-words">
-                          {msg.body.split(/(@\S+)/g).map((part, i) =>
-                            part.startsWith('@')
-                              ? <span key={i} className="font-semibold text-amber-300">{part}</span>
-                              : part
-                          )}
-                        </span>
+                        <Markdown mentionClassName="font-semibold text-amber-300">{msg.body}</Markdown>
                         <MessageAttachments attachments={msg.attachments} />
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -497,13 +495,13 @@ export function TicketDetailPage() {
                     className={`flex flex-col gap-1 ${isOutbound ? 'items-end' : 'items-start'}`}
                   >
                     <div
-                      className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                      className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm leading-relaxed break-words ${
                         isOutbound
                           ? 'bg-brand-accent/20 border border-brand-accent/25 text-slate-100'
                           : 'bg-white/5 border border-white/10 text-slate-200'
                       }`}
                     >
-                      {msg.body}
+                      <Markdown mentionClassName="font-semibold text-brand-accent">{msg.body}</Markdown>
                       <MessageAttachments attachments={msg.attachments} />
                     </div>
                     <div className={`flex items-center gap-1.5 ${isOutbound ? 'flex-row-reverse' : ''}`}>
@@ -576,22 +574,29 @@ export function TicketDetailPage() {
               </div>
 
               <div className="flex gap-3 items-stretch">
-              <div className="relative flex-1">
-                <textarea
+              <div className="relative flex-1 flex flex-col">
+                <MarkdownEditor
                   ref={replyRef}
                   value={replyBody}
                   onChange={handleReplyChange}
                   onKeyDown={handleKeyDown}
+                  mode={replyMode}
+                  setMode={setReplyMode}
+                  onModeChange={(m) => { if (m === 'preview') setMentionQuery(null) }}
                   placeholder={isInternal ? t('inbox.detail.internalNotePlaceholder') : t('inbox.detail.replyPlaceholder')}
-                  rows={3}
-                  className={`h-full w-full rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none transition-colors ${
+                  minHeightClassName="min-h-[140px]"
+                  surfaceClassName={
                     isInternal
-                      ? 'bg-amber-950/30 border border-amber-700/40 focus:border-amber-600'
-                      : 'bg-slate-800 border border-slate-700 focus:border-brand-accent'
-                  }`}
+                      ? 'bg-amber-950/30 border border-amber-700/40 focus-within:border-amber-600'
+                      : 'bg-slate-800 border border-slate-700 focus-within:border-brand-accent'
+                  }
+                  mentionClassName={isInternal ? 'font-semibold text-amber-300' : 'font-semibold text-brand-accent'}
+                  writeLabel={t('inbox.markdownWrite')}
+                  previewLabel={t('inbox.markdownPreview')}
+                  emptyPreviewLabel={t('inbox.markdownEmptyPreview')}
                 />
                 {/* @mention dropdown */}
-                {mentionQuery !== null && filteredMentionUsers.length > 0 && (
+                {replyMode === 'write' && mentionQuery !== null && filteredMentionUsers.length > 0 && (
                   <div className="absolute bottom-full left-0 mb-1 w-48 bg-brand-surface border border-brand-border rounded-lg shadow-xl z-50 overflow-hidden">
                     {filteredMentionUsers.slice(0, 6).map((user) => (
                       <button
@@ -846,9 +851,9 @@ export function TicketDetailPage() {
                 <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
                   {t('inbox.detail.description')}
                 </p>
-                <p className="text-sm text-slate-300 leading-relaxed bg-white/5 border border-white/10 rounded-lg p-3">
-                  {ticket.description}
-                </p>
+                <div className="text-sm text-slate-300 leading-relaxed bg-white/5 border border-white/10 rounded-lg p-3">
+                  <Markdown>{ticket.description}</Markdown>
+                </div>
               </div>
             )}
           </div>

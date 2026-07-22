@@ -15,6 +15,15 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.3.0",
+        "date": "2026-07-22",
+        "highlights": [
+            "Suporte a Markdown em mensagens, notas internas e descrição de tickets — negrito, itálico, listas, links e blocos de código",
+            "Toggle Escrever / Pré-visualizar nos campos de texto",
+            "Campo de resposta do ticket ficou mais alto",
+        ],
+    },
+    {
         "version": "1.2.1",
         "date": "2026-07-20",
         "highlights": [
