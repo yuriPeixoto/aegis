@@ -83,6 +83,9 @@ Após salvar, reinicie o Claude Code. O servidor aparecerá como ferramenta disp
 | `add_note` | Adiciona nota interna a um ticket |
 | `update_status` | Altera o status do ticket |
 | `create_ticket` | Abre um ticket interno (bug, melhoria, sugestão) |
+| `list_tags` | Lista as tags cadastradas (nome, cor, descrição) |
+| `set_tag_color` | Cria ou atualiza a cor de uma tag (requer admin) |
+| `update_tags` | Substitui as tags de um ticket existente (por nome) |
 
 ## Exemplos de uso no Claude Code
 
