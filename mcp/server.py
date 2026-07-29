@@ -243,6 +243,7 @@ async def _list_tools() -> list[types.Tool]:
                             "Telemetria",
                             "Aegis",
                             "Painel de Motoristas",
+                            "Manutenção",
                         ],
                         "description": (
                             "Projeto ao qual a tarefa pertence — anexa a tag correspondente "
