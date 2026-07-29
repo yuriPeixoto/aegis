@@ -51,6 +51,13 @@ async def _patch(path: str, body: dict) -> Any:
         return r.json()
 
 
+async def _put(path: str, body: dict) -> Any:
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.put(f"{BASE_URL}/v1{path}", headers=_headers(), json=body)
+        r.raise_for_status()
+        return r.json()
+
+
 # ---------------------------------------------------------------------------
 # Auth: AEGIS_API_KEY (recomendado) > AEGIS_TOKEN (JWT, expira) > login com senha
 # ---------------------------------------------------------------------------
@@ -281,6 +288,31 @@ async def _list_tools() -> list[types.Tool]:
                 "additionalProperties": False,
             },
         ),
+        types.Tool(
+            name="update_tags",
+            description=(
+                "Substitui as tags de um ticket já existente. Recebe NOMES de tag "
+                "(os ids são resolvidos internamente). ATENÇÃO: substitui o conjunto "
+                "inteiro — tags que não estiverem na lista são removidas do ticket. "
+                "Passe uma lista vazia para remover todas."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                    "tags": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Nomes exatos das tags que o ticket deve ter ao final. "
+                            "Use list_tags para ver os nomes disponíveis."
+                        ),
+                    },
+                },
+                "required": ["ticket_id", "tags"],
+                "additionalProperties": False,
+            },
+        ),
     ]
 
 
@@ -409,6 +441,26 @@ async def _dispatch(name: str, args: dict) -> str:
         body["name"] = args["name"]
         tag = await _post("/tags", body)
         return f"Tag '{tag['name']}' criada: cor = {tag['color']}."
+
+    if name == "update_tags":
+        ticket_id = int(args["ticket_id"])
+        desejadas = args["tags"]
+
+        tags = await _get("/tags")
+        por_nome = {t["name"]: t for t in tags}
+
+        desconhecidas = [n for n in desejadas if n not in por_nome]
+        if desconhecidas:
+            disponiveis = ", ".join(sorted(por_nome)) or "(nenhuma)"
+            return (
+                f"Tag(s) não encontrada(s): {', '.join(desconhecidas)}.\n"
+                f"Disponíveis: {disponiveis}"
+            )
+
+        tag_ids = [por_nome[n]["id"] for n in desejadas]
+        ticket = await _put(f"/tickets/{ticket_id}/tags", {"tag_ids": tag_ids})
+        aplicadas = ", ".join(t["name"] for t in ticket.get("tags", [])) or "—"
+        return f"Ticket #{ticket_id} atualizado. Tags: {aplicadas}"
 
     return f"Ferramenta desconhecida: {name}"
 
