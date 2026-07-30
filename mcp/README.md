@@ -86,6 +86,10 @@ Após salvar, reinicie o Claude Code. O servidor aparecerá como ferramenta disp
 | `list_tags` | Lista as tags cadastradas (nome, cor, descrição) |
 | `set_tag_color` | Cria ou atualiza a cor de uma tag (requer admin) |
 | `update_tags` | Substitui as tags de um ticket existente (por nome) |
+| `list_checklist` | Lista os itens da checklist de um ticket, com id e progresso |
+| `add_checklist_items` | Adiciona um ou mais itens à checklist, na ordem informada |
+| `update_checklist_item` | Marca/desmarca como concluído e/ou altera o texto de um item |
+| `delete_checklist_item` | Remove um item da checklist |
 
 ## Exemplos de uso no Claude Code
 
@@ -95,4 +99,6 @@ Após salvar, reinicie o Claude Code. O servidor aparecerá como ferramenta disp
 "Adiciona uma nota no ticket 15 dizendo que o problema foi reproduzido."
 "Fecha o ticket 23."
 "Abre um ticket de bug: login quebrado no Safari, prioridade alta."
+"Quebra o ticket 60 em subtarefas: modelagem, endpoints, tela, deploy."
+"Marca 'modelagem' como concluído no ticket 60."
 ```

@@ -58,6 +58,13 @@ async def _put(path: str, body: dict) -> Any:
         return r.json()
 
 
+async def _delete(path: str) -> None:
+    """DELETE responde 204 sem corpo — nada a desserializar."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.delete(f"{BASE_URL}/v1{path}", headers=_headers())
+        r.raise_for_status()
+
+
 # ---------------------------------------------------------------------------
 # Auth: AEGIS_API_KEY (recomendado) > AEGIS_TOKEN (JWT, expira) > login com senha
 # ---------------------------------------------------------------------------
@@ -112,6 +119,61 @@ def _fmt_message(m: dict) -> str:
     direction = "↑ Equipe" if m["direction"] == "outbound" else "↓ Cliente"
     internal = " [nota interna]" if m.get("is_internal") else ""
     return f"[{m['created_at'][:19]}] {direction} — {m['author_name']}{internal}\n{m['body']}"
+
+
+def _fmt_checklist(items: list[dict]) -> str:
+    if not items:
+        return "(sem itens)"
+    done = sum(1 for i in items if i.get("is_done"))
+    lines = [f"Progresso: {done}/{len(items)}"]
+    for i in items:
+        lines.append(f"  [{'x' if i.get('is_done') else ' '}] #{i['id']}  {i['text']}")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Checklist — leitura e resolução de item
+# ---------------------------------------------------------------------------
+#
+# Não existe GET dedicado: GET /v1/tickets/{id} já devolve checklist_items[]
+# (id, text, is_done, position) e checklist_progress.
+
+
+async def _fetch_checklist(ticket_id: int) -> list[dict]:
+    ticket = await _get(f"/tickets/{ticket_id}")
+    return sorted(ticket.get("checklist_items", []), key=lambda i: i["position"])
+
+
+def _resolve_checklist_item(items: list[dict], item_id: int | None, item_text: str | None) -> dict:
+    """Localiza um item por id ou por texto.
+
+    Casamento por texto: exato primeiro, substring como fallback. Ambiguidade nunca
+    é resolvida por chute — marcar o item errado é silencioso, e um erro que lista
+    os candidatos com id custa só uma mensagem a mais.
+    """
+    if item_id is None and not item_text:
+        raise ValueError("Informe item_id ou item_text.")
+
+    disponiveis = _fmt_checklist(items)
+
+    if item_id is not None:
+        match = next((i for i in items if i["id"] == item_id), None)
+        if match is None:
+            raise ValueError(f"Item #{item_id} não existe nesta checklist.\n{disponiveis}")
+        return match
+
+    alvo = item_text.strip().casefold()  # type: ignore[union-attr]
+    exatos = [i for i in items if i["text"].strip().casefold() == alvo]
+    candidatos = exatos or [i for i in items if alvo in i["text"].casefold()]
+
+    if not candidatos:
+        raise ValueError(f"Nenhum item casa com '{item_text}'.\n{disponiveis}")
+    if len(candidatos) > 1:
+        lista = "\n".join(f"  #{i['id']}  {i['text']}" for i in candidatos)
+        raise ValueError(
+            f"'{item_text}' casa com {len(candidatos)} itens — repita usando item_id:\n{lista}"
+        )
+    return candidatos[0]
 
 
 # ---------------------------------------------------------------------------
@@ -258,8 +320,105 @@ async def _list_tools() -> list[types.Tool]:
                             "Usado pelo weekly-report pra agrupar o relatório por projeto."
                         ),
                     },
+                    "checklist_items": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Subtarefas a criar já na abertura do ticket, na ordem informada. "
+                            "Use para quebrar um trabalho grande (onboarding de projeto novo, "
+                            "desenho de módulo) em itens marcáveis numa única chamada."
+                        ),
+                    },
                 },
                 "required": ["subject", "description"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="list_checklist",
+            description=(
+                "Lista os itens da checklist de progresso de um ticket, com o id de cada "
+                "item e o progresso (concluídos/total)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                },
+                "required": ["ticket_id"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="add_checklist_items",
+            description=(
+                "Adiciona um ou mais itens à checklist de um ticket, na ordem informada. "
+                "Os itens são acrescentados ao final da lista existente."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "description": "Textos dos itens, na ordem em que devem aparecer",
+                    },
+                },
+                "required": ["ticket_id", "items"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="update_checklist_item",
+            description=(
+                "Marca/desmarca um item da checklist como concluído e/ou altera o texto dele. "
+                "Identifique o item por item_id (preciso) ou por item_text (casa texto exato e, "
+                "se não achar, substring). Informe ao menos um de text/is_done."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                    "item_id": {
+                        "type": "integer",
+                        "description": "ID do item (use list_checklist para descobrir)",
+                    },
+                    "item_text": {
+                        "type": "string",
+                        "description": (
+                            "Alternativa ao item_id: texto do item. Se casar com mais de um, "
+                            "a chamada falha listando os candidatos — nenhum item é alterado."
+                        ),
+                    },
+                    "is_done": {
+                        "type": "boolean",
+                        "description": "true marca como concluído, false desmarca",
+                    },
+                    "text": {"type": "string", "description": "Novo texto do item"},
+                },
+                "required": ["ticket_id"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="delete_checklist_item",
+            description=(
+                "Remove um item da checklist de um ticket. Identifique por item_id ou "
+                "item_text (mesma regra de casamento do update_checklist_item)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                    "item_id": {"type": "integer", "description": "ID do item"},
+                    "item_text": {
+                        "type": "string",
+                        "description": "Alternativa ao item_id: texto do item",
+                    },
+                },
+                "required": ["ticket_id"],
                 "additionalProperties": False,
             },
         ),
@@ -366,6 +525,10 @@ async def _dispatch(name: str, args: dict) -> str:
         if ticket.get("description"):
             lines += ["=== DESCRIÇÃO ===", ticket["description"], ""]
 
+        checklist = sorted(ticket.get("checklist_items", []), key=lambda i: i["position"])
+        if checklist:
+            lines += ["=== CHECKLIST ===", _fmt_checklist(checklist), ""]
+
         recent_public = public_msgs[-msg_limit:] if len(public_msgs) > msg_limit else public_msgs
         if recent_public:
             lines.append(f"=== CONVERSA (últimas {len(recent_public)} mensagens) ===")
@@ -412,11 +575,84 @@ async def _dispatch(name: str, args: dict) -> str:
             r.raise_for_status()
             ticket = r.json()
         tags = ", ".join(tag["name"] for tag in ticket.get("tags", [])) or "—"
+        linhas = [
+            "Ticket criado com sucesso!",
+            f"ID: {ticket['id']}  |  Ref: {ticket['external_id']}",
+            f"Assunto: {ticket['subject']}",
+            f"Tags: {tags}",
+        ]
+
+        # POST /v1/tickets/internal não aceita checklist (é form-encoded, sem o campo);
+        # criar item a item aqui evita mudar a API só por isso.
+        textos = [t for t in args.get("checklist_items") or [] if t.strip()]
+        if textos:
+            for texto in textos:
+                await _post(f"/tickets/{ticket['id']}/checklist", {"text": texto})
+            items = await _fetch_checklist(ticket["id"])
+            linhas += ["", "=== CHECKLIST ===", _fmt_checklist(items)]
+
+        return "\n".join(linhas)
+
+    if name == "list_checklist":
+        ticket_id = int(args["ticket_id"])
+        items = await _fetch_checklist(ticket_id)
+        if not items:
+            return f"Ticket #{ticket_id} não tem checklist."
+        return f"Checklist do ticket #{ticket_id}:\n{_fmt_checklist(items)}"
+
+    if name == "add_checklist_items":
+        ticket_id = int(args["ticket_id"])
+        textos = [t for t in args["items"] if t.strip()]
+        if not textos:
+            return "Nenhum item informado."
+
+        # Sequencial de propósito: a API deriva `position` de max(position)+1 por
+        # request, então requests concorrentes embaralhariam a ordem.
+        for texto in textos:
+            await _post(f"/tickets/{ticket_id}/checklist", {"text": texto})
+
+        items = await _fetch_checklist(ticket_id)
+        plural = "itens adicionados" if len(textos) > 1 else "item adicionado"
+        return f"{len(textos)} {plural} ao ticket #{ticket_id}:\n{_fmt_checklist(items)}"
+
+    if name == "update_checklist_item":
+        ticket_id = int(args["ticket_id"])
+        novo_texto = args.get("text")
+        is_done = args.get("is_done")
+        if novo_texto is None and is_done is None:
+            return "Nada a alterar: informe text e/ou is_done."
+
+        items = await _fetch_checklist(ticket_id)
+        if not items:
+            return f"Ticket #{ticket_id} não tem checklist."
+
+        alvo = _resolve_checklist_item(items, args.get("item_id"), args.get("item_text"))
+
+        body: dict = {}
+        if novo_texto is not None:
+            body["text"] = novo_texto
+        if is_done is not None:
+            body["is_done"] = is_done
+        await _patch(f"/tickets/{ticket_id}/checklist/{alvo['id']}", body)
+
         return (
-            f"Ticket criado com sucesso!\n"
-            f"ID: {ticket['id']}  |  Ref: {ticket['external_id']}\n"
-            f"Assunto: {ticket['subject']}\n"
-            f"Tags: {tags}"
+            f"Item #{alvo['id']} atualizado no ticket #{ticket_id}.\n"
+            f"{_fmt_checklist(await _fetch_checklist(ticket_id))}"
+        )
+
+    if name == "delete_checklist_item":
+        ticket_id = int(args["ticket_id"])
+        items = await _fetch_checklist(ticket_id)
+        if not items:
+            return f"Ticket #{ticket_id} não tem checklist."
+
+        alvo = _resolve_checklist_item(items, args.get("item_id"), args.get("item_text"))
+        await _delete(f"/tickets/{ticket_id}/checklist/{alvo['id']}")
+
+        restantes = await _fetch_checklist(ticket_id)
+        return (
+            f"Item #{alvo['id']} ('{alvo['text']}') removido do ticket #{ticket_id}.\n"
+            f"{_fmt_checklist(restantes)}"
         )
 
     if name == "list_tags":
