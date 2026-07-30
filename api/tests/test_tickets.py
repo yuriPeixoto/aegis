@@ -50,6 +50,30 @@ async def ingested_ticket(client: AsyncClient, source_with_key: dict) -> dict:
 
 
 @pytest.mark.asyncio
+async def test_list_tickets_requires_auth(client: AsyncClient, ingested_ticket: dict) -> None:
+    """Regressão: as duas rotas de leitura já responderam 200 sem cabeçalho nenhum,
+    expondo assunto, descrição, cliente de origem e CSAT de todos os tickets."""
+    response = await client.get("/v1/tickets")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_ticket_requires_auth(client: AsyncClient, ingested_ticket: dict) -> None:
+    response = await client.get(f"/v1/tickets/{ingested_ticket['ticket_id']}")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_source_api_key_does_not_grant_ticket_read(
+    client: AsyncClient, ingested_ticket: dict
+) -> None:
+    """A chave de source autentica ingestão, não leitura de dashboard — o 401 aqui
+    é o que separa 'o GF pode enviar tickets' de 'o GF pode ler todos os tickets'."""
+    response = await client.get("/v1/tickets", headers={"X-Aegis-Key": ingested_ticket["api_key"]})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_list_tickets(admin_client: AsyncClient, ingested_ticket: dict) -> None:
     response = await admin_client.get("/v1/tickets")
     assert response.status_code == 200

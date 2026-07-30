@@ -86,6 +86,7 @@ def _detail(ticket) -> TicketDetailResponse:  # type: ignore[no-untyped-def]
 @router.get("", response_model=TicketListResponse)
 async def list_tickets(
     db: DbSession,
+    _: CurrentUser,
     source_id: int | None = Query(None),
     status: str | None = Query(None),
     priority: str | None = Query(None),
@@ -153,7 +154,7 @@ async def list_tickets(
 
 
 @router.get("/{ticket_id}", response_model=TicketDetailResponse)
-async def get_ticket(ticket_id: int, db: DbSession) -> TicketDetailResponse:
+async def get_ticket(ticket_id: int, db: DbSession, _: CurrentUser) -> TicketDetailResponse:
     ticket = await TicketService(db).get_ticket(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
