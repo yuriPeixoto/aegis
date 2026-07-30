@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] — 2026-07-30
+
+### Security
+- **Rotas de leitura de chamados exigiam autenticação nenhuma** — `GET /v1/tickets` e `GET /v1/tickets/{ticket_id}` respondiam 200 sem cabeçalho algum, de fora da rede, expondo cliente de origem, `external_id`, assunto, descrição completa, status, prioridade, responsável, CSAT e datas de agendamento de deploy. Era omissão pontual da dependência de auth nas duas assinaturas, não decisão de arquitetura: todas as rotas vizinhas (escrita, mensagens, notas, tags, usuários) já exigiam `CurrentUser`/`AdminUser`. Adicionada `CurrentUser` nas duas, com testes de regressão cobrindo 401 sem credencial e 401 com chave de *source* — chave de source autentica ingestão, nunca leitura de dashboard, senão a chave de um cliente leria os chamados de todos.
+
+  Nenhum consumidor quebra: o GF só faz `POST /v1/ingest/*` com chave de source, e frontend, MCP e weekly-report já mandavam JWT ou chave de usuário.
+
+Ticket Aegis #1038 (`AEGIS-1785339191`).
+
+### Added
+- **MCP — checklist de progresso** — novas tools `list_checklist`, `add_checklist_items` (aceita lista, cria na ordem informada), `update_checklist_item` e `delete_checklist_item`; `get_ticket` passou a exibir a seção da checklist (o payload já trazia o campo, o MCP descartava); `create_ticket` aceita `checklist_items` opcional, criando o ticket já quebrado em subtarefas numa única chamada. Itens são identificados por `item_id` ou por texto (exato, depois substring) — texto ambíguo falha listando os candidatos, sem alterar nada. Nenhuma mudança de API foi necessária: os endpoints `POST/PATCH/DELETE /v1/tickets/{id}/checklist` já existiam desde a v1.1.0 e aceitam `X-Aegis-Key`.
+
+  Vale só para quem roda o MCP (`mcp/` não faz parte do que sobe pro servidor) — entrou nesta versão por carona no release da correção acima.
+
+Ticket Aegis #1049 (`AEGIS-1785438562`).
+
 ## [1.3.1] — 2026-07-22
 
 ### Fixed

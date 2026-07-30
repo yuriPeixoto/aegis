@@ -15,10 +15,21 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.3.2",
+        "date": "2026-07-30",
+        # Descrito sem detalhar a falha: este modal é lido dentro do próprio sistema
+        # que estava exposto. O detalhe técnico fica no CHANGELOG.md e no ticket #1038.
+        "highlights": [
+            "Segurança: consulta de chamados pela API agora exige credencial em todas as rotas",
+            "MCP: checklist de chamados no Claude Code — criar, editar, marcar e remover itens",
+        ],
+    },
+    {
         "version": "1.3.1",
         "date": "2026-07-22",
         "highlights": [
-            "Correção: versão no rodapé da sidebar estava travada em v1.0.0 — agora busca dinamicamente do /v1/about",
+            "Correção: versão no rodapé da sidebar estava travada em v1.0.0 — "
+            "agora busca dinamicamente do /v1/about",
             "Cor da versão no rodapé trocada de cinza pra verde (mesma da página Sobre)",
         ],
     },
@@ -26,7 +37,8 @@ APP_CHANGELOG: list[dict] = [
         "version": "1.3.0",
         "date": "2026-07-22",
         "highlights": [
-            "Suporte a Markdown em mensagens, notas internas e descrição de tickets — negrito, itálico, listas, links e blocos de código",
+            "Suporte a Markdown em mensagens, notas internas e descrição de tickets — "
+            "negrito, itálico, listas, links e blocos de código",
             "Toggle Escrever / Pré-visualizar nos campos de texto",
             "Campo de resposta do ticket ficou mais alto",
         ],
@@ -62,7 +74,8 @@ APP_CHANGELOG: list[dict] = [
         "version": "1.0.3",
         "date": "2026-06-29",
         "highlights": [
-            "Correção: download de anexos .png em mensagens baixava HTML em vez da imagem (URL /attachments/ sem prefixo /v1/)",
+            "Correção: download de anexos .png em mensagens baixava HTML em vez da imagem "
+            "(URL /attachments/ sem prefixo /v1/)",
         ],
     },
     {
