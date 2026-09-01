@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, NavLink, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell, Info } from 'lucide-react'
+import { Inbox, LayoutDashboard, Settings, Zap, MessageSquarePlus, Keyboard, Trash2, CalendarDays, Bell, Info, GraduationCap } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 import { useAbout } from '../../hooks/useAbout'
 import { useTickets } from '../../hooks/useTickets'
@@ -89,6 +89,11 @@ export function Sidebar() {
         <NavLink to="/agenda" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
           <CalendarDays className="w-4 h-4 shrink-0" />
           {t('nav.calendar')}
+        </NavLink>
+
+        <NavLink to="/treinamentos" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+          <GraduationCap className="w-4 h-4 shrink-0" />
+          {t('nav.trainingRecords')}
         </NavLink>
 
         <NavLink to="/settings" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>

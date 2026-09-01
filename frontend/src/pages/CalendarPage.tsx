@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { isAxiosError } from 'axios'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, GraduationCap } from 'lucide-react'
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
 import { useSources } from '../hooks/useSources'
@@ -100,8 +102,9 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
         await updateMut.mutateAsync(payload)
       }
       onClose()
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? t('calendar.modal.error_generic'))
+    } catch (err: unknown) {
+      const detail = isAxiosError<{ detail?: string }>(err) ? err.response?.data?.detail : undefined
+      setError(detail ?? t('calendar.modal.error_generic'))
     }
   }
 
@@ -110,8 +113,9 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
     try {
       await deleteMut.mutateAsync(event.id)
       onClose()
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? t('calendar.modal.error_generic'))
+    } catch (err: unknown) {
+      const detail = isAxiosError<{ detail?: string }>(err) ? err.response?.data?.detail : undefined
+      setError(detail ?? t('calendar.modal.error_generic'))
     }
   }
 
@@ -231,6 +235,17 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
                 ))}
               </select>
             </div>
+          )}
+
+          {/* Comprovante de treinamento — só para training já salvo */}
+          {type === 'training' && !isNew && event && (
+            <Link
+              to={`/treinamentos/novo?calendar_event_id=${event.id}${sourceId ? `&source_id=${sourceId}` : ''}`}
+              className="flex items-center gap-1.5 text-xs text-brand-purple hover:text-brand-neon transition-colors"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              {t('calendar.modal.trainingRecordLink')}
+            </Link>
           )}
 
           {/* Notas */}

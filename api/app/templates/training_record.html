@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 10.5pt; color: #1a1a1a; }
+  h1 { font-size: 16pt; margin: 0 0 2mm 0; }
+  h2 { font-size: 11.5pt; margin: 6mm 0 2mm 0; padding-bottom: 1mm; border-bottom: 1.5pt solid #333; }
+  .subtitle { color: #555; font-size: 9.5pt; margin-bottom: 6mm; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
+  td, th { border: 0.5pt solid #999; padding: 1.8mm 2.5mm; font-size: 9.5pt; vertical-align: top; }
+  th { background: #eee; text-align: left; }
+  .info-table td:first-child { font-weight: bold; width: 32mm; background: #f5f5f5; }
+  .modules-table th { width: auto; }
+  .participants-table th { background: #e8e8e8; }
+  .sig-cell { height: 16mm; text-align: center; }
+  .sig-cell img { max-height: 14mm; max-width: 100%; }
+  .status-pending { color: #999; font-style: italic; font-size: 8.5pt; }
+  .final-sign { display: flex; margin-top: 4mm; }
+  .final-sign-block { flex: 1; text-align: center; padding: 0 4mm; }
+  .final-sign-block .sig-line { border-top: 0.5pt solid #333; margin-top: 16mm; padding-top: 1.5mm; font-size: 9pt; }
+  .final-sign-block img { max-height: 16mm; }
+  .empty-note { color: #777; font-style: italic; }
+  .footer-meta { margin-top: 8mm; font-size: 8pt; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Comprovante de Treinamento</h1>
+<div class="subtitle">Gerado em {{ generated_at }} — Aegis</div>
+
+<h2>1. Identificação do Treinamento</h2>
+<table class="info-table">
+  <tr><td>Treinamento</td><td>{{ record.training_name }}</td></tr>
+  <tr><td>Sistema / Módulo</td><td>{{ record.system_module }}{% if record.version %} (v{{ record.version }}){% endif %}</td></tr>
+  <tr><td>Data</td><td>{{ record.training_date }}{% if record.start_time %} — {{ record.start_time }}{% if record.end_time %} às {{ record.end_time }}{% endif %}{% endif %}</td></tr>
+  {% if record.workload_hours %}<tr><td>Carga horária</td><td>{{ record.workload_hours }}</td></tr>{% endif %}
+  <tr><td>Modalidade</td><td>{{ modality_label }}</td></tr>
+  <tr><td>Tipo</td><td>{{ training_type_label }}</td></tr>
+  {% if record.area_sector %}<tr><td>Área / Setor</td><td>{{ record.area_sector }}</td></tr>{% endif %}
+  {% if source_name %}<tr><td>Cliente</td><td>{{ source_name }}</td></tr>{% endif %}
+</table>
+
+<h2>2. Instrutor</h2>
+<table class="info-table">
+  <tr><td>Nome</td><td>{{ record.instructor.name }}</td></tr>
+  {% if record.instructor_title %}<tr><td>Cargo / Depto</td><td>{{ record.instructor_title }}</td></tr>{% endif %}
+</table>
+
+{% if record.modules %}
+<h2>3. Módulos e Assuntos Abordados</h2>
+<table class="modules-table">
+  <thead><tr><th>Módulo</th><th>Assuntos</th></tr></thead>
+  <tbody>
+    {% for m in record.modules %}
+    <tr><td>{{ m.module }}</td><td>{{ m.subjects }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>4. Lista de Presença</h2>
+{% if record.participants %}
+<table class="participants-table">
+  <thead><tr><th>Nome</th><th>Cargo</th><th>Setor</th><th style="width: 32mm;">Assinatura</th></tr></thead>
+  <tbody>
+    {% for p in record.participants %}
+    <tr>
+      <td>{{ p.name }}</td>
+      <td>{{ p.role_title or '—' }}</td>
+      <td>{{ p.sector or '—' }}</td>
+      <td class="sig-cell">
+        {% if p.signature_b64 %}
+          <img src="data:image/png;base64,{{ p.signature_b64 }}" alt="assinatura">
+        {% else %}
+          <span class="status-pending">pendente</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty-note">Nenhum participante cadastrado.</p>
+{% endif %}
+
+{% if record.evaluation_method or record.performance_notes or record.general_notes %}
+<h2>5. Avaliação / Observações</h2>
+<table class="info-table">
+  {% if record.evaluation_method %}<tr><td>Método de avaliação</td><td>{{ record.evaluation_method }}</td></tr>{% endif %}
+  {% if record.performance_notes %}<tr><td>Aproveitamento</td><td>{{ record.performance_notes }}</td></tr>{% endif %}
+  {% if record.general_notes %}<tr><td>Observações gerais</td><td>{{ record.general_notes }}</td></tr>{% endif %}
+</table>
+{% endif %}
+
+<h2>6. Validação Final</h2>
+<div class="final-sign">
+  <div class="final-sign-block">
+    {% if instructor_signature_b64 %}<img src="data:image/png;base64,{{ instructor_signature_b64 }}" alt="assinatura instrutor">{% endif %}
+    <div class="sig-line">{{ record.instructor.name }}<br>Instrutor</div>
+  </div>
+  <div class="final-sign-block">
+    {% if responsible_signature_b64 %}<img src="data:image/png;base64,{{ responsible_signature_b64 }}" alt="assinatura responsável">{% endif %}
+    <div class="sig-line">{{ record.responsible_name or '—' }}<br>Responsável (RH/Gestor)</div>
+  </div>
+</div>
+
+<div class="footer-meta">Registro #{{ record.id }} — status: {{ record.status }}</div>
+
+</body>
+</html>

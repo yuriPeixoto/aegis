@@ -25,6 +25,7 @@
     "shortcutBulkPriority": "Change priority (bulk)",
     "calendar": "Agenda",
     "shortcutCalendar": "Go to Agenda",
+    "trainingRecords": "Trainings",
     "about": "About"
   },
   "about": {
@@ -707,7 +708,102 @@
       "notes": "Notes",
       "notes_placeholder": "Optional notes...",
       "delete": "Delete event",
-      "error_generic": "Something went wrong. Please try again."
+      "error_generic": "Something went wrong. Please try again.",
+      "trainingRecordLink": "View / create training record"
+    }
+  },
+  "training": {
+    "list": {
+      "title": "Training Records",
+      "subtitle": "Training attendance records, with participant signatures",
+      "new": "New record",
+      "empty": "No training records yet."
+    },
+    "status": {
+      "draft": "In progress",
+      "completed": "Completed"
+    },
+    "modality": {
+      "presencial": "In person",
+      "remoto": "Remote"
+    },
+    "type": {
+      "inicial": "Initial",
+      "reciclagem": "Refresher",
+      "atualizacao": "Update",
+      "nova_funcionalidade": "New feature"
+    },
+    "fields": {
+      "trainingName": "Training name",
+      "systemModule": "System / Module",
+      "version": "Version",
+      "date": "Date",
+      "workloadHours": "Workload",
+      "startTime": "Start",
+      "endTime": "End",
+      "modality": "Modality",
+      "type": "Type",
+      "areaSector": "Area / Sector served",
+      "client": "Client",
+      "instructor": "Instructor",
+      "instructorTitle": "Instructor title / dept",
+      "moduleName": "Module",
+      "moduleSubjects": "Subjects covered",
+      "evaluationMethod": "Evaluation method",
+      "performanceNotes": "Performance",
+      "generalNotes": "General notes",
+      "participantName": "Name",
+      "participantRole": "Role",
+      "participantSector": "Sector",
+      "responsibleName": "Responsible person's name"
+    },
+    "detail": {
+      "back": "Back",
+      "newTitle": "New training record",
+      "downloadPdf": "Download PDF",
+      "pdfError": "Error generating the PDF. Please try again.",
+      "section1": "1. Training Identification",
+      "section2": "2. Instructor",
+      "section3": "3. Modules and Subjects Covered",
+      "section4": "4. Attendance List",
+      "section5": "5. Evaluation / Notes",
+      "section6": "6. Final Validation",
+      "addModule": "Add module",
+      "save": "Save",
+      "saving": "Saving...",
+      "savedToast": "Record saved.",
+      "selectInstructor": "Select the instructor...",
+      "noSource": "— None (internal) —",
+      "signed": "Signed",
+      "copyLink": "Copy signing link",
+      "openLink": "Open signing link",
+      "linkCopied": "Link copied.",
+      "addParticipant": "Add",
+      "instructorSignLabel": "Instructor signature",
+      "responsibleSignLabel": "Responsible person's signature (HR/Manager)",
+      "confirmInstructorSignature": "Confirm signature",
+      "confirmResponsibleSignature": "Confirm signature",
+      "instructorSigned": "Instructor signature recorded.",
+      "responsibleSigned": "Responsible person's signature recorded."
+    },
+    "signature": {
+      "placeholder": "Sign here",
+      "clear": "Clear signature"
+    },
+    "public": {
+      "loading": "Loading...",
+      "notFound": "Link not found or expired.",
+      "instructor": "Instructor",
+      "nameLabel": "Your name",
+      "roleLabel": "Role",
+      "sectorLabel": "Sector",
+      "signatureLabel": "Signature",
+      "confirmText": "I attended and understood the content presented.",
+      "submitError": "Error submitting. Please try again.",
+      "submitting": "Submitting...",
+      "submit": "Confirm attendance",
+      "alreadySignedTitle": "Attendance confirmed",
+      "alreadySignedBody": "Thank you! Your signature has already been recorded for this training."
     }
   }
 }

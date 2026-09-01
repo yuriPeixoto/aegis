@@ -25,6 +25,7 @@
     "shortcutBulkPriority": "Mudar prioridade (em lote)",
     "calendar": "Agenda",
     "shortcutCalendar": "Ir para Agenda",
+    "trainingRecords": "Treinamentos",
     "about": "Sobre"
   },
   "about": {
@@ -707,7 +708,102 @@
       "notes": "Observações",
       "notes_placeholder": "Observações opcionais...",
       "delete": "Excluir evento",
-      "error_generic": "Algo deu errado. Tente novamente."
+      "error_generic": "Algo deu errado. Tente novamente.",
+      "trainingRecordLink": "Ver / criar comprovante de treinamento"
+    }
+  },
+  "training": {
+    "list": {
+      "title": "Registros de Treinamento",
+      "subtitle": "Comprovantes de treinamento aplicado, com assinatura dos participantes",
+      "new": "Novo registro",
+      "empty": "Nenhum registro de treinamento ainda."
+    },
+    "status": {
+      "draft": "Em andamento",
+      "completed": "Concluído"
+    },
+    "modality": {
+      "presencial": "Presencial",
+      "remoto": "Remoto"
+    },
+    "type": {
+      "inicial": "Inicial",
+      "reciclagem": "Reciclagem",
+      "atualizacao": "Atualização",
+      "nova_funcionalidade": "Nova funcionalidade"
+    },
+    "fields": {
+      "trainingName": "Nome do treinamento",
+      "systemModule": "Sistema / Módulo",
+      "version": "Versão",
+      "date": "Data",
+      "workloadHours": "Carga horária",
+      "startTime": "Início",
+      "endTime": "Fim",
+      "modality": "Modalidade",
+      "type": "Tipo",
+      "areaSector": "Área / Setor atendido",
+      "client": "Cliente",
+      "instructor": "Instrutor",
+      "instructorTitle": "Cargo / Depto do instrutor",
+      "moduleName": "Módulo",
+      "moduleSubjects": "Assuntos abordados",
+      "evaluationMethod": "Método de avaliação",
+      "performanceNotes": "Aproveitamento",
+      "generalNotes": "Observações gerais",
+      "participantName": "Nome",
+      "participantRole": "Cargo",
+      "participantSector": "Setor",
+      "responsibleName": "Nome do responsável"
+    },
+    "detail": {
+      "back": "Voltar",
+      "newTitle": "Novo registro de treinamento",
+      "downloadPdf": "Baixar PDF",
+      "pdfError": "Erro ao gerar o PDF. Tente novamente.",
+      "section1": "1. Identificação do Treinamento",
+      "section2": "2. Instrutor",
+      "section3": "3. Módulos e Assuntos Abordados",
+      "section4": "4. Lista de Presença",
+      "section5": "5. Avaliação / Observações",
+      "section6": "6. Validação Final",
+      "addModule": "Adicionar módulo",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "savedToast": "Registro salvo.",
+      "selectInstructor": "Selecione o instrutor...",
+      "noSource": "— Nenhum (interno) —",
+      "signed": "Assinado",
+      "copyLink": "Copiar link de assinatura",
+      "openLink": "Abrir link de assinatura",
+      "linkCopied": "Link copiado.",
+      "addParticipant": "Adicionar",
+      "instructorSignLabel": "Assinatura do instrutor",
+      "responsibleSignLabel": "Assinatura do responsável (RH/Gestor)",
+      "confirmInstructorSignature": "Confirmar assinatura",
+      "confirmResponsibleSignature": "Confirmar assinatura",
+      "instructorSigned": "Assinatura do instrutor registrada.",
+      "responsibleSigned": "Assinatura do responsável registrada."
+    },
+    "signature": {
+      "placeholder": "Assine aqui",
+      "clear": "Limpar assinatura"
+    },
+    "public": {
+      "loading": "Carregando...",
+      "notFound": "Link não encontrado ou expirado.",
+      "instructor": "Instrutor",
+      "nameLabel": "Seu nome",
+      "roleLabel": "Cargo",
+      "sectorLabel": "Setor",
+      "signatureLabel": "Assinatura",
+      "confirmText": "Participei e compreendi o conteúdo apresentado.",
+      "submitError": "Erro ao enviar. Tente novamente.",
+      "submitting": "Enviando...",
+      "submit": "Confirmar participação",
+      "alreadySignedTitle": "Participação confirmada",
+      "alreadySignedBody": "Obrigado! Sua assinatura já foi registrada para este treinamento."
     }
   }
 }

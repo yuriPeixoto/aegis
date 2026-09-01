@@ -14,6 +14,8 @@ from app.models.ticket_attachment import TicketAttachment
 from app.models.ticket_checklist_item import TicketChecklistItem
 from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
+from app.models.training_participant import TrainingParticipant
+from app.models.training_record import TrainingRecord
 from app.models.user import User
 
 __all__ = [
@@ -35,5 +37,7 @@ __all__ = [
     "TicketEscalation",
     "TicketEvent",
     "TicketMessage",
+    "TrainingParticipant",
+    "TrainingRecord",
     "User",
 ]
