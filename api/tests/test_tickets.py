@@ -168,3 +168,57 @@ async def test_list_tickets_by_fixed_ticket_ids(
     assert returned_ids == set(ticket_ids)
     assert other_id not in returned_ids
     assert data["total"] == 2
+
+
+@pytest.mark.asyncio
+async def test_assign_ticket_notifies_new_assignee(
+    admin_client: AsyncClient, agent_client: AsyncClient, agent_user: dict, ingested_ticket: dict
+) -> None:
+    """#1086 — atribuir um ticket a alguém deve gerar uma notificação pra essa pessoa
+    (base pro modal de confirmação bloqueante que o frontend renderiza)."""
+    response = await admin_client.patch(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/assign",
+        json={"user_id": agent_user["id"]},
+    )
+    assert response.status_code == 200
+
+    notif_response = await agent_client.get("/v1/me/notifications", params={"unread_only": True})
+    assert notif_response.status_code == 200
+    notifications = notif_response.json()
+    assigned = [n for n in notifications if n["type"] == "assigned"]
+    assert len(assigned) == 1
+    assert assigned[0]["ticket_id"] == ingested_ticket["ticket_id"]
+    assert assigned[0]["ticket_external_id"] == ingested_ticket["external_id"]
+
+
+@pytest.mark.asyncio
+async def test_assign_ticket_to_self_does_not_notify(
+    admin_client: AsyncClient, admin_user: dict, ingested_ticket: dict
+) -> None:
+    """Atribuir a si mesmo (ex: botão 'Atribuir a mim') não deve gerar notificação —
+    a pessoa já sabe que acabou de se atribuir o ticket."""
+    response = await admin_client.patch(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/assign",
+        json={"user_id": admin_user["id"]},
+    )
+    assert response.status_code == 200
+
+    notif_response = await admin_client.get("/v1/me/notifications", params={"unread_only": True})
+    assigned = [n for n in notif_response.json() if n["type"] == "assigned"]
+    assert len(assigned) == 0
+
+
+@pytest.mark.asyncio
+async def test_reassign_same_user_does_not_duplicate_notification(
+    admin_client: AsyncClient, agent_client: AsyncClient, agent_user: dict, ingested_ticket: dict
+) -> None:
+    """Re-atribuir pro mesmo agente que já estava (no-op) não deve gerar uma 2ª notificação."""
+    ticket_url = f"/v1/tickets/{ingested_ticket['ticket_id']}/assign"
+    first = await admin_client.patch(ticket_url, json={"user_id": agent_user["id"]})
+    assert first.status_code == 200
+    second = await admin_client.patch(ticket_url, json={"user_id": agent_user["id"]})
+    assert second.status_code == 200
+
+    notif_response = await agent_client.get("/v1/me/notifications", params={"unread_only": True})
+    assigned = [n for n in notif_response.json() if n["type"] == "assigned"]
+    assert len(assigned) == 1

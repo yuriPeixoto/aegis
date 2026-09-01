@@ -667,7 +667,14 @@
       "inTicket": "in",
       "justNow": "just now",
       "onCallReminder": "On-call reminder for",
-      "trainingReminder": "Training reminder for"
+      "trainingReminder": "Training reminder for",
+      "assignedYou": "assigned you to"
+    },
+    "assignment": {
+      "title": "New ticket assigned to you",
+      "body": "assigned the ticket below to you:",
+      "viewTicket": "View ticket",
+      "confirm": "Got it"
     }
   },
   "calendar": {

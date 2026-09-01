@@ -12,6 +12,7 @@ from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent  # active — needed to create status_changed events
 from app.models.ticket_message import TicketMessage
 from app.models.user import User  # noqa: F401 — loaded via selectinload
+from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
@@ -159,12 +160,17 @@ class TicketService:
         return result.scalar_one_or_none()
 
     async def assign_ticket(
-        self, ticket_id: int, user_id: int | None, assigned_by_name: str
+        self,
+        ticket_id: int,
+        user_id: int | None,
+        assigned_by_name: str,
+        assigned_by_user_id: int | None = None,
     ) -> Ticket | None:
         ticket = await self.get_ticket(ticket_id)
         if ticket is None:
             return None
 
+        previous_assignee_id: int | None = ticket.assigned_to_user_id
         previous_assignee_name: str | None = ticket.assignee.name if ticket.assignee else None
 
         new_assignee_name: str | None = None
@@ -186,6 +192,16 @@ class TicketService:
         self._db.add(TicketEvent(ticket_id=ticket_id, event_type="assigned", payload=event_payload))
 
         await self._db.commit()
+
+        # Notify the new assignee — skip no-op reassignment and self-assignment
+        if (
+            user_id is not None
+            and user_id != previous_assignee_id
+            and user_id != assigned_by_user_id
+        ):
+            await NotificationService(self._db).create_assignment_notification(
+                ticket, user_id, assigned_by_name
+            )
         result = await self._db.execute(
             select(Ticket)
             .where(Ticket.id == ticket_id)
@@ -403,7 +419,9 @@ class TicketService:
             tags = list(tags_result.scalars().all())
 
         if source_id is not None:
-            source_result = await self._db.execute(select(Source).where(Source.id == source_id, Source.is_active == True))  # noqa: E712
+            source_result = await self._db.execute(
+                select(Source).where(Source.id == source_id, Source.is_active == True)  # noqa: E712
+            )
             source = source_result.scalar_one_or_none()
             if source is None:
                 raise ValueError(f"Source {source_id} not found or inactive")

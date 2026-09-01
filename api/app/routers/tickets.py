@@ -278,7 +278,10 @@ async def assign_ticket(
     background_tasks: BackgroundTasks,
 ) -> TicketDetailResponse:
     ticket = await TicketService(db).assign_ticket(
-        ticket_id, body.user_id, assigned_by_name=current_user.name
+        ticket_id,
+        body.user_id,
+        assigned_by_name=current_user.name,
+        assigned_by_user_id=current_user.id,
     )
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")

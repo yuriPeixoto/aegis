@@ -667,7 +667,14 @@
       "inTicket": "em",
       "justNow": "agora",
       "onCallReminder": "Lembrete de plantão para",
-      "trainingReminder": "Lembrete de treinamento para"
+      "trainingReminder": "Lembrete de treinamento para",
+      "assignedYou": "atribuiu você em"
+    },
+    "assignment": {
+      "title": "Novo ticket atribuído a você",
+      "body": "atribuiu o ticket abaixo a você:",
+      "viewTicket": "Ver ticket",
+      "confirm": "Ciente"
     }
   },
   "calendar": {

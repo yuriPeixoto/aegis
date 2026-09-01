@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { WhatsNewModal } from './WhatsNewModal'
+import { AssignmentConfirmModal } from './AssignmentConfirmModal'
 import { useMe } from '../../hooks/useAuth'
 import { useInboundNotifications } from '../../hooks/useInboundNotifications'
 import type { TFunction } from 'i18next'
@@ -89,6 +90,7 @@ export function AppShell() {
         </main>
       </div>
       <WhatsNewModal />
+      <AssignmentConfirmModal />
     </div>
   )
 }
