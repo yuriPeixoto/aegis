@@ -15,6 +15,20 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.4.0",
+        "date": "2026-09-01",
+        "highlights": [
+            "Novo: registro de treinamentos com assinatura dos participantes "
+            "(presencial ou remoto)",
+            "Novo: confirmação obrigatória ao ser atribuído a um chamado",
+            "Chamados: status intermediários do Gestão de Frota agora aparecem detalhados",
+            "Chamados: edição do tipo de chamado passou a ser restrita a administradores",
+            "Correção: clique em imagem de uma mensagem agora abre visualização, "
+            "não baixa o arquivo",
+            "Correção: tela do chamado passa a rolar automaticamente até a última mensagem",
+        ],
+    },
+    {
         "version": "1.3.2",
         "date": "2026-07-30",
         # Descrito sem detalhar a falha: este modal é lido dentro do próprio sistema

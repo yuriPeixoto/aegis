@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] — 2026-09-01
+
+### Added
+- **Registro de Treinamento com assinatura de participantes** — novo módulo para registrar treinamentos internos (presencial ou remoto): lista de participantes, coleta de assinatura via link público não-autenticado (mesmo mecanismo pra presencial e remoto — o participante assina no próprio celular ou num dispositivo compartilhado) e exportação em PDF (WeasyPrint + Jinja2, embutido no processo da API). Modelo, service, PDF service, rotas públicas/internas, testes. Ticket Aegis #985 (`docs/adr/011-training-attendance-records.md`).
+- **Confirmação obrigatória ao atribuir um chamado** — modal bloqueante (sem dismissal por Escape/clique fora, via `createPortal`) exibido pro atendente assim que um ticket é atribuído a ele; evita que atribuições passem despercebidas na sidebar. Pula auto-atribuição e reatribuição para o mesmo agente (sem notificação duplicada). Ticket Aegis #1086.
+- **Sub-status do GF exposto quando `pending_closure`** — `aguardando_cliente` e `aguardando_validacao_cliente` do Gestão de Frota colapsam no mesmo status `pending_closure` aqui (ADR-003, decisão deliberada ligada à lógica de SLA); o status bruto do GF agora fica em `source_metadata.gf_status_raw` e aparece como sub-badge no detalhe do ticket, disambiguando "cliente precisa responder" de "cliente precisa confirmar a resolução".
+- **`PATCH /v1/tickets/{id}/type`** — endpoint novo pra editar o tipo do chamado, restrito a `AdminUser` (tipo dispara o fluxo de revisão de qualidade do GF, então a mudança precisa ser deliberada). Prioridade continua editável por qualquer agente.
+
+### Fixed
+- **Clique em imagem numa mensagem baixava o arquivo em vez de abrir visualização** — e a imagem, ao ampliar, sobrepunha o modal "Reportar Problema" por causa de stacking context de `position: sticky`/`fixed`. Adicionado `ImageLightboxModal`; modais renderizados via `createPortal(..., document.body)`. Ticket Aegis #1168 (mesma causa raiz do #461).
+- **Tela de detalhe do chamado não rolava automaticamente até a última mensagem ao abrir** — a dependência do `useEffect` "assentava" no valor final enquanto ainda em loading, então nunca disparava de novo quando o DOM real montava. Ticket Aegis #1085.
+- **Data do treinamento na tela pública de assinatura aparecia em ISO (`2026-09-01`) em vez do formato local (pt-BR/en)**.
+
 ## [1.3.2] — 2026-07-30
 
 ### Security
