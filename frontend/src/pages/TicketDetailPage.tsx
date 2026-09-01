@@ -123,25 +123,67 @@ function SecureImage({ url, alt, className }: { url: string; alt: string; classN
   return <img src={src} alt={alt} className={className} />
 }
 
-function MessageAttachments({ attachments }: { attachments: TicketMessage['attachments'] }) {
-  if (!attachments || attachments.length === 0) return null
+async function triggerAttachmentDownload(att: { download_url: string; filename: string }) {
+  const token = localStorage.getItem('aegis_token')
+  const response = await fetch(att.download_url, {
+    headers: { Authorization: `Bearer ${token ?? ''}` },
+  })
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`)
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = att.filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
-  const triggerDownload = async (att: { download_url: string; filename: string }) => {
-    const token = localStorage.getItem('aegis_token')
-    const response = await fetch(att.download_url, {
-      headers: { Authorization: `Bearer ${token ?? ''}` },
-    })
-    if (!response.ok) throw new Error(`Download failed: ${response.status}`)
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = att.filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+function ImageLightboxModal({
+  attachment,
+  onClose,
+}: {
+  attachment: { download_url: string; filename: string }
+  onClose: () => void
+}) {
+  useKeyboardShortcut('Escape', onClose, { enabled: true, ignoreInputs: false })
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="relative max-w-4xl max-h-full flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+        <SecureImage
+          url={attachment.download_url}
+          alt={attachment.filename}
+          className="max-h-[80vh] max-w-full object-contain rounded-lg"
+        />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => triggerAttachmentDownload(attachment)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {attachment.filename}
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MessageAttachments({ attachments }: { attachments: TicketMessage['attachments'] }) {
+  const [lightboxAtt, setLightboxAtt] = useState<{ download_url: string; filename: string } | null>(null)
+
+  if (!attachments || attachments.length === 0) return null
 
   return (
     <div className="mt-3 space-y-2 w-full">
@@ -150,22 +192,19 @@ function MessageAttachments({ attachments }: { attachments: TicketMessage['attac
         return (
           <div key={att.id} className="group relative flex flex-col gap-1 max-w-sm">
             {isImage ? (
-              <button 
-                onClick={() => triggerDownload(att)}
+              <button
+                onClick={() => setLightboxAtt(att)}
                 className="block rounded-lg overflow-hidden border border-white/10 hover:border-brand-accent/50 transition-all active:scale-[0.98] text-left"
               >
-                <SecureImage 
-                  url={att.download_url} 
+                <SecureImage
+                  url={att.download_url}
                   alt={att.filename}
                   className="max-h-64 w-auto object-contain bg-black/20"
                 />
-                 <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Download className="w-3.5 h-3.5" />
-                </div>
               </button>
             ) : (
               <button
-                onClick={() => triggerDownload(att)}
+                onClick={() => triggerAttachmentDownload(att)}
                 className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-2 transition-colors text-left w-full active:scale-[0.98]"
               >
                 <FileIcon contentType={att.content_type} />
@@ -183,6 +222,7 @@ function MessageAttachments({ attachments }: { attachments: TicketMessage['attac
           </div>
         )
       })}
+      {lightboxAtt && <ImageLightboxModal attachment={lightboxAtt} onClose={() => setLightboxAtt(null)} />}
     </div>
   )
 }
