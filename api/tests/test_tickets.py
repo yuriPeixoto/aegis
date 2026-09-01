@@ -222,3 +222,35 @@ async def test_reassign_same_user_does_not_duplicate_notification(
     notif_response = await agent_client.get("/v1/me/notifications", params={"unread_only": True})
     assigned = [n for n in notif_response.json() if n["type"] == "assigned"]
     assert len(assigned) == 1
+
+
+@pytest.mark.asyncio
+async def test_update_ticket_type_requires_admin(
+    agent_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    """Type drives the GF quality-review workflow — only admins may change it."""
+    response = await agent_client.patch(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/type", json={"type": "improvement"}
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_update_ticket_type_as_admin(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    response = await admin_client.patch(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/type", json={"type": "improvement"}
+    )
+    assert response.status_code == 200
+    assert response.json()["type"] == "improvement"
+
+
+@pytest.mark.asyncio
+async def test_update_ticket_type_rejects_invalid_value(
+    admin_client: AsyncClient, ingested_ticket: dict
+) -> None:
+    response = await admin_client.patch(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/type", json={"type": "not_a_real_type"}
+    )
+    assert response.status_code == 422

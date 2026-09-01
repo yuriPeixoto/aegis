@@ -1,0 +1,644 @@
+<title>Alinhamento de Status GF ↔ Aegis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#1b232e;
+    --ink-soft:#4c5866;
+    --paper:#f4f6f6;
+    --paper-raised:#ffffff;
+    --line:#dce2e2;
+    --accent:#2f7a72;
+    --accent-soft:#e4efed;
+    --warn:#b3651f;
+    --warn-soft:#f7ead9;
+    --bad:#a4373a;
+    --bad-soft:#f8e4e2;
+    --good:#2f7a4a;
+    --good-soft:#e3f0e5;
+
+    --gf-bg:#f3f5f9;
+    --gf-card:#ffffff;
+    --gf-line:#e2e6ee;
+    --gf-ink:#1f2937;
+    --gf-sub:#6b7280;
+    --gf-blue:#2563eb;
+    --gf-blue-soft:#dbeafe;
+
+    --ae-bg:#0e1015;
+    --ae-card:#181b22;
+    --ae-line:#2a2f3a;
+    --ae-ink:#e6e8ee;
+    --ae-sub:#8b93a3;
+    --ae-purple:#7c3aed;
+    --ae-purple-soft:#241a3d;
+    --ae-neon:#5ee6c2;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e9edee;
+      --ink-soft:#a8b3b4;
+      --paper:#12181a;
+      --paper-raised:#1a2224;
+      --line:#2a3436;
+      --accent:#59b7ab;
+      --accent-soft:#173430;
+      --warn:#e0a34f;
+      --warn-soft:#3a2c16;
+      --bad:#e18081;
+      --bad-soft:#3a1e1f;
+      --good:#7fca94;
+      --good-soft:#182f1f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e9edee;
+    --ink-soft:#a8b3b4;
+    --paper:#12181a;
+    --paper-raised:#1a2224;
+    --line:#2a3436;
+    --accent:#59b7ab;
+    --accent-soft:#173430;
+    --warn:#e0a34f;
+    --warn-soft:#3a2c16;
+    --bad:#e18081;
+    --bad-soft:#3a1e1f;
+    --good:#7fca94;
+    --good-soft:#182f1f;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+    line-height:1.6;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:56px 28px 120px;
+  }
+
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,Consolas,monospace;}
+
+  /* ---------- Header ---------- */
+  header.doc-head{
+    margin-bottom:52px;
+    padding-bottom:32px;
+    border-bottom:1px solid var(--line);
+  }
+  .status-banner{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--good-soft);
+    color:var(--good);
+    border:1px solid color-mix(in srgb, var(--good) 30%, transparent);
+    border-radius:8px;
+    padding:10px 16px;
+    font-family:'IBM Plex Mono';
+    font-size:12.5px;
+    margin-bottom:28px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono';
+    font-size:12.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+  h1{
+    font-size:clamp(28px,4vw,38px);
+    line-height:1.15;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+    text-wrap:balance;
+    font-weight:700;
+  }
+  .dek{
+    max-width:62ch;
+    color:var(--ink-soft);
+    font-size:16.5px;
+    margin:0 0 22px;
+  }
+  .meta-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .meta-chip{
+    font-family:'IBM Plex Mono';
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:5px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+  }
+
+  /* ---------- Section scaffolding ---------- */
+  section{margin-bottom:56px;}
+  .sec-head{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .sec-num{
+    font-family:'IBM Plex Mono';
+    font-size:13px;
+    color:var(--accent);
+    font-weight:600;
+  }
+  h2{
+    font-size:22px;
+    margin:0;
+    letter-spacing:-.01em;
+    text-wrap:balance;
+  }
+  .sec-sub{
+    color:var(--ink-soft);
+    max-width:68ch;
+    margin:10px 0 24px;
+    font-size:15px;
+  }
+  h3{
+    font-size:16.5px;
+    margin:28px 0 10px;
+  }
+  p{max-width:68ch;}
+  ul, ol{max-width:68ch; padding-left:1.2em;}
+  li{margin-bottom:6px;}
+
+  /* ---------- Finding cards ---------- */
+  .finding{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:16px;
+  }
+  .finding-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:8px;
+  }
+  .finding-title{font-weight:600; font-size:15.5px;}
+  .sev{
+    font-family:'IBM Plex Mono';
+    font-size:11px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:4px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .sev-real{background:var(--bad-soft); color:var(--bad);}
+  .sev-latent{background:var(--warn-soft); color:var(--warn);}
+  .sev-gap{background:var(--accent-soft); color:var(--accent);}
+  .finding p{font-size:14.5px; color:var(--ink-soft); margin:0 0 10px; max-width:none;}
+  .finding p:last-child{margin-bottom:0;}
+  .finding .file{
+    font-family:'IBM Plex Mono';
+    font-size:12.5px;
+    color:var(--ink);
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:2px 7px;
+    border-radius:4px;
+  }
+
+  /* ---------- Roadmap ---------- */
+  .phase{
+    display:grid;
+    grid-template-columns:52px 1fr;
+    gap:18px;
+    padding:22px 0;
+    border-top:1px solid var(--line);
+  }
+  .phase:last-child{border-bottom:1px solid var(--line);}
+  .phase-num{
+    font-family:'IBM Plex Mono';
+    font-size:22px;
+    font-weight:600;
+    color:var(--accent);
+    line-height:1;
+  }
+  .phase-title{font-weight:600; font-size:16px; margin-bottom:6px;}
+  .phase-body{color:var(--ink-soft); font-size:14.5px; max-width:64ch;}
+  .phase-tags{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .tag{
+    font-family:'IBM Plex Mono';
+    font-size:11px;
+    padding:3px 8px;
+    border-radius:4px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+  }
+
+  /* ---------- Mockup shell ---------- */
+  .compare{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin:22px 0 8px;
+  }
+  @media (max-width:760px){ .compare{grid-template-columns:1fr;} }
+  .compare-label{
+    font-family:'IBM Plex Mono';
+    font-size:11.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+
+  /* GF skin */
+  .gf-frame{
+    background:var(--gf-bg);
+    border:1px solid var(--gf-line);
+    border-radius:12px;
+    padding:18px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .gf-card{
+    background:var(--gf-card);
+    border:1px solid var(--gf-line);
+    border-radius:8px;
+    padding:16px;
+    box-shadow:0 1px 2px rgba(20,30,50,.04);
+  }
+  .gf-title{color:var(--gf-ink); font-weight:600; font-size:14.5px; margin-bottom:2px;}
+  .gf-ticket-id{color:var(--gf-sub); font-size:12px; font-family:'IBM Plex Mono';}
+  .gf-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    font-weight:500;
+    padding:4px 10px;
+    border-radius:20px;
+    margin-top:10px;
+  }
+  .gf-badge.blue{background:var(--gf-blue-soft); color:var(--gf-blue);}
+  .gf-hint{color:var(--gf-sub); font-size:12px; margin-top:8px; line-height:1.5;}
+  .gf-divider{height:1px; background:var(--gf-line); margin:14px 0;}
+  .gf-btn-row{display:flex; gap:8px; margin-top:6px;}
+  .gf-btn{
+    font-size:12.5px;
+    padding:7px 12px;
+    border-radius:6px;
+    border:1px solid var(--gf-line);
+    color:var(--gf-sub);
+    background:#fff;
+  }
+  .gf-btn.primary{background:var(--gf-blue); color:#fff; border-color:var(--gf-blue);}
+  .gf-select{
+    width:100%;
+    font-size:13px;
+    padding:8px 10px;
+    border-radius:6px;
+    border:1px solid var(--gf-line);
+    color:var(--gf-ink);
+    background:#fff;
+    margin-top:6px;
+  }
+  .strike{opacity:.45; position:relative;}
+  .strike::after{
+    content:"";
+    position:absolute; left:0; right:0; top:50%;
+    border-top:1.5px solid var(--bad);
+  }
+
+  /* Aegis skin */
+  .ae-frame{
+    background:var(--ae-bg);
+    border:1px solid var(--ae-line);
+    border-radius:12px;
+    padding:18px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .ae-card{
+    background:var(--ae-card);
+    border:1px solid var(--ae-line);
+    border-radius:10px;
+    padding:16px;
+  }
+  .ae-title{color:var(--ae-ink); font-weight:600; font-size:14.5px; margin-bottom:2px;}
+  .ae-ticket-id{color:var(--ae-sub); font-size:12px; font-family:'IBM Plex Mono';}
+  .ae-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:500;
+    font-family:'IBM Plex Mono';
+    letter-spacing:.03em;
+    padding:4px 9px;
+    border-radius:5px;
+    margin-top:10px;
+    text-transform:uppercase;
+  }
+  .ae-badge.purple{background:var(--ae-purple-soft); color:#c9a8fb;}
+  .ae-badge.neon{background:rgba(94,230,194,.12); color:var(--ae-neon);}
+  .ae-sub-badge{
+    display:block;
+    font-size:11px;
+    color:var(--ae-sub);
+    margin-top:6px;
+    font-family:'IBM Plex Mono';
+  }
+  .ae-divider{height:1px; background:var(--ae-line); margin:14px 0;}
+  .ae-field-row{display:flex; justify-content:space-between; align-items:center; padding:7px 0;}
+  .ae-field-label{color:var(--ae-sub); font-size:12.5px;}
+  .ae-field-val{color:var(--ae-ink); font-size:12.5px; font-family:'IBM Plex Mono';}
+  .ae-lock{color:var(--ae-sub); font-size:11px; display:inline-flex; align-items:center; gap:4px;}
+  .ae-select{
+    font-size:12.5px;
+    padding:6px 9px;
+    border-radius:6px;
+    border:1px solid var(--ae-line);
+    color:var(--ae-ink);
+    background:#20242e;
+  }
+
+  .caption{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+
+  /* ---------- Callout ---------- */
+  .callout{
+    background:var(--accent-soft);
+    border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius:10px;
+    padding:16px 20px;
+    margin:18px 0;
+  }
+  .callout p{margin:0; font-size:14.5px; max-width:none;}
+  .callout .k{font-family:'IBM Plex Mono'; font-weight:600; color:var(--accent);}
+
+  /* ---------- Decisions table ---------- */
+  .decisions{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px;}
+  .decisions th{
+    text-align:left;
+    font-family:'IBM Plex Mono';
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .decisions td{
+    padding:12px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+    color:var(--ink);
+  }
+  .decisions tr:last-child td{border-bottom:none;}
+  .rec{
+    font-size:11.5px;
+    font-family:'IBM Plex Mono';
+    background:var(--good-soft);
+    color:var(--good);
+    padding:2px 7px;
+    border-radius:4px;
+    display:inline-block;
+    margin-top:4px;
+  }
+
+  footer{
+    margin-top:60px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    color:var(--ink-soft);
+    font-size:12.5px;
+    font-family:'IBM Plex Mono';
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="status-banner">✓ Aprovado e implementado — 01/09/2026. Decisão do Yuri: prioridade continua editável por qualquer agente; só Tipo ficou restrito a Admin.</div>
+
+  <header class="doc-head">
+    <div class="eyebrow"><span class="dot"></span>Gestão de Frota × Aegis — plano técnico</div>
+    <h1>Alinhamento do fluxo de chamados entre GF e Aegis</h1>
+    <p class="dek">Levantamento de código nos dois repositórios (branch local <code>fix/roles-guard-web-user-edit</code> de <code>gestao_frota</code>, já sincronizada com <code>origin/main</code> nos arquivos relevantes) para endereçar o #974 e o caso reportado da Carvalima. Só análise — nada foi alterado.</p>
+    <div class="meta-row">
+      <span class="meta-chip">01/09/2026</span>
+      <span class="meta-chip">gestao_frota → app/Http/Controllers/TicketController.php</span>
+      <span class="meta-chip">aegis → api/app/services/ingest_service.py</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>O que o código já resolve</h2></div>
+    <p class="sec-sub">Antes de propor mudanças, vale registrar: parte do #974 já foi corrigida em 11/08/2026 (commit <code>ff64a9860</code>). O controller do GF já bloqueia qualquer rota manual de tentar setar <code>EM_ATENDIMENTO</code>, e a atribuição de responsável já é 100% redirecionada para o Aegis. O que falta não é "impedir o cliente de mexer no status" — isso já está bloqueado no back-end. O que falta é consertar o que ficou pela metade nessa transição.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>3 achados reais no código</h2></div>
+    <p class="sec-sub">Nenhum destes é hipotético — são leituras diretas do código atual nos dois repositórios.</p>
+
+    <div class="finding">
+      <div class="finding-head">
+        <div class="finding-title">Dois status opostos do GF caem no mesmo status do Aegis</div>
+        <span class="sev sev-real">causa raiz — Carvalima</span>
+      </div>
+      <p><span class="file">SendTicketToAegis::mapStatus()</span> e <span class="file">ingest_service.py::_GF_TO_AEGIS</span> mapeiam <code class="mono">aguardando_cliente</code> (equipe espera resposta do cliente) e <code class="mono">aguardando_validacao_cliente</code> (chamado resolvido, espera confirmação do cliente) para o <b>mesmo</b> valor: <code class="mono">pending_closure</code>, exibido no Aegis como "Ag. Validação".</p>
+      <p>São estados opostos disfarçados de um só. É exatamente essa fusão que explica o ticket da Carvalima mostrando uma coisa pro cliente e outra pra equipe — o Aegis simplesmente não tem informação suficiente pra diferenciar os dois casos.</p>
+      <p>Importante: essa fusão foi <b>decisão deliberada</b> (ADR-003, executada no commit <code>2ddd8fe</code>) — existia um status <code class="mono">waiting_client</code> separado, removido porque só servia pra pausar o SLA, e a equipe decidiu que nenhum dos dois casos deveria pausar SLA. Não proponho reverter essa decisão de SLA — proponho preservar a distinção como <i>informação</i>, sem reabrir a lógica de pausa. Ver Fase 1 do roadmap.</p>
+    </div>
+
+    <div class="finding">
+      <div class="finding-head">
+        <div class="finding-title">O botão "Alterar Status" está morto por um typo de permissão</div>
+        <span class="sev sev-latent">bug latente, não explorado</span>
+      </div>
+      <p><span class="file">show.blade.php:459</span> verifica <code class="mono">@can('tickets.update_status')</code> — essa permissão <b>não existe</b>. O único registro real, em <span class="file">create_tickets_roles_permissions.sql</span>, é <code class="mono">tickets.change_status</code> (é o que o controller checa). Resultado: o botão nunca aparece pra ninguém, nem pra quem deveria conseguir confirmar resolução ou reabrir.</p>
+      <p>Isso "protege" por acidente hoje, mas quebra o fluxo legítimo (cliente confirmar que o chamado foi resolvido) e é o tipo de bug que alguém corrige sem querer só ajustando o nome — reabrindo a exposição total do dropdown de status pro cliente sem querer.</p>
+    </div>
+
+    <div class="finding">
+      <div class="finding-head">
+        <div class="finding-title">Dropdown de status expõe o enum inteiro, não 2 ações</div>
+        <span class="sev sev-gap">gap de design</span>
+      </div>
+      <p>O modal "Alterar Status" (mesmo arquivo) lista <i>toda</i> transição permitida por <code class="mono">canTransitionTo()</code> — incluindo <code class="mono">CANCELADO</code>, <code class="mono">AGUARDANDO_CLIENTE</code> etc. Isso já foi identificado pela própria equipe em <code>docs/gf-ticket-client-refactor.md §3.4</code> do Aegis: o cliente deveria ver só duas ações — <b>Confirmar Resolução</b> e <b>Reabrir</b> — não um select genérico de enum interno.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Tipo e prioridade — hoje sem controle de acesso</h2></div>
+    <p class="sec-sub">Pedido do Yuri: editar tipo e prioridade do chamado, restrito a usuários Admin.</p>
+    <div class="finding">
+      <div class="finding-head">
+        <div class="finding-title">Prioridade: endpoint existe, sem gate de admin</div>
+        <span class="sev sev-gap">decisão: manter assim</span>
+      </div>
+      <p><span class="file">PATCH /v1/tickets/{id}/priority</span> em <span class="file">tickets.py:398</span> usa <code class="mono">current_user: CurrentUser</code> — qualquer agente autenticado. Levantado como candidato a gate de admin junto com Tipo, mas o Yuri decidiu manter prioridade aberta pra qualquer agente — só Tipo precisa do gate (ver Fase 3). Não alterado.</p>
+    </div>
+    <div class="finding">
+      <div class="finding-head">
+        <div class="finding-title">Tipo: não existe endpoint de edição</div>
+        <span class="sev sev-gap">feature ausente</span>
+      </div>
+      <p>Não há rota <code class="mono">PATCH /v1/tickets/{id}/type</code> em nenhum lugar do backend do Aegis. É funcionalidade nova, não um gate faltando — precisa de rota, service method e evento de auditoria (mesmo padrão de <code class="mono">update_ticket_priority</code>), mais o campo editável no front-end, ambos atrás de <code class="mono">AdminUser</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Mockups — antes / depois</h2></div>
+    <p class="sec-sub">Visual aproximado dos dois produtos (paleta e tipografia reais de cada um), pra validar antes de qualquer linha de código.</p>
+
+    <h3>4.1 — Status: visão do cliente no GF</h3>
+    <div class="compare">
+      <div>
+        <div class="compare-label">Hoje</div>
+        <div class="gf-frame">
+          <div class="gf-card">
+            <div class="gf-title">Relatório de abastecimento não carrega</div>
+            <div class="gf-ticket-id">#SUP-2026-0672 · Carvalima</div>
+            <span class="gf-badge blue">● Em análise interna</span>
+            <div class="gf-divider"></div>
+            <div class="gf-hint">Ações</div>
+            <select class="gf-select" disabled>
+              <option>Novo</option><option>Aguardando Qualidade</option>
+              <option>Em Atendimento</option><option>Cancelado</option>
+            </select>
+            <div class="gf-hint">↑ dropdown com todo o enum interno — <code class="mono">@can('tickets.update_status')</code> nunca é verdadeiro, então na prática este bloco some da tela mesmo devendo aparecer.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="compare-label">Proposto</div>
+        <div class="gf-frame">
+          <div class="gf-card">
+            <div class="gf-title">Relatório de abastecimento não carrega</div>
+            <div class="gf-ticket-id">#SUP-2026-0672 · Carvalima</div>
+            <span class="gf-badge blue">● Aguardando sua validação</span>
+            <div class="gf-divider"></div>
+            <div class="gf-hint" style="margin-top:0;">A equipe marcou este chamado como resolvido.</div>
+            <div class="gf-btn-row">
+              <button class="gf-btn primary">Confirmar Resolução</button>
+              <button class="gf-btn">Reabrir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Duas ações nomeadas pelo que fazem, permissão corrigida para <code class="mono">tickets.change_status</code> (a real), dropdown genérico removido — conforme já documentado em <code>gf-ticket-client-refactor.md §3.4</code>.</p>
+
+    <h3 style="margin-top:36px;">4.2 — Status: visão do agente no Aegis</h3>
+    <div class="compare">
+      <div>
+        <div class="compare-label">Hoje</div>
+        <div class="ae-frame">
+          <div class="ae-card">
+            <div class="ae-title">Relatório de abastecimento não carrega</div>
+            <div class="ae-ticket-id">SUP-2026-0672 · Carvalima</div>
+            <span class="ae-badge purple">Ag. Validação</span>
+            <div class="ae-divider"></div>
+            <div class="ae-field-row"><span class="ae-field-label">Tipo</span><span class="ae-field-val">bug</span></div>
+            <div class="ae-field-row"><span class="ae-field-label">Prioridade</span><span class="ae-field-val">high</span></div>
+          </div>
+        </div>
+        <p class="caption">"Ag. Validação" é ambíguo: pode ser "cliente precisa responder" ou "cliente precisa confirmar que resolveu" — o agente não sabe qual sem abrir o histórico completo.</p>
+      </div>
+      <div>
+        <div class="compare-label">Proposto</div>
+        <div class="ae-frame">
+          <div class="ae-card">
+            <div class="ae-title">Relatório de abastecimento não carrega</div>
+            <div class="ae-ticket-id">SUP-2026-0672 · Carvalima</div>
+            <span class="ae-badge purple">Ag. Validação</span>
+            <span class="ae-sub-badge">↳ origem GF: aguardando_validacao_cliente</span>
+            <div class="ae-divider"></div>
+            <div class="ae-field-row">
+              <span class="ae-field-label">Tipo</span>
+              <span class="ae-field-val">bug <span class="ae-lock">🔒 admin</span></span>
+            </div>
+            <div class="ae-field-row">
+              <span class="ae-field-label">Prioridade</span>
+              <span class="ae-select">high ▾</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption">Sub-badge só aparece quando <code class="mono">status == pending_closure</code> — mostra o sub-status real do GF sem reabrir a lógica de SLA/pausa. Tipo e prioridade viram editáveis só pra quem tem <code class="mono">role == admin</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Roadmap proposto</h2></div>
+    <p class="sec-sub">3 fases independentes — dá pra fazer em qualquer ordem, mas a 1 é a que resolve o caso Carvalima diretamente.</p>
+
+    <div class="phase">
+      <div class="phase-num">1</div>
+      <div>
+        <div class="phase-title">Distinguir os dois sub-estados de "pending_closure"</div>
+        <div class="phase-body">Guardar o status bruto do GF (<code class="mono">aguardando_cliente</code> vs <code class="mono">aguardando_validacao_cliente</code>) em <code class="mono">source_metadata</code> na ingestão — já chega no payload, só não é persistido separado do status mapeado. Exibir como sub-badge no front-end do Aegis quando <code class="mono">status == pending_closure</code>. Sem tocar SLA, sem tocar ADR-003.</div>
+        <div class="phase-tags"><span class="tag">aegis · ingest_service.py</span><span class="tag">aegis · frontend StatusBadge</span><span class="tag">baixo risco</span></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-num">2</div>
+      <div>
+        <div class="phase-title">Corrigir o fluxo de status do cliente no GF</div>
+        <div class="phase-body">Trocar <code class="mono">tickets.update_status</code> por <code class="mono">tickets.change_status</code> na view. Substituir o dropdown genérico por duas ações: Confirmar Resolução (→ <code class="mono">FECHADO</code>) e Reabrir (já existe a rota <code class="mono">tickets.reopen</code>, só precisa virar o CTA principal quando o status for <code class="mono">aguardando_validacao_cliente</code>).</div>
+        <div class="phase-tags"><span class="tag">gf · show.blade.php</span><span class="tag">gf · TicketController</span><span class="tag">resolve #974</span></div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-num">3</div>
+      <div>
+        <div class="phase-title">Tipo — edição restrita a Admin (prioridade continua livre)</div>
+        <div class="phase-body">Decisão do Yuri: prioridade faz sentido continuar editável por qualquer agente — não mexer em <code class="mono">update_ticket_priority</code>. Só Tipo ganha o gate: <code class="mono">PATCH /v1/tickets/{id}/type</code> (rota nova) atrás de <code class="mono">AdminUser</code>, com evento de auditoria <code class="mono">type_changed</code>. Front-end: select de Tipo só aparece pra quem tem <code class="mono">role === "admin"</code>.</div>
+        <div class="phase-tags"><span class="tag">aegis · tickets.py</span><span class="tag">aegis · frontend TicketDetailPage</span><span class="tag">feature nova (tipo)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Decisões que precisam de você</h2></div>
+    <table class="decisions">
+      <thead><tr><th>Ponto</th><th>Opções</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Sub-status na Fase 1</td>
+          <td>Sub-badge textual (proposto acima) <span class="rec">recomendado</span><br>vs. tooltip on-hover no badge principal, sem elemento novo na tela</td>
+        </tr>
+        <tr>
+          <td>Ação "Confirmar Resolução" na Fase 2</td>
+          <td>Fecha direto (<code class="mono">FECHADO</code>) <span class="rec">recomendado</span><br>vs. abre modal de avaliação (rating) antes de fechar — hoje é uma ação separada (<code class="mono">tickets.rate</code>)</td>
+        </tr>
+        <tr>
+          <td>Endpoint de tipo na Fase 3</td>
+          <td>Troca livre entre os 4 tipos <span class="rec">recomendado</span><br>vs. bloquear saída de/para <code class="mono">improvement</code> (dispara fluxo de qualidade específico no GF, mudar o tipo no Aegis não reflete lá)</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    gestao_frota @ fix/roles-guard-web-user-edit (idêntico a origin/main nos arquivos citados) · aegis @ local — nenhuma alteração de código nesta sessão
+  </footer>
+
+</div>

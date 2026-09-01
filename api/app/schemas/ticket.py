@@ -102,6 +102,10 @@ class UpdatePriorityRequest(BaseModel):
     priority: str
 
 
+class UpdateTypeRequest(BaseModel):
+    type: str
+
+
 class InternalTicketCreate(BaseModel):
     subject: str
     description: str

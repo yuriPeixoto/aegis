@@ -11,6 +11,7 @@ import {
   useUpdateTicketStatus,
   useAssignTicket,
   useUpdatePriority,
+  useUpdateType,
   useUsers,
   useMessages,
   useSendMessage,
@@ -23,6 +24,7 @@ import { toast } from 'sonner'
 import { markTicketAsViewed } from '../hooks/useInboundNotifications'
 import { useMarkTicketRead } from '../hooks/useNotifications'
 import { StatusBadge } from '../components/inbox/StatusBadge'
+import { tGfSubStatus } from '../lib/translations'
 import { PriorityBadge } from '../components/inbox/PriorityBadge'
 import { TypeBadge } from '../components/inbox/TypeBadge'
 import { SlaBadge } from '../components/inbox/SlaBadge'
@@ -339,6 +341,7 @@ export function TicketDetailPage() {
   const updateStatus = useUpdateTicketStatus(ticketId)
   const assignTicket = useAssignTicket(ticketId)
   const updatePriority = useUpdatePriority(ticketId)
+  const updateType = useUpdateType(ticketId)
   const overrideSla = useOverrideSla(ticketId)
   const { data: users = [] } = useUsers()
   const { data: messages = [] } = useMessages(ticketId)
@@ -484,6 +487,15 @@ export function TicketDetailPage() {
           {ticket.type && <TypeBadge type={ticket.type} />}
           {ticket.priority && <PriorityBadge priority={ticket.priority} />}
           <StatusBadge status={ticket.status} />
+          {ticket.status.toUpperCase() === 'PENDING_CLOSURE' && (() => {
+            const gfStatusRaw = (ticket.source_metadata as { gf_status_raw?: string } | null)?.gf_status_raw
+            const hint = gfStatusRaw ? tGfSubStatus(locale, gfStatusRaw) : null
+            return hint ? (
+              <span className="text-[11px] font-mono text-slate-400" title="Status de origem no GF, antes do mapeamento para pending_closure (ADR-003)">
+                ↳ {hint}
+              </span>
+            ) : null
+          })()}
           <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
         </div>
         <div className="ml-4 border-l border-white/10 pl-4 h-6 flex items-center">
@@ -795,6 +807,25 @@ export function TicketDetailPage() {
                 <option value="urgent">Urgente</option>
               </select>
             </div>
+
+            {/* Type — admin-only: type drives the GF quality-review workflow (ADR-003),
+                changing it is a deliberate call, not routine agent triage like priority. */}
+            {isAdmin && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="shrink-0">Tipo:</span>
+                <select
+                  disabled={updateType.isPending}
+                  value={ticket.type ?? ''}
+                  onChange={(e) => updateType.mutate({ type: e.target.value })}
+                  className="flex-1 bg-brand-surface border border-white/15 rounded px-2 py-0.5 text-xs text-slate-200 cursor-pointer focus:outline-none focus:border-brand-purple disabled:opacity-50"
+                >
+                  <option value="bug">Bug</option>
+                  <option value="improvement">Melhoria</option>
+                  <option value="question">Dúvida</option>
+                  <option value="support">Suporte</option>
+                </select>
+              </div>
+            )}
 
             {/* Dates */}
             <div className="space-y-2">

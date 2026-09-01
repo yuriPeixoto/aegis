@@ -2,6 +2,7 @@ type Translations = {
   status: Record<string, string>
   priority: Record<string, string>
   type: Record<string, string>
+  gfSubStatus: Record<string, string>
 }
 
 const TRANSLATIONS: Record<string, Translations> = {
@@ -14,6 +15,12 @@ const TRANSLATIONS: Record<string, Translations> = {
     },
     priority: { URGENT: 'Urgent', HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' },
     type: { BUG: 'Bug', IMPROVEMENT: 'Improvement', QUESTION: 'Question', SUPPORT: 'Support' },
+    // Sub-reason for PENDING_CLOSURE — GF collapses these two into the same Aegis status
+    // (ADR-003), this disambiguates which one it actually is.
+    gfSubStatus: {
+      aguardando_cliente: 'awaiting client reply',
+      aguardando_validacao_cliente: 'awaiting client confirmation',
+    },
   },
   'pt-BR': {
     status: {
@@ -24,6 +31,10 @@ const TRANSLATIONS: Record<string, Translations> = {
     },
     priority: { URGENT: 'Urgente', HIGH: 'Alto', MEDIUM: 'Médio', LOW: 'Baixo' },
     type: { BUG: 'Bug', IMPROVEMENT: 'Melhoria', QUESTION: 'Dúvida', SUPPORT: 'Suporte' },
+    gfSubStatus: {
+      aguardando_cliente: 'aguardando resposta do cliente',
+      aguardando_validacao_cliente: 'aguardando confirmação do cliente',
+    },
   },
 }
 
@@ -44,4 +55,8 @@ export function tPriority(lang: string, value: string): string {
 export function tType(lang: string, value: string): string {
   const key = value.toUpperCase()
   return resolve(lang).type[key] ?? value
+}
+
+export function tGfSubStatus(lang: string, value: string): string | null {
+  return resolve(lang).gfSubStatus[value] ?? null
 }

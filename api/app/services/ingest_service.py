@@ -38,6 +38,12 @@ _GF_TO_AEGIS: dict[str, str] = {
     "cancelado": "cancelled",
 }
 
+# The two GF statuses that both collapse into "pending_closure" above but mean opposite
+# things ("aguardando_cliente" = team is waiting on the client to reply; "aguardando_
+# validacao_cliente" = ticket is done, client needs to confirm). Tracked in
+# ticket.source_metadata["gf_status_raw"] so the frontend can disambiguate.
+_AMBIGUOUS_GF_STATUSES = {"aguardando_cliente", "aguardando_validacao_cliente"}
+
 logger = logging.getLogger(__name__)
 
 
@@ -269,6 +275,14 @@ class IngestService:
                 old_status = ticket.status
                 ticket.status = aegis_status
                 ticket.last_synced_at = datetime.now(UTC)
+                # aguardando_cliente e aguardando_validacao_cliente colapsam ambos em
+                # "pending_closure" (ADR-003) — guarda o status bruto do GF para o
+                # front-end distinguir os dois casos sem reabrir a lógica de SLA.
+                if gf_status in _AMBIGUOUS_GF_STATUSES:
+                    ticket.source_metadata = {
+                        **(ticket.source_metadata or {}),
+                        "gf_status_raw": gf_status,
+                    }
                 await SlaService(self._db).on_status_changed(
                     ticket, old_status, aegis_status, datetime.now(UTC)
                 )

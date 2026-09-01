@@ -224,6 +224,20 @@ export function useUpdatePriority(ticketId: number) {
   })
 }
 
+export function useUpdateType(ticketId: number) {
+  const queryClient = useQueryClient()
+  return useMutation<TicketDetail, Error, { type: string }>({
+    mutationFn: async (body) => {
+      const { data } = await api.patch<TicketDetail>(`/tickets/${ticketId}/type`, body)
+      return data
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['ticket', ticketId], updated)
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
+    },
+  })
+}
+
 export interface BulkUpdatePayload {
   ticket_ids: number[]
   status?: string
