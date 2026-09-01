@@ -125,3 +125,36 @@ async def admin_client(admin_token_headers: dict) -> AsyncClient:
         headers=admin_token_headers,
     ) as ac:
         yield ac
+
+
+@pytest.fixture
+async def agent_user(db_session: AsyncSession) -> dict:
+    email = f"agent-{uuid.uuid4().hex[:8]}@aegis.test"
+    password = "AgentP@ss1"
+    user = await UserService(db_session).create(
+        email=email,
+        password=password,
+        name="Test Agent",
+        role="agent",
+        must_change_password=False,
+    )
+    return {"id": user.id, "email": email, "password": password}
+
+
+@pytest.fixture
+async def agent_token_headers(client: AsyncClient, agent_user: dict) -> dict:
+    resp = await client.post(
+        "/v1/auth/login",
+        json={"email": agent_user["email"], "password": agent_user["password"]},
+    )
+    return {"Authorization": f"Bearer {resp.json()['access_token']}"}
+
+
+@pytest.fixture
+async def agent_client(agent_token_headers: dict) -> AsyncClient:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers=agent_token_headers,
+    ) as ac:
+        yield ac

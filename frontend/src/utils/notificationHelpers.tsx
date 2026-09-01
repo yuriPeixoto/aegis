@@ -1,5 +1,5 @@
 import React from 'react'
-import { AtSign, AlertTriangle, MessageCircle, CalendarDays, BookOpen } from 'lucide-react'
+import { AtSign, AlertTriangle, MessageCircle, CalendarDays, BookOpen, UserCheck } from 'lucide-react'
 
 export interface NotifMetaInput {
   type: string
@@ -49,6 +49,13 @@ export function notifMeta(
     return {
       icon: MessageCircle,
       label: <>{t('notifications.bell.newMessageFrom')} {actor} {t('notifications.bell.inTicket')} {id}</>,
+      href: ticketHref,
+    }
+  }
+  if (notif.type === 'assigned') {
+    return {
+      icon: UserCheck,
+      label: <>{actor} {t('notifications.bell.assignedYou')} {id}</>,
       href: ticketHref,
     }
   }
