@@ -108,3 +108,37 @@ async def test_ingest_event(client: AsyncClient, source_with_key: dict) -> None:
     )
     assert response.status_code == 201
     assert "event_id" in response.json()
+
+
+@pytest.mark.asyncio
+async def test_ingest_event_status_changed_stores_gf_ambiguous_substatus(
+    client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """aguardando_cliente and aguardando_validacao_cliente both map to Aegis's
+    'pending_closure' (ADR-003) — the raw GF status must be kept in source_metadata
+    so the frontend can tell the two apart. See docs/adr/003-enum-normalization-strategy.md."""
+    external_id = unique_external_id()
+    headers = {"X-Aegis-Key": source_with_key["api_key"]}
+
+    create_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": external_id, "status": "in_progress", "subject": "Test ticket"},
+    )
+    ticket_id = create_resp.json()["ticket_id"]
+
+    response = await client.post(
+        "/v1/ingest/tickets/events",
+        headers=headers,
+        json={
+            "external_id": external_id,
+            "event_type": "status_changed",
+            "payload": {"status": "aguardando_validacao_cliente"},
+        },
+    )
+    assert response.status_code == 201
+
+    ticket_resp = await admin_client.get(f"/v1/tickets/{ticket_id}")
+    ticket = ticket_resp.json()
+    assert ticket["status"] == "pending_closure"
+    assert ticket["source_metadata"]["gf_status_raw"] == "aguardando_validacao_cliente"

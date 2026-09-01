@@ -24,6 +24,7 @@ from app.schemas.ticket import (
     TicketTagsUpdateRequest,
     UpdatePriorityRequest,
     UpdateStatusRequest,
+    UpdateTypeRequest,
 )
 from app.services.attachment_service import AttachmentService
 from app.services.ticket_service import TicketService
@@ -427,6 +428,50 @@ async def update_ticket_priority(
                 "old_priority": old_priority,
                 "new_priority": body.priority,
                 "changed_by": current_user.name,
+            },
+        )
+    )
+    await db.commit()
+
+    ticket = await svc.get_ticket(ticket_id)
+    return _detail(ticket)
+
+
+_VALID_TYPES = {"bug", "improvement", "question", "support"}
+
+
+@router.patch("/{ticket_id}/type", response_model=TicketDetailResponse)
+async def update_ticket_type(
+    ticket_id: int,
+    body: UpdateTypeRequest,
+    db: DbSession,
+    admin: AdminUser,
+) -> TicketDetailResponse:
+    """Override the type of a ticket. Admin-only — unlike priority, type drives the GF
+    quality-review workflow (see ADR-003), so changing it needs to be a deliberate call."""
+    if body.type not in _VALID_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Invalid type. Must be one of: {', '.join(sorted(_VALID_TYPES))}",
+        )
+
+    from app.models.ticket_event import TicketEvent
+
+    svc = TicketService(db)
+    ticket = await svc.get_ticket(ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    old_type = ticket.type
+    ticket.type = body.type
+    db.add(
+        TicketEvent(
+            ticket_id=ticket_id,
+            event_type="type_changed",
+            payload={
+                "old_type": old_type,
+                "new_type": body.type,
+                "changed_by": admin.name,
             },
         )
     )
