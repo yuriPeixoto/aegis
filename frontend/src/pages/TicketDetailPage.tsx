@@ -379,11 +379,19 @@ export function TicketDetailPage() {
   useEffect(() => {
     markTicketAsViewed(ticketId)
     markTicketRead.mutate(ticketId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- markTicketRead.mutate is stable (TanStack Query); including the mutation object itself would re-run this on every unrelated state change (isPending, etc.)
   }, [ticketId])
 
+  // Tracks which ticket we've already auto-scrolled, so re-opening a ticket jumps
+  // straight to the bottom (no animation) while a live new message still scrolls smoothly.
+  const scrolledTicketRef = useRef<number | null>(null)
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+    if (isLoading || !ticket) return
+    const isFirstScrollForTicket = scrolledTicketRef.current !== ticketId
+    bottomRef.current?.scrollIntoView({ behavior: isFirstScrollForTicket ? 'auto' : 'smooth' })
+    scrolledTicketRef.current = ticketId
+  }, [isLoading, ticket, ticketId, messages.length])
 
   const extractMentions = useCallback((text: string): number[] => {
     return users.filter((u) => text.includes(`@${u.name}`)).map((u) => u.id)
