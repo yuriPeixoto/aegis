@@ -10,6 +10,9 @@ import { AgentProfilePage } from '../pages/AgentProfilePage'
 import { CalendarPage } from '../pages/CalendarPage'
 import { NotificationsPage } from '../pages/NotificationsPage'
 import { AboutPage } from '../pages/AboutPage'
+import { TrainingRecordsPage } from '../pages/TrainingRecordsPage'
+import { TrainingRecordDetailPage } from '../pages/TrainingRecordDetailPage'
+import { PublicTrainingSignPage } from '../pages/PublicTrainingSignPage'
 
 import { DashboardLayout } from '../pages/dashboard/DashboardLayout'
 import { OverviewTab } from '../pages/dashboard/OverviewTab'
@@ -35,6 +38,10 @@ export const router = createBrowserRouter([
   {
     path: '/change-password',
     element: <ChangePasswordPage />,
+  },
+  {
+    path: '/assinar-treinamento/:token',
+    element: <PublicTrainingSignPage />,
   },
   {
     element: <AppShell />,
@@ -77,6 +84,14 @@ export const router = createBrowserRouter([
       {
         path: '/agenda',
         element: <CalendarPage />,
+      },
+      {
+        path: '/treinamentos',
+        element: <TrainingRecordsPage />,
+      },
+      {
+        path: '/treinamentos/:id',
+        element: <TrainingRecordDetailPage />,
       },
       {
         path: '/notifications',

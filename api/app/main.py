@@ -26,6 +26,7 @@ from app.routers import (
     sources,
     tags,
     tickets,
+    training_records,
     users,
     views,
 )
@@ -79,6 +80,8 @@ app.include_router(dashboard.router)
 app.include_router(escalation.router)
 app.include_router(views.router)
 app.include_router(settings_router.router)
+app.include_router(training_records.router)
+app.include_router(training_records.public_router)
 
 
 @app.get("/health")

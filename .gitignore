@@ -21,6 +21,9 @@ build/
 frontend/node_modules/
 frontend/dist/
 
+# Uploaded files (ticket attachments, training signatures) — never committed
+api/uploads/
+
 # IDE
 .idea/
 .vscode/
