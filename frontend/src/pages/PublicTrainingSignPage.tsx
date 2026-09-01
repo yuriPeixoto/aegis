@@ -11,8 +11,16 @@ const MODALITY_LABEL_KEY: Record<string, string> = {
   remoto: 'training.modality.remoto',
 }
 
+function formatDate(iso: string, locale: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 export function PublicTrainingSignPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { token = '' } = useParams<{ token: string }>()
   const { data: summary, isLoading, isError } = usePublicTrainingSummary(token)
   const { mutate: sign, isPending, isError: signError } = usePublicSign(token)
@@ -88,7 +96,7 @@ export function PublicTrainingSignPage() {
             <>
               <h2 className="text-lg font-semibold text-slate-100 mb-1">{summary.training_name}</h2>
               <p className="text-xs text-slate-400 mb-4">
-                {summary.system_module} — {summary.training_date}
+                {summary.system_module} — {formatDate(summary.training_date, i18n.language)}
                 {summary.start_time && ` · ${summary.start_time}${summary.end_time ? ` às ${summary.end_time}` : ''}`}
                 {' · '}
                 {t(MODALITY_LABEL_KEY[summary.modality] ?? 'training.modality.presencial')}
