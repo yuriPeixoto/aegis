@@ -1,4 +1,5 @@
 import React, { useRef, useState, memo } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { X, Send, AlertCircle, Loader2, Paperclip, XCircle } from 'lucide-react'
 import { useCreateInternalTicket } from '../../hooks/useTickets'
@@ -80,7 +81,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
     { value: 'urgent', label: t('priority.URGENT') },
   ]
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-dark/80 backdrop-blur-sm">
       <div className="bg-brand-dark border border-brand-border rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-brand-border flex items-center justify-between">
@@ -244,6 +245,7 @@ export const InternalTicketModal = memo(function InternalTicketModal({ isOpen, o
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })
