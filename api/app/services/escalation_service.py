@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -208,6 +208,30 @@ class EscalationService:
         candidates = [t for t in [last_msg, last_ev] if t is not None]
         return max(candidates) if candidates else None
 
+    async def _find_open_escalation_note(
+        self, rule_id: int, ticket_id: int
+    ) -> TicketMessage | None:
+        """Most recent automatic note this rule already left on this ticket, if any."""
+        result = await self._db.execute(
+            select(TicketMessage)
+            .where(
+                TicketMessage.ticket_id == ticket_id,
+                TicketMessage.escalation_rule_id == rule_id,
+            )
+            .order_by(TicketMessage.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def _escalation_occurrence(self, rule_id: int, ticket_id: int) -> int:
+        """How many times this rule has already fired for this ticket (1 = first time)."""
+        result = await self._db.execute(
+            select(func.count())
+            .select_from(TicketEscalation)
+            .where(TicketEscalation.rule_id == rule_id, TicketEscalation.ticket_id == ticket_id)
+        )
+        return (result.scalar_one() or 0) + 1
+
     async def _apply_action(
         self, rule: EscalationRule, ticket: Ticket, now: datetime
     ) -> str | None:
@@ -283,17 +307,31 @@ class EscalationService:
             mention_ids = await self._get_notify_user_ids(rule.action_type)
             if not mention_ids:
                 return None
-            note = TicketMessage(
-                ticket_id=ticket.id,
-                direction="outbound",
-                author_name="Aegis (automático)",
-                body=f"🚨 Escalação automática — regra: **{rule.name}**",
-                is_internal=True,
-                author_user_id=None,
-                mentioned_user_ids=mention_ids,
-                created_at=now,
-            )
-            self._db.add(note)
+
+            occurrence = await self._escalation_occurrence(rule.id, ticket.id)
+            body = f"🚨 Escalação automática — regra: **{rule.name}**"
+            if occurrence > 1:
+                body += f" (sem novidade, disparo nº {occurrence})"
+
+            existing_note = await self._find_open_escalation_note(rule.id, ticket.id)
+            if existing_note is not None:
+                existing_note.body = body
+                existing_note.mentioned_user_ids = mention_ids
+                existing_note.created_at = now
+            else:
+                self._db.add(
+                    TicketMessage(
+                        ticket_id=ticket.id,
+                        direction="outbound",
+                        author_name="Aegis (automático)",
+                        body=body,
+                        is_internal=True,
+                        author_user_id=None,
+                        mentioned_user_ids=mention_ids,
+                        escalation_rule_id=rule.id,
+                        created_at=now,
+                    )
+                )
             self._db.add(
                 TicketEvent(
                     ticket_id=ticket.id,

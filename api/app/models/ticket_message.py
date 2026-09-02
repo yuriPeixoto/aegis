@@ -44,6 +44,12 @@ class TicketMessage(Base):
     # ID of the message in the source system — used to prevent duplicate ingestion
     source_message_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
+    # Set only for automatic escalation notes — lets EscalationService find and
+    # update the existing note for a ticket+rule instead of piling up new ones
+    escalation_rule_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("escalation_rules.id", ondelete="SET NULL"), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
