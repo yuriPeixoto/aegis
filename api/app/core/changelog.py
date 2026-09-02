@@ -15,6 +15,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.4.1",
+        "date": "2026-09-02",
+        "highlights": [
+            "Correção: reduzido o número de notificações repetidas sobre chamados "
+            "parados sem atualização",
+        ],
+    },
+    {
         "version": "1.4.0",
         "date": "2026-09-01",
         "highlights": [

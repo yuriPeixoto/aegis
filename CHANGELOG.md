@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] — 2026-09-02
+
+### Fixed
+- **Ruído da regra de escalação "Sem atualização — 48h"** — regra disparava pra qualquer prioridade, acumulando 10-20+ notas internas repetidas em tickets de baixa prioridade parados há meses. Restrita a high/urgent; nova regra irmã pra low/medium com cooldown de 7 dias (era 24h); disparos repetidos da mesma regra no mesmo ticket agora atualizam a nota automática existente em vez de criar uma nova a cada vez (`ticket_messages.escalation_rule_id`). Ticket Aegis #1249.
+
+### Chore
+- Normalizado 1 registro isolado com `type='melhoria'` (português) pra `'improvement'`, inconsistência de dado achada em auditoria geral do banco. Ticket Aegis #1252.
+
 ## [1.4.0] — 2026-09-01
 
 ### Added
