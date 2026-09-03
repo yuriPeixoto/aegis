@@ -96,6 +96,26 @@ class NotificationService:
         )
         await self._db.commit()
 
+    async def create_critical_source_notification(
+        self,
+        ticket: Ticket,
+        recipient_user_id: int,
+        source_name: str,
+    ) -> None:
+        """Notify the recipient that a critical-source ticket (Log Watcher, Cronwatch —
+        see #1271) was just created. Caller only invokes this once, at ticket creation."""
+        self._db.add(
+            Notification(
+                user_id=recipient_user_id,
+                type="critical_source",
+                ticket_id=ticket.id,
+                actor_name=source_name,
+                ticket_subject=ticket.subject,
+                ticket_external_id=ticket.external_id,
+            )
+        )
+        await self._db.commit()
+
     async def create_new_message_notifications(
         self,
         ticket: Ticket,

@@ -15,6 +15,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.5.0",
+        "date": "2026-09-03",
+        "highlights": [
+            "Novo: modal bloqueante ao surgir um chamado crítico do Log Watcher, "
+            "com tag automática",
+        ],
+    },
+    {
         "version": "1.4.1",
         "date": "2026-09-02",
         "highlights": [

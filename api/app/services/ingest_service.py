@@ -9,14 +9,24 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.source import Source
+from app.models.tag import Tag
 from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
+from app.models.user import User
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
 from app.services.attachment_service import AttachmentService
 from app.services.checklist_service import ChecklistService
 from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
+
+# Source.slug -> (tag name, recipient email). A ticket created by one of these
+# sources gets the tag auto-applied and a blocking notification (see #1086) sent
+# to the recipient, once, at creation. Extend here for Cronwatch when it's ready
+# (#1271) — same mechanism, new slug/tag/recipient entry.
+_CRITICAL_SOURCE_ALERTS: dict[str, tuple[str, str]] = {
+    "log-watcher": ("Log Watcher", "yuripeixoto@gmail.com"),
+}
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 #
@@ -145,6 +155,14 @@ class IngestService:
                 await self._db.commit()
 
             await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
+
+            alert = _CRITICAL_SOURCE_ALERTS.get(source.slug)
+            if alert:
+                tag_name, recipient_email = alert
+                await self._apply_critical_source_alert(
+                    ticket, tag_name, recipient_email, source.name
+                )
+
             return ticket, True
 
         # Update existing ticket
@@ -174,6 +192,39 @@ class IngestService:
         await self._db.commit()
         await self._db.refresh(ticket)
         return ticket, False
+
+    async def _apply_critical_source_alert(
+        self, ticket: Ticket, tag_name: str, recipient_email: str, source_name: str
+    ) -> None:
+        """Auto-tag the ticket and notify the recipient — see _CRITICAL_SOURCE_ALERTS."""
+        tag_result = await self._db.execute(select(Tag).where(Tag.name == tag_name))
+        tag = tag_result.scalar_one_or_none()
+        if tag is None:
+            tag = Tag(name=tag_name)
+            self._db.add(tag)
+            await self._db.flush()
+
+        await self._db.refresh(ticket, ["tags"])
+        if tag not in ticket.tags:
+            ticket.tags.append(tag)
+
+        user_result = await self._db.execute(select(User).where(User.email == recipient_email))
+        recipient = user_result.scalar_one_or_none()
+        if recipient is None:
+            logger.warning(
+                "ingest: critical source alert recipient '%s' not found — "
+                "skipping notification for ticket %s (tag '%s' still applied)",
+                recipient_email,
+                ticket.external_id,
+                tag_name,
+            )
+            await self._db.commit()
+            return
+
+        await self._db.commit()
+        await NotificationService(self._db).create_critical_source_notification(
+            ticket, recipient.id, source_name
+        )
 
     async def record_event(self, source: Source, data: TicketEventPayload) -> TicketEvent:
         """
