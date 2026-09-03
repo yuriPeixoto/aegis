@@ -15,6 +15,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.5.1",
+        "date": "2026-09-03",
+        "highlights": [
+            "Correção: ticket mesclado não conta mais como atrasado para sempre",
+            "Correção: mensagens novas do cliente pós-mesclagem chegam no ticket certo",
+        ],
+    },
+    {
         "version": "1.5.0",
         "date": "2026-09-03",
         "highlights": [

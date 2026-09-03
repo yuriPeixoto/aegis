@@ -29,7 +29,10 @@ async def ingest_ticket(
     ticket, created = await IngestService(db).upsert_ticket(source, data)
     return IngestResponse(
         ticket_id=ticket.id,
-        external_id=ticket.external_id,
+        # Echo the request's own external_id, not ticket.external_id — #1287's merge
+        # redirect can land this update on a different (target) ticket, whose
+        # external_id would otherwise silently diverge from what was submitted.
+        external_id=data.external_id,
         created=created,
     )
 

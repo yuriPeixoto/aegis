@@ -14,7 +14,7 @@ from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
 from app.models.user import User
 
-_INACTIVE = ("pending_closure", "resolved", "closed", "cancelled")
+_INACTIVE = ("pending_closure", "resolved", "closed", "cancelled", "merged")
 
 
 class DashboardService:

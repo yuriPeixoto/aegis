@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.ticket import Ticket
 
 
 def unique_slug() -> str:
@@ -254,3 +259,73 @@ async def test_update_ticket_type_rejects_invalid_value(
         f"/v1/tickets/{ingested_ticket['ticket_id']}/type", json={"type": "not_a_real_type"}
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_merge_ticket_clears_source_sla(
+    admin_client: AsyncClient,
+    ingested_ticket: dict,
+    source_with_key: dict,
+    client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """#1287 bug 2: a merged ticket kept its old sla_due_at forever, counting as
+    perpetually overdue in the dashboard. merge_ticket() must clear the source's
+    SLA clock at merge time."""
+    target_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers={"X-Aegis-Key": source_with_key["api_key"]},
+        json={"external_id": unique_external_id(), "status": "open", "subject": "Target ticket"},
+    )
+    target_id = target_resp.json()["ticket_id"]
+
+    result = await db_session.execute(
+        select(Ticket).where(Ticket.id == ingested_ticket["ticket_id"])
+    )
+    source_ticket = result.scalar_one()
+    source_ticket.sla_due_at = datetime.now(UTC) - timedelta(hours=5)
+    source_ticket.sla_started_at = datetime.now(UTC) - timedelta(hours=10)
+    await db_session.commit()
+
+    merge_resp = await admin_client.post(
+        f"/v1/tickets/{ingested_ticket['ticket_id']}/merge",
+        json={"target_ticket_id": target_id},
+    )
+    assert merge_resp.status_code == 200
+
+    # The API call committed via a different session — this session's identity map
+    # still holds the stale pre-merge object, so force a re-fetch from the DB.
+    db_session.expire_all()
+    result = await db_session.execute(
+        select(Ticket).where(Ticket.id == ingested_ticket["ticket_id"])
+    )
+    merged_source = result.scalar_one()
+    assert merged_source.status == "merged"
+    assert merged_source.sla_due_at is None
+    assert merged_source.sla_started_at is None
+
+
+@pytest.mark.asyncio
+async def test_merged_ticket_excluded_from_dashboard_overdue(
+    admin_client: AsyncClient,
+    ingested_ticket: dict,
+    db_session: AsyncSession,
+) -> None:
+    """#1287 bug 2: dashboard_service._INACTIVE didn't include 'merged', so an
+    already-merged ticket that still had a stale (pre-fix) sla_due_at in the past
+    kept counting as overdue forever. Reproduces that leftover state directly —
+    independent of the merge_ticket() SLA-clearing fix covered by the test above."""
+    result = await db_session.execute(
+        select(Ticket).where(Ticket.id == ingested_ticket["ticket_id"])
+    )
+    ticket = result.scalar_one()
+    ticket.status = "merged"
+    ticket.sla_due_at = datetime.now(UTC) - timedelta(hours=5)
+    await db_session.commit()
+
+    stats_resp = await admin_client.get("/v1/dashboard/stats")
+    assert stats_resp.status_code == 200
+    stats = stats_resp.json()
+
+    overdue_ids = {t["id"] for t in stats["overdue_tickets"]}
+    assert ingested_ticket["ticket_id"] not in overdue_ids
