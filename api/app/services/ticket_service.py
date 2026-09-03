@@ -88,9 +88,7 @@ class TicketService:
                 term = f"%{search}%"
                 from sqlalchemy import or_
 
-                query = query.where(
-                    or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term))
-                )
+                query = query.where(or_(Ticket.subject.ilike(term), Ticket.external_id.ilike(term)))
             if created_after is not None:
                 query = query.where(Ticket.first_ingested_at >= created_after)
             if created_before is not None:
@@ -581,10 +579,16 @@ class TicketService:
             )
         )
 
-        # Mark source as merged
+        # Mark source as merged — also clear its SLA clock so it doesn't count as
+        # perpetually overdue in the dashboard/KPIs after being folded into the target
+        # (#1287: a merged ticket kept its old sla_due_at forever, with no way to
+        # re-run it short of a manual SQL fix).
         source.status = "merged"
         source.merged_into_ticket_id = target_ticket_id
         source.merged_at = now
+        source.sla_due_at = None
+        source.sla_started_at = None
+        source.sla_paused_since = None
         self._db.add(source)
 
         await self._db.commit()

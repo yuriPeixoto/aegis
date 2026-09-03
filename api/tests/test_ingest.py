@@ -171,6 +171,123 @@ async def test_ingest_critical_source_tags_and_notifies_once(
 
 
 @pytest.mark.asyncio
+async def test_record_event_client_reply_redirects_to_merge_target(
+    client: AsyncClient,
+    admin_client: AsyncClient,
+    agent_client: AsyncClient,
+    agent_user: dict,
+    source_with_key: dict,
+) -> None:
+    """#1287 bug 1: a client reply arriving for a ticket that's already been merged
+    must land on the ticket the conversation actually lives on now, or it's
+    invisible to whoever is working the merged-into ticket."""
+    headers = {"X-Aegis-Key": source_with_key["api_key"]}
+    source_ext = unique_external_id()
+    target_ext = unique_external_id()
+
+    source_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": source_ext, "status": "open", "subject": "Duplicate report"},
+    )
+    source_id = source_resp.json()["ticket_id"]
+
+    target_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={
+            "external_id": target_ext,
+            "status": "open",
+            "subject": "Primary report",
+            "assigned_to_user_id": agent_user["id"],
+        },
+    )
+    target_id = target_resp.json()["ticket_id"]
+
+    merge_resp = await admin_client.post(
+        f"/v1/tickets/{source_id}/merge", json={"target_ticket_id": target_id}
+    )
+    assert merge_resp.status_code == 200
+
+    event_resp = await client.post(
+        "/v1/ingest/tickets/events",
+        headers=headers,
+        json={
+            "external_id": source_ext,
+            "event_type": "client_reply",
+            "payload": {"body": "Ainda sem resposta!", "author_name": "Cliente"},
+        },
+    )
+    assert event_resp.status_code == 201
+
+    target_messages = (await admin_client.get(f"/v1/tickets/{target_id}/messages")).json()
+    assert any(m["body"] == "Ainda sem resposta!" for m in target_messages)
+
+    source_messages = (await admin_client.get(f"/v1/tickets/{source_id}/messages")).json()
+    assert not any(m["body"] == "Ainda sem resposta!" for m in source_messages)
+
+    notif_resp = await agent_client.get("/v1/me/notifications", params={"unread_only": "true"})
+    new_message_notifs = [n for n in notif_resp.json() if n["type"] == "new_client_message"]
+    assert any(n["ticket_id"] == target_id for n in new_message_notifs)
+
+
+@pytest.mark.asyncio
+async def test_upsert_ticket_redirects_through_merge_chain(
+    client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """#1287 bug 1: a merge target can itself later be merged into a further ticket
+    (A -> B -> C). A sync arriving for A must walk the whole chain and land on C,
+    not stall at the now-also-merged B. The response still echoes the request's own
+    external_id, not whichever ticket the update actually landed on."""
+    headers = {"X-Aegis-Key": source_with_key["api_key"]}
+    a_ext, b_ext, c_ext = unique_external_id(), unique_external_id(), unique_external_id()
+
+    a_id = (
+        await client.post(
+            "/v1/ingest/tickets",
+            headers=headers,
+            json={"external_id": a_ext, "status": "open", "subject": "A"},
+        )
+    ).json()["ticket_id"]
+    b_id = (
+        await client.post(
+            "/v1/ingest/tickets",
+            headers=headers,
+            json={"external_id": b_ext, "status": "open", "subject": "B"},
+        )
+    ).json()["ticket_id"]
+    c_id = (
+        await client.post(
+            "/v1/ingest/tickets",
+            headers=headers,
+            json={"external_id": c_ext, "status": "open", "subject": "C"},
+        )
+    ).json()["ticket_id"]
+
+    merge_ab = await admin_client.post(f"/v1/tickets/{a_id}/merge", json={"target_ticket_id": b_id})
+    assert merge_ab.status_code == 200
+    merge_bc = await admin_client.post(f"/v1/tickets/{b_id}/merge", json={"target_ticket_id": c_id})
+    assert merge_bc.status_code == 200
+
+    upsert_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": a_ext, "status": "in_progress", "subject": "A updated"},
+    )
+    assert upsert_resp.status_code == 200
+    body = upsert_resp.json()
+    assert body["created"] is False
+    assert body["ticket_id"] == c_id
+    assert body["external_id"] == a_ext
+
+    c_ticket = (await admin_client.get(f"/v1/tickets/{c_id}")).json()
+    assert c_ticket["status"] == "in_progress"
+
+    a_ticket = (await admin_client.get(f"/v1/tickets/{a_id}")).json()
+    assert a_ticket["status"] == "merged"
+
+
+@pytest.mark.asyncio
 async def test_ingest_event_status_changed_stores_gf_ambiguous_substatus(
     client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
 ) -> None:

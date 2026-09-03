@@ -165,6 +165,11 @@ class IngestService:
 
             return ticket, True
 
+        # #1287: a ticket that was merged into another has no business receiving new
+        # state from the source anymore — redirect to wherever it actually lives now.
+        if ticket.merged_into_ticket_id is not None:
+            ticket = await self._resolve_active_ticket(ticket)
+
         # Update existing ticket
         old_status = ticket.status
         ticket.status = data.status
@@ -226,6 +231,33 @@ class IngestService:
             ticket, recipient.id, source_name
         )
 
+    async def _resolve_active_ticket(self, ticket: Ticket) -> Ticket:
+        """Follow merged_into_ticket_id to the ticket that's still active (#1287: a
+        merge target can itself be merged into a later ticket, so this walks the
+        whole chain, not just one hop). Everything inbound for a merged ticket —
+        new messages, status/CSAT events — should land on wherever the conversation
+        actually lives now, or it silently disappears on the dead source ticket."""
+        seen = {ticket.id}
+        current = ticket
+        while current.merged_into_ticket_id is not None:
+            if current.merged_into_ticket_id in seen:
+                logger.error(
+                    "ingest: merge chain cycle detected starting at ticket %s — "
+                    "stopping redirect at ticket %s",
+                    ticket.external_id,
+                    current.external_id,
+                )
+                break
+            seen.add(current.merged_into_ticket_id)
+            result = await self._db.execute(
+                select(Ticket).where(Ticket.id == current.merged_into_ticket_id)
+            )
+            next_ticket = result.scalar_one_or_none()
+            if next_ticket is None:
+                break
+            current = next_ticket
+        return current
+
     async def record_event(self, source: Source, data: TicketEventPayload) -> TicketEvent:
         """
         Record a discrete event (status change, response added, etc.) for an existing ticket.
@@ -250,6 +282,8 @@ class IngestService:
             )
             self._db.add(ticket)
             await self._db.flush()
+        elif ticket.merged_into_ticket_id is not None:
+            ticket = await self._resolve_active_ticket(ticket)
 
         # Cleanse payload for storage in events table (remove huge base64 strings)
         cleansed_payload = _cleanse_attachments_for_event(data.payload)
