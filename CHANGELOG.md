@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] — 2026-09-03
+
+### Added
+- **Modal bloqueante para chamados críticos do Log Watcher** — reaproveita exatamente a infra do #1086 (mesmo modal sem dismissal por Escape/clique fora, só "Ciente"/"Ver ticket"), mas o gatilho passa a ser a criação de um ticket vindo da Source dedicada do log-watch-aegis (`slug` `log-watcher`), em vez de atribuição. A tag "Log Watcher" é criada/aplicada automaticamente no ticket nesse momento. Dispara só uma vez, na criação — um upsert de atualização do mesmo ticket não repete a notificação. Escopo reduzido de propósito só ao Log Watcher por ora; Cronwatch fica para uma iteração futura (mapa `_CRITICAL_SOURCE_ALERTS` já preparado pra receber a segunda entrada). Ticket Aegis #1271.
+
 ## [1.4.1] — 2026-09-02
 
 ### Fixed

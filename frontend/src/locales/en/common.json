@@ -676,6 +676,10 @@
       "body": "assigned the ticket below to you:",
       "viewTicket": "View ticket",
       "confirm": "Got it"
+    },
+    "criticalSource": {
+      "title": "Critical ticket created",
+      "body": "automatically opened the ticket below, which needs your attention:"
     }
   },
   "calendar": {

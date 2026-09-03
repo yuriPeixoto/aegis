@@ -111,6 +111,66 @@ async def test_ingest_event(client: AsyncClient, source_with_key: dict) -> None:
 
 
 @pytest.mark.asyncio
+async def test_ingest_critical_source_tags_and_notifies_once(
+    client: AsyncClient,
+    admin_client: AsyncClient,
+    agent_client: AsyncClient,
+    agent_user: dict,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ticket created by a source registered in _CRITICAL_SOURCE_ALERTS (e.g. Log
+    Watcher, #1271) gets the tag auto-applied and a blocking 'critical_source'
+    notification sent to the mapped recipient — only on creation, not on upsert."""
+    from app.services import ingest_service
+
+    monkeypatch.setitem(
+        ingest_service._CRITICAL_SOURCE_ALERTS,
+        "log-watcher-test",
+        ("Log Watcher", agent_user["email"]),
+    )
+
+    source_resp = await admin_client.post(
+        "/v1/sources", json={"name": "Log Watcher", "slug": "log-watcher-test"}
+    )
+    assert source_resp.status_code == 201
+    source = source_resp.json()
+
+    external_id = unique_external_id()
+    ingest_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers={"X-Aegis-Key": source["api_key"]},
+        json={"external_id": external_id, "status": "open", "subject": "Falha real em produção"},
+    )
+    assert ingest_resp.status_code == 200
+    ticket_id = ingest_resp.json()["ticket_id"]
+
+    ticket_resp = await admin_client.get(f"/v1/tickets/{ticket_id}")
+    tag_names = {t["name"] for t in ticket_resp.json()["tags"]}
+    assert "Log Watcher" in tag_names
+
+    notif_resp = await agent_client.get("/v1/me/notifications", params={"unread_only": "true"})
+    notifications = notif_resp.json()
+    critical = [n for n in notifications if n["type"] == "critical_source"]
+    assert len(critical) == 1
+    assert critical[0]["ticket_id"] == ticket_id
+    assert critical[0]["actor_name"] == "Log Watcher"
+
+    # Upsert (same external_id) must not fire a second notification
+    await client.post(
+        "/v1/ingest/tickets",
+        headers={"X-Aegis-Key": source["api_key"]},
+        json={
+            "external_id": external_id,
+            "status": "in_progress",
+            "subject": "Falha real em produção",
+        },
+    )
+    notif_resp_2 = await agent_client.get("/v1/me/notifications", params={"unread_only": "true"})
+    critical_2 = [n for n in notif_resp_2.json() if n["type"] == "critical_source"]
+    assert len(critical_2) == 1
+
+
+@pytest.mark.asyncio
 async def test_ingest_event_status_changed_stores_gf_ambiguous_substatus(
     client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
 ) -> None:

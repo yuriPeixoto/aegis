@@ -25,7 +25,8 @@ class Notification(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
-    # mention | new_ticket | new_client_message | assigned | on_call_reminder | training_reminder
+    # mention | new_ticket | new_client_message | assigned | critical_source |
+    # on_call_reminder | training_reminder
     type: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Ticket-related (nullable — calendar notifications don't have a ticket)

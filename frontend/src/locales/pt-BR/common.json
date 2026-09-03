@@ -676,6 +676,10 @@
       "body": "atribuiu o ticket abaixo a você:",
       "viewTicket": "Ver ticket",
       "confirm": "Ciente"
+    },
+    "criticalSource": {
+      "title": "Ticket crítico criado",
+      "body": "abriu automaticamente o ticket abaixo, que precisa da sua atenção:"
     }
   },
   "calendar": {
