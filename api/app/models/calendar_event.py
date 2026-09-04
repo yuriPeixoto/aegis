@@ -44,6 +44,9 @@ class CalendarEvent(Base):
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )  # tarefa concluída (fechamento do ticket) — presença = "feita"
+    recurrence_group_id: Mapped[str | None] = mapped_column(
+        String(36), nullable=True, index=True
+    )  # UUID compartilhado entre as ocorrências materializadas de uma série
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

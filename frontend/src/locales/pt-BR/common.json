@@ -697,6 +697,7 @@
     },
     "today": "Hoje",
     "completedHint": "Tarefa concluída",
+    "recurringHint": "Tarefa recorrente",
     "weekday": {
       "sun": "Dom",
       "mon": "Seg",
@@ -724,6 +725,15 @@
       "notCompletedYet": "Ainda não concluída",
       "prNumber": "Número do PR",
       "prPlaceholder": "ex: #1234 (deixe em branco se não houver)",
+      "repeat": "Repetir",
+      "repeatEvery": "A cada",
+      "repeatFreq": {
+        "daily": "dia(s)",
+        "weekly": "semana(s)",
+        "monthly": "mês(es)"
+      },
+      "repeatUntil": "Repetir até (opcional)",
+      "repeatUntilHint": "Deixe em branco pra repetir por até ~2 anos (limite de segurança)",
       "notes": "Observações",
       "notes_placeholder": "Observações opcionais...",
       "delete": "Excluir evento",

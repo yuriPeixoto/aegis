@@ -444,3 +444,124 @@ async def test_on_call_and_training_stay_shared(
     ids = [e["id"] for e in view.json()]
     assert on_call_id in ids
     assert training_id in ids
+
+
+# ── Recorrência (#599) ──────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_create_recurring_task_materializes_each_occurrence(
+    admin_client: AsyncClient, admin_user: dict
+) -> None:
+    resp = await admin_client.post(
+        "/v1/calendar/events/recurring",
+        json={
+            "type": "task",
+            "title": "Revisão semanal",
+            "agent_id": admin_user["id"],
+            "event_date": "2026-09-07",
+            "start_time": "17:00",
+            "recurrence": {
+                "freq": "weekly",
+                "interval": 1,
+                "byweekday": [1],  # segunda
+                "until": "2026-09-28",
+            },
+        },
+    )
+    assert resp.status_code == 201
+    events = resp.json()
+    assert [e["event_date"] for e in events] == [
+        "2026-09-07", "2026-09-14", "2026-09-21", "2026-09-28",
+    ]
+    group_ids = {e["recurrence_group_id"] for e in events}
+    assert len(group_ids) == 1
+    assert all(e["title"] == "Revisão semanal" for e in events)
+    assert len({e["id"] for e in events}) == 4  # linhas independentes, ids distintos
+
+
+@pytest.mark.asyncio
+async def test_recurring_occurrence_deleted_independently(
+    admin_client: AsyncClient, admin_user: dict
+) -> None:
+    create = await admin_client.post(
+        "/v1/calendar/events/recurring",
+        json={
+            "type": "task",
+            "title": "Daily",
+            "agent_id": admin_user["id"],
+            "event_date": "2026-09-07",
+            "recurrence": {"freq": "daily", "interval": 1, "until": "2026-09-10"},
+        },
+    )
+    events = create.json()
+    assert len(events) == 4
+
+    delete = await admin_client.delete(f"/v1/calendar/events/{events[1]['id']}")
+    assert delete.status_code == 204
+
+    remaining = (
+        await admin_client.get("/v1/calendar/events", params={"year": 2026, "month": 9})
+    ).json()
+    remaining_ids = {e["id"] for e in remaining}
+    assert events[1]["id"] not in remaining_ids
+    assert events[0]["id"] in remaining_ids
+    assert events[2]["id"] in remaining_ids
+    assert events[3]["id"] in remaining_ids
+
+
+@pytest.mark.asyncio
+async def test_recurrence_rejected_for_non_task_type(
+    admin_client: AsyncClient, admin_user: dict
+) -> None:
+    resp = await admin_client.post(
+        "/v1/calendar/events/recurring",
+        json={
+            "type": "on_call",
+            "agent_id": admin_user["id"],
+            "event_date": "2026-09-07",
+            "recurrence": {"freq": "daily", "interval": 1, "until": "2026-09-10"},
+        },
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_plain_create_endpoint_rejects_recurrence_payload(
+    admin_client: AsyncClient, admin_user: dict
+) -> None:
+    resp = await admin_client.post(
+        "/v1/calendar/events",
+        json={
+            "type": "task",
+            "title": "Deveria usar o endpoint /recurring",
+            "agent_id": admin_user["id"],
+            "event_date": "2026-09-07",
+            "recurrence": {"freq": "daily", "interval": 1, "until": "2026-09-10"},
+        },
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_recurring_task_still_respects_privacy_between_agents(
+    agent_client: AsyncClient, agent_user: dict, other_agent_client: AsyncClient
+) -> None:
+    create = await agent_client.post(
+        "/v1/calendar/events/recurring",
+        json={
+            "type": "task",
+            "title": "Tarefa recorrente privada",
+            "agent_id": agent_user["id"],
+            "event_date": "2026-09-07",
+            "recurrence": {"freq": "weekly", "interval": 1, "until": "2026-09-21"},
+        },
+    )
+    assert create.status_code == 201
+    created_ids = {e["id"] for e in create.json()}
+
+    other_view = await other_agent_client.get(
+        "/v1/calendar/events", params={"year": 2026, "month": 9}
+    )
+    other_ids = {e["id"] for e in other_view.json()}
+    assert created_ids.isdisjoint(other_ids)

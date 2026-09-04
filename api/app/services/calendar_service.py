@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date
 
 from sqlalchemy import and_, extract, or_, select
@@ -9,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.models.calendar_event import CalendarEvent
 from app.models.ticket import Ticket
 from app.schemas.calendar_event import CalendarEventCreate, CalendarEventUpdate
+from app.services.recurrence import expand_recurrence
 
 _TICKET_TAGS_OPTION = selectinload(CalendarEvent.ticket).selectinload(Ticket.tags)
 
@@ -56,7 +58,7 @@ class CalendarService:
         )
 
     async def create(self, data: CalendarEventCreate) -> CalendarEvent:
-        event = CalendarEvent(**data.model_dump())
+        event = CalendarEvent(**data.model_dump(exclude={"recurrence"}))
         self._db.add(event)
         await self._db.commit()
         # refresh() não recarrega relacionamentos aninhados (ticket.tags) —
@@ -64,6 +66,32 @@ class CalendarService:
         created = await self.get(event.id)
         assert created is not None
         return created
+
+    async def create_recurring(self, data: CalendarEventCreate) -> list[CalendarEvent]:
+        """Materializa uma série: cada ocorrência vira uma linha real e
+        independente (mesma cor/título/horário), compartilhando um
+        recurrence_group_id. Sem expansão virtual — ver #599."""
+        assert data.recurrence is not None
+        dates = expand_recurrence(data.event_date, data.recurrence)
+        group_id = str(uuid.uuid4())
+        base_fields = data.model_dump(exclude={"recurrence", "event_date"})
+
+        events = [
+            CalendarEvent(**base_fields, event_date=d, recurrence_group_id=group_id)
+            for d in dates
+        ]
+        self._db.add_all(events)
+        await self._db.commit()
+
+        ids = [e.id for e in events]
+        stmt = (
+            select(CalendarEvent)
+            .where(CalendarEvent.id.in_(ids))
+            .options(_TICKET_TAGS_OPTION)
+            .order_by(CalendarEvent.event_date)
+        )
+        result = await self._db.execute(stmt)
+        return list(result.scalars().all())
 
     async def update(self, event_id: int, data: CalendarEventUpdate) -> CalendarEvent | None:
         event = await self.get(event_id)

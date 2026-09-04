@@ -36,12 +36,20 @@ export interface CalendarEvent {
   color: string | null
   pr_number: string | null
   completed_at: string | null
+  recurrence_group_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
   agent: AgentSlim
   source: SourceSlim | null
   ticket: TicketSlim | null
+}
+
+export interface RecurrenceRule {
+  freq: 'daily' | 'weekly' | 'monthly'
+  interval?: number
+  byweekday?: number[] | null // 0=domingo .. 6=sábado, só pra freq='weekly'
+  until?: string | null       // "YYYY-MM-DD"
 }
 
 export interface CalendarEventCreate {
@@ -56,6 +64,7 @@ export interface CalendarEventCreate {
   color?: string | null
   pr_number?: string | null
   notes?: string | null
+  recurrence?: RecurrenceRule | null
 }
 
 export interface CalendarEventUpdate {

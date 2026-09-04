@@ -46,6 +46,12 @@ async def create_event(
     db: DbSession,
     current_user: CurrentUser,
 ) -> CalendarEventResponse:
+    if data.recurrence is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use POST /v1/calendar/events/recurring for recurring events",
+        )
+
     # on_call: somente admin
     if data.type == "on_call" and current_user.role != ROLE_ADMIN:
         raise HTTPException(
@@ -62,6 +68,25 @@ async def create_event(
 
     event = await svc.create(data)
     return CalendarEventResponse.model_validate(event)
+
+
+@router.post(
+    "/events/recurring",
+    response_model=list[CalendarEventResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_recurring_events(
+    data: CalendarEventCreate,
+    db: DbSession,
+    _: CurrentUser,
+) -> list[CalendarEventResponse]:
+    if data.recurrence is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="recurrence is required for this endpoint",
+        )
+    events = await CalendarService(db).create_recurring(data)
+    return [CalendarEventResponse.model_validate(e) for e in events]
 
 
 @router.patch("/events/{event_id}", response_model=CalendarEventResponse)

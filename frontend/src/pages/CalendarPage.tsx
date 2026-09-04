@@ -19,11 +19,18 @@ import { useSources } from '../hooks/useSources'
 import {
   useCalendarEvents,
   useCreateCalendarEvent,
+  useCreateRecurringCalendarEvents,
   useUpdateCalendarEvent,
   useDeleteCalendarEvent,
   useRescheduleCalendarEvent,
 } from '../hooks/useCalendar'
-import type { CalendarEvent, CalendarEventCreate, CalendarEventUpdate, CalendarEventType } from '../types/calendar'
+import type {
+  CalendarEvent,
+  CalendarEventCreate,
+  CalendarEventUpdate,
+  CalendarEventType,
+  RecurrenceRule,
+} from '../types/calendar'
 import { DayView, ROW_HEIGHT } from '../components/calendar/DayView'
 import { DEFAULT_TASK_COLOR } from '../components/calendar/colors'
 import { canEditEvent } from '../components/calendar/permissions'
@@ -72,6 +79,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   const sources = sourcesData ?? []
 
   const createMut = useCreateCalendarEvent()
+  const createRecurringMut = useCreateRecurringCalendarEvents()
   const updateMut = useUpdateCalendarEvent(event?.id ?? 0)
   const deleteMut = useDeleteCalendarEvent()
 
@@ -87,6 +95,13 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   const [prNumber, setPrNumber] = useState(event?.pr_number ?? '')
   const [notes, setNotes] = useState(event?.notes ?? '')
   const [error, setError] = useState('')
+
+  // Recorrência — só faz sentido ao criar uma tarefa nova (#599, baixa prioridade)
+  const [repeatEnabled, setRepeatEnabled] = useState(false)
+  const [repeatFreq, setRepeatFreq] = useState<RecurrenceRule['freq']>('weekly')
+  const [repeatInterval, setRepeatInterval] = useState(1)
+  const [repeatWeekdays, setRepeatWeekdays] = useState<number[]>([])
+  const [repeatUntil, setRepeatUntil] = useState('')
 
   // Cor da tag do ticket vinculado, se houver — tem prioridade sobre a cor manual
   const inheritedColor = event?.ticket?.tags[0]?.color ?? null
@@ -110,7 +125,17 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
           color: type === 'task' ? color : null,
           notes: notes || null,
         }
-        await createMut.mutateAsync(payload)
+        if (type === 'task' && repeatEnabled) {
+          payload.recurrence = {
+            freq: repeatFreq,
+            interval: repeatInterval,
+            byweekday: repeatFreq === 'weekly' && repeatWeekdays.length > 0 ? repeatWeekdays : null,
+            until: repeatUntil || null,
+          }
+          await createRecurringMut.mutateAsync(payload)
+        } else {
+          await createMut.mutateAsync(payload)
+        }
       } else {
         const payload: CalendarEventUpdate = {
           title: type === 'task' ? title : undefined,
@@ -143,7 +168,8 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
     }
   }
 
-  const isBusy = createMut.isPending || updateMut.isPending || deleteMut.isPending
+  const isBusy =
+    createMut.isPending || createRecurringMut.isPending || updateMut.isPending || deleteMut.isPending
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -228,6 +254,81 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
                   disabled={!canEdit}
                   className="h-8 w-16 bg-brand-surface border border-brand-border rounded-md disabled:opacity-50"
                 />
+              )}
+            </div>
+          )}
+
+          {/* Repetir — só ao criar uma tarefa nova (#599, baixa prioridade) */}
+          {isNew && type === 'task' && (
+            <div className="rounded-md border border-brand-border bg-brand-surface/50 px-3 py-2 space-y-3">
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={repeatEnabled}
+                  onChange={(e) => setRepeatEnabled(e.target.checked)}
+                  className="rounded border-brand-border"
+                />
+                {t('calendar.modal.repeat')}
+              </label>
+
+              {repeatEnabled && (
+                <div className="space-y-3 pl-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{t('calendar.modal.repeatEvery')}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={52}
+                      value={repeatInterval}
+                      onChange={(e) => setRepeatInterval(Math.max(1, Number(e.target.value)))}
+                      className="w-14 bg-brand-surface border border-brand-border rounded-md px-2 py-1 text-sm text-slate-200"
+                    />
+                    <select
+                      value={repeatFreq}
+                      onChange={(e) => setRepeatFreq(e.target.value as RecurrenceRule['freq'])}
+                      className="flex-1 bg-brand-surface border border-brand-border rounded-md px-2 py-1 text-sm text-slate-200"
+                    >
+                      <option value="daily">{t('calendar.modal.repeatFreq.daily')}</option>
+                      <option value="weekly">{t('calendar.modal.repeatFreq.weekly')}</option>
+                      <option value="monthly">{t('calendar.modal.repeatFreq.monthly')}</option>
+                    </select>
+                  </div>
+
+                  {repeatFreq === 'weekly' && (
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3, 4, 5, 6].map((wd) => (
+                        <button
+                          key={wd}
+                          type="button"
+                          onClick={() =>
+                            setRepeatWeekdays((prev) =>
+                              prev.includes(wd) ? prev.filter((d) => d !== wd) : [...prev, wd]
+                            )
+                          }
+                          className={`w-7 h-7 rounded-full text-[10px] font-medium transition-colors ${
+                            repeatWeekdays.includes(wd)
+                              ? 'bg-brand-accent text-white'
+                              : 'bg-brand-surface border border-brand-border text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {t(`calendar.weekday.${['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][wd]}`).slice(0, 1)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.repeatUntil')}</label>
+                    <input
+                      type="date"
+                      value={repeatUntil}
+                      onChange={(e) => setRepeatUntil(e.target.value)}
+                      min={eventDate}
+                      className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">{t('calendar.modal.repeatUntilHint')}</p>
+                  </div>
+                </div>
               )}
             </div>
           )}

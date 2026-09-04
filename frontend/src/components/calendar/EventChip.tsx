@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Repeat } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import type { CSSProperties, MouseEvent } from 'react'
 import type { CalendarEvent, CalendarEventType } from '../../types/calendar'
@@ -24,6 +24,7 @@ export function EventChip({ event, t, onClick, draggable = false, className, sty
 
   const isTask = event.type === 'task'
   const isDone = !!event.completed_at
+  const isRecurring = !!event.recurrence_group_id
   const taskColor = isTask ? taskDisplayColor(event) : null
 
   return (
@@ -32,7 +33,7 @@ export function EventChip({ event, t, onClick, draggable = false, className, sty
       {...(draggable ? attributes : {})}
       {...(draggable ? listeners : {})}
       onClick={(e) => onClick(event, e)}
-      title={isDone ? t('calendar.completedHint') : undefined}
+      title={isDone ? t('calendar.completedHint') : isRecurring ? t('calendar.recurringHint') : undefined}
       className={`text-left px-1.5 py-0.5 rounded text-[11px] font-medium truncate overflow-hidden flex items-center gap-1 ${
         isTask ? 'border' : EVENT_COLORS[event.type as CalendarEventType]
       } ${draggable ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-30' : isDone ? 'opacity-50' : ''} ${className ?? ''}`}
@@ -45,6 +46,8 @@ export function EventChip({ event, t, onClick, draggable = false, className, sty
     >
       {isDone ? (
         <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
+      ) : isRecurring ? (
+        <Repeat className="w-2.5 h-2.5 shrink-0" />
       ) : (
         <span
           className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${!isTask ? DOT_COLORS[event.type as CalendarEventType] : ''}`}
