@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,8 @@ from app.models.ticket_message import TicketMessage
 from app.models.user import User  # noqa: F401 — loaded via selectinload
 from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
+
+_LOCAL_TZ = ZoneInfo("America/Cuiaba")
 
 _ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "open": {"in_progress", "cancelled"},
@@ -249,6 +252,30 @@ class TicketService:
         )
         self._db.add(event)
 
+        if new_status == "in_progress":
+            from app.models.calendar_event import EVENT_TYPE_TASK, CalendarEvent
+
+            # Se já existe uma tarefa em aberto vinculada a este ticket (agendada
+            # via #602), "Iniciar atendimento" ajusta ela pro momento real do
+            # início do trabalho — o horário planejado (ex: 08h-12h) vira o
+            # horário real em que o atendimento de fato começou.
+            task_started = (
+                await self._db.execute(
+                    select(CalendarEvent)
+                    .where(
+                        CalendarEvent.ticket_id == ticket_id,
+                        CalendarEvent.type == EVENT_TYPE_TASK,
+                        CalendarEvent.completed_at.is_(None),
+                    )
+                    .order_by(CalendarEvent.created_at.desc())
+                )
+            ).scalars().first()
+
+            if task_started is not None:
+                local_now = now.astimezone(_LOCAL_TZ)
+                task_started.event_date = local_now.date()
+                task_started.start_time = local_now.strftime("%H:%M")
+
         if new_status == "pending_closure" and deployment_scheduled_at is not None:
             from app.models.calendar_event import EVENT_TYPE_TASK, CalendarEvent
 
@@ -259,11 +286,13 @@ class TicketService:
             agent_id = ticket.assigned_to_user_id or changed_by_user_id
 
             # Se já existe uma tarefa em aberto vinculada a este ticket (agendada
-            # via #602), a conclusão ATUALIZA ela em vez de criar um evento
-            # separado — a mesma tarefa que vivia na Agenda vira "concluída"
-            # (completed_at + pr_number), com hora e data ajustadas pro momento
-            # real do fechamento. Sem tarefa prévia, cria uma já concluída, pra
-            # todo fechamento deixar rastro na Agenda.
+            # via #602, com início real já ajustado por "Iniciar atendimento"
+            # acima), a conclusão ATUALIZA ela em vez de criar um evento
+            # separado — vira "concluída" (completed_at + end_time + pr_number),
+            # preservando o event_date/start_time reais em vez de sobrescrever
+            # pro momento do fechamento. Sem tarefa prévia, cria uma já
+            # concluída (início = fim, é só um ponto no tempo), pra todo
+            # fechamento deixar rastro na Agenda.
             existing_task = (
                 await self._db.execute(
                     select(CalendarEvent)
@@ -276,10 +305,11 @@ class TicketService:
                 )
             ).scalars().first()
 
+            closure_time = deployment_scheduled_at.strftime("%H:%M")
+
             if existing_task is not None:
                 existing_task.completed_at = deployment_scheduled_at
-                existing_task.event_date = deployment_scheduled_at.date()
-                existing_task.start_time = deployment_scheduled_at.strftime("%H:%M")
+                existing_task.end_time = closure_time
                 if pr_number:
                     existing_task.pr_number = pr_number
             else:
@@ -289,7 +319,8 @@ class TicketService:
                         title=f"Chamado #{ticket.external_id}",
                         agent_id=agent_id,
                         event_date=deployment_scheduled_at.date(),
-                        start_time=deployment_scheduled_at.strftime("%H:%M"),
+                        start_time=closure_time,
+                        end_time=closure_time,
                         ticket_id=ticket_id,
                         pr_number=pr_number,
                         completed_at=deployment_scheduled_at,

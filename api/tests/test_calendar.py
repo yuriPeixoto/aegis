@@ -48,8 +48,8 @@ async def source_with_key(admin_client: AsyncClient) -> dict:
     return resp.json()
 
 
-async def _ingest_ticket_in_progress(admin_client: AsyncClient, source_with_key: dict) -> int:
-    """Ingesta um ticket e avança pra in_progress (pré-requisito de pending_closure)."""
+async def _ingest_ticket_open(admin_client: AsyncClient, source_with_key: dict) -> int:
+    """Ingesta um ticket e deixa em 'open', sem avançar de status."""
     ingest = await admin_client.post(
         "/v1/ingest/tickets",
         headers={"X-Aegis-Key": source_with_key["api_key"]},
@@ -58,12 +58,17 @@ async def _ingest_ticket_in_progress(admin_client: AsyncClient, source_with_key:
             "type": "bug",
             "priority": "high",
             "status": "open",
-            "subject": "Ticket de teste — fechamento",
+            "subject": "Ticket de teste — início real",
             "description": "n/a",
         },
     )
     assert ingest.status_code == 200
-    ticket_id = ingest.json()["ticket_id"]
+    return ingest.json()["ticket_id"]
+
+
+async def _ingest_ticket_in_progress(admin_client: AsyncClient, source_with_key: dict) -> int:
+    """Ingesta um ticket e avança pra in_progress (pré-requisito de pending_closure)."""
+    ticket_id = await _ingest_ticket_open(admin_client, source_with_key)
     resp = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
     assert resp.status_code == 200
     return ticket_id
@@ -268,6 +273,70 @@ async def test_agent_can_edit_own_task(agent_client: AsyncClient, agent_user: di
     assert resp.json()["title"] == "Tarefa própria editada"
 
 
+# ── Início de atendimento → tarefa ajustada pro momento real ───────────────────
+
+
+@pytest.mark.asyncio
+async def test_starting_ticket_moves_scheduled_task_to_real_start(
+    admin_client: AsyncClient, admin_user: dict, source_with_key: dict
+) -> None:
+    """Tarefa agendada pra outro dia/hora (#602); 'Iniciar atendimento' ajusta pro momento real."""
+    from datetime import date
+
+    ticket_id = await _ingest_ticket_open(admin_client, source_with_key)
+
+    scheduled = await admin_client.post(
+        "/v1/calendar/events",
+        json={
+            "type": "task",
+            "title": "Vai começar depois",
+            "agent_id": admin_user["id"],
+            "event_date": "2026-12-31",
+            "start_time": "23:59",
+        },
+    )
+    assert scheduled.status_code == 201
+    task_id = scheduled.json()["id"]
+
+    link = await admin_client.patch(f"/v1/calendar/events/{task_id}", json={"ticket_id": ticket_id})
+    assert link.status_code == 200
+
+    resp = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
+    assert resp.status_code == 200
+
+    today_local = date.today().isoformat()
+    events = (
+        await admin_client.get("/v1/calendar/events", params={"year": date.today().year, "month": date.today().month})
+    ).json()
+    updated = next(e for e in events if e["id"] == task_id)
+    assert updated["event_date"] == today_local
+    assert updated["start_time"] != "23:59"
+
+
+@pytest.mark.asyncio
+async def test_reopening_ticket_does_not_touch_already_completed_task(
+    admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """Reabrir (pending_closure→in_progress) não deve reajustar uma tarefa já concluída."""
+    ticket_id = await _ingest_ticket_in_progress(admin_client, source_with_key)
+
+    close = await admin_client.patch(
+        f"/v1/tickets/{ticket_id}/status",
+        json={"status": "pending_closure", "deployment_scheduled_at": "2026-09-10T14:30:00Z"},
+    )
+    assert close.status_code == 200
+
+    reopen = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
+    assert reopen.status_code == 200
+
+    events = (
+        await admin_client.get("/v1/calendar/events", params={"year": 2026, "month": 9})
+    ).json()
+    linked = next(e for e in events if e["ticket_id"] == ticket_id)
+    assert linked["event_date"] == "2026-09-10"  # não voltou pra "hoje"
+    assert linked["completed_at"] is not None  # continua concluída
+
+
 # ── Fechamento de ticket → tarefa concluída na Agenda ──────────────────────────
 
 
@@ -298,6 +367,7 @@ async def test_closing_ticket_without_prior_task_creates_completed_one(
     assert task["completed_at"] is not None
     assert task["event_date"] == "2026-09-10"
     assert task["start_time"] == "14:30"
+    assert task["end_time"] == "14:30"  # sem tarefa prévia, início=fim (é um ponto no tempo)
 
 
 @pytest.mark.asyncio
@@ -342,6 +412,9 @@ async def test_closing_ticket_updates_existing_scheduled_task_instead_of_duplica
     assert len(linked) == 1, "fechamento não deveria duplicar a tarefa já agendada"
     assert linked[0]["id"] == task_id
     assert linked[0]["title"] == "Atacar o chamado hoje"  # título original preservado
+    assert linked[0]["event_date"] == "2026-09-08"  # data planejada preservada, não sobrescrita
+    assert linked[0]["start_time"] == "09:00"  # início planejado preservado, não sobrescrito
+    assert linked[0]["end_time"] == "14:30"  # fim = momento real do fechamento
     assert linked[0]["completed_at"] is not None
     assert linked[0]["pr_number"] is None  # skipInfo — nem todo fechamento tem PR
 
