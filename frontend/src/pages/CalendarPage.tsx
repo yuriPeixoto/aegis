@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, GraduationCap } from 'lucide-react'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
 import { useMe } from '../hooks/useAuth'
 import { useAllUsers } from '../hooks/useUsers'
 import { useSources } from '../hooks/useSources'
@@ -11,10 +21,15 @@ import {
   useCreateCalendarEvent,
   useUpdateCalendarEvent,
   useDeleteCalendarEvent,
+  useRescheduleCalendarEvent,
 } from '../hooks/useCalendar'
 import type { CalendarEvent, CalendarEventCreate, CalendarEventUpdate, CalendarEventType } from '../types/calendar'
-import { DayView } from '../components/calendar/DayView'
-import { DEFAULT_TASK_COLOR, DOT_COLORS, EVENT_COLORS, eventLabel, taskDisplayColor } from '../components/calendar/colors'
+import { DayView, ROW_HEIGHT } from '../components/calendar/DayView'
+import { DEFAULT_TASK_COLOR } from '../components/calendar/colors'
+import { canEditEvent } from '../components/calendar/permissions'
+import { EventChip } from '../components/calendar/EventChip'
+import { MonthDayCell } from '../components/calendar/MonthDayCell'
+import { toMinutes, fromMinutes, clampMinutes } from '../components/calendar/time'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -75,9 +90,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   // Cor da tag do ticket vinculado, se houver — tem prioridade sobre a cor manual
   const inheritedColor = event?.ticket?.tags[0]?.color ?? null
 
-  const canEditOnCall = isAdmin
-  const canEditOwned = isAdmin || (event?.agent_id === currentUserId)
-  const canEdit = event ? (event.type === 'on_call' ? canEditOnCall : canEditOwned) : true
+  const canEdit = event ? canEditEvent(event, isAdmin, currentUserId) : true
   const canDelete = canEdit
 
   async function handleSubmit(e: React.FormEvent) {
@@ -382,6 +395,62 @@ export function CalendarPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
+  // Drag-and-drop (#597) — arrastar entre dias no mês, ou entre horários no dia
+  const rescheduleMut = useRescheduleCalendarEvent()
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  function canDragEvent(ev: CalendarEvent): boolean {
+    return !!me && canEditEvent(ev, isAdmin, me.id)
+  }
+
+  function eventFromDragId(id: string): CalendarEvent | undefined {
+    const evId = Number(id.slice('event:'.length))
+    return events.find((ev) => ev.id === evId)
+  }
+
+  function handleDragStart(e: DragStartEvent) {
+    setActiveDragId(e.active.id as string)
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveDragId(null)
+    const activeIdStr = e.active.id as string
+    const ev = eventFromDragId(activeIdStr)
+    if (!ev) return
+
+    function reportError(err: unknown) {
+      const detail = isAxiosError<{ detail?: string }>(err) ? err.response?.data?.detail : undefined
+      toast.error(detail ?? t('calendar.modal.error_generic'))
+    }
+
+    if (viewMode === 'day') {
+      // Arrastar verticalmente reagenda o horário (mantém a duração)
+      if (!ev.start_time || e.delta.y === 0) return
+      const deltaMinutes = Math.round(((e.delta.y / ROW_HEIGHT) * 60) / 15) * 15
+      if (deltaMinutes === 0) return
+      const newStartMin = clampMinutes(toMinutes(ev.start_time) + deltaMinutes)
+      const payload: CalendarEventUpdate = { start_time: fromMinutes(newStartMin) }
+      if (ev.end_time) {
+        const duration = toMinutes(ev.end_time) - toMinutes(ev.start_time)
+        payload.end_time = fromMinutes(clampMinutes(newStartMin + duration))
+      }
+      rescheduleMut.mutate({ id: ev.id, payload }, { onError: reportError })
+      return
+    }
+
+    // Modo mês: soltar sobre outra célula reagenda a data (horário intacto)
+    const overIdStr = e.over?.id as string | undefined
+    if (!overIdStr?.startsWith('day:')) return
+    const newDate = overIdStr.slice('day:'.length)
+    if (newDate === ev.event_date) return
+    rescheduleMut.mutate({ id: ev.id, payload: { event_date: newDate } }, { onError: reportError })
+  }
+
+  const activeDragEvent = activeDragId ? eventFromDragId(activeDragId) : undefined
+
   // Mapa: "YYYY-MM-DD" → CalendarEvent[]
   const eventsByDate = events.reduce<Record<string, CalendarEvent[]>>((acc, ev) => {
     if (!acc[ev.event_date]) acc[ev.event_date] = []
@@ -463,6 +532,7 @@ export function CalendarPage() {
   ]
 
   return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
     <div className="flex flex-col gap-6 h-full">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -555,6 +625,7 @@ export function CalendarPage() {
           t={t}
           onSlotClick={(time) => openNewEvent(dayDate, time)}
           onEventClick={openEditEvent}
+          canDragEvent={canDragEvent}
         />
       ) : (
         <div className="flex-1 flex flex-col min-h-0">
@@ -582,8 +653,9 @@ export function CalendarPage() {
               const isSun = day.getDay() === 0
 
               return (
-                <div
+                <MonthDayCell
                   key={dateStr}
+                  dateStr={dateStr}
                   onClick={() => openDayView(dateStr)}
                   className={`bg-brand-dark p-2 min-h-[100px] cursor-pointer group transition-colors hover:bg-white/[0.02] flex flex-col
                     ${isSat || isSun ? 'bg-white/[0.015]' : ''}
@@ -609,36 +681,18 @@ export function CalendarPage() {
 
                   {/* Eventos do dia */}
                   <div className="flex flex-col gap-0.5 flex-1">
-                    {dayEvents.map((ev) => {
-                      const isTask = ev.type === 'task'
-                      const taskColor = isTask ? taskDisplayColor(ev) : null
-                      return (
-                        <button
-                          key={ev.id}
-                          onClick={(e) => openEditEvent(ev, e)}
-                          className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] font-medium truncate ${
-                            isTask ? 'border' : EVENT_COLORS[ev.type as CalendarEventType]
-                          }`}
-                          style={
-                            taskColor
-                              ? {
-                                  backgroundColor: `${taskColor}33`,
-                                  color: taskColor,
-                                  borderColor: `${taskColor}66`,
-                                }
-                              : undefined
-                          }
-                        >
-                          <span
-                            className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${!isTask ? DOT_COLORS[ev.type as CalendarEventType] : ''}`}
-                            style={taskColor ? { backgroundColor: taskColor } : undefined}
-                          />
-                          {eventLabel(ev, t)}
-                        </button>
-                      )
-                    })}
+                    {dayEvents.map((ev) => (
+                      <EventChip
+                        key={ev.id}
+                        event={ev}
+                        t={t}
+                        onClick={openEditEvent}
+                        draggable={canDragEvent(ev)}
+                        className="w-full"
+                      />
+                    ))}
                   </div>
-                </div>
+                </MonthDayCell>
               )
             })}
           </div>
@@ -657,5 +711,11 @@ export function CalendarPage() {
         />
       )}
     </div>
+    <DragOverlay>
+      {activeDragEvent ? (
+        <EventChip event={activeDragEvent} t={t} onClick={() => {}} className="shadow-lg" />
+      ) : null}
+    </DragOverlay>
+    </DndContext>
   )
 }

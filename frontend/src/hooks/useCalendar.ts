@@ -54,6 +54,22 @@ export function useUpdateCalendarEvent(eventId: number) {
   })
 }
 
+// Reagendar via drag-and-drop: diferente de useUpdateCalendarEvent, o id do
+// evento não é fixado na criação do hook — cada chamada de mutate escolhe o
+// alvo, porque o grid arrasta eventos diferentes a cada gesto.
+export function useRescheduleCalendarEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: CalendarEventUpdate }) => {
+      const { data } = await api.patch<CalendarEvent>(`/calendar/events/${id}`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}
+
 export function useDeleteCalendarEvent() {
   const queryClient = useQueryClient()
   return useMutation({
