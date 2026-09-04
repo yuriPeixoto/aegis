@@ -698,6 +698,10 @@
     "today": "Today",
     "completedHint": "Completed task",
     "recurringHint": "Recurring task",
+    "dayOff": {
+      "weekend": "Outside business hours (weekend)",
+      "holiday": "Holiday — {{description}}"
+    },
     "weekday": {
       "sun": "Sun",
       "mon": "Mon",
