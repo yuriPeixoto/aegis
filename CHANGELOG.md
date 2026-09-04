@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2] — 2026-09-04
+
+### Fixed
+- **Agenda: início da tarefa era apagado no fechamento do chamado** — o fluxo do #607 sobrescrevia `event_date`/`start_time` pro momento do fechamento, perdendo o horário real em que o trabalho começou. Agora o fechamento só grava `completed_at`/`end_time` (+ PR), preservando o início. Sem tarefa prévia agendada, cria uma já concluída com início=fim.
+- **Agenda: "Iniciar atendimento" não registrava o início real** — se o chamado já tinha uma tarefa agendada (#602), clicar em "Iniciar atendimento" agora ajusta `event_date`/`start_time` dela pro momento real da transição `open→in_progress`, em vez de deixar o horário planejado original. Reabrir um chamado já concluído não reajusta a tarefa.
+
 ## [1.6.1] — 2026-09-04
 
 ### Added
