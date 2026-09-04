@@ -20,6 +20,8 @@ class CalendarEventCreate(BaseModel):
     source_id: int | None = None
     ticket_id: int | None = None
     color: str | None = None
+    pr_number: str | None = None
+    completed_at: datetime | None = None
     notes: str | None = None
 
     @field_validator("type")
@@ -65,6 +67,8 @@ class CalendarEventUpdate(BaseModel):
     source_id: int | None = None
     ticket_id: int | None = None
     color: str | None = None
+    pr_number: str | None = None
+    completed_at: datetime | None = None
     notes: str | None = None
 
     @field_validator("start_time", "end_time")
@@ -124,6 +128,8 @@ class CalendarEventResponse(BaseModel):
     source_id: int | None
     ticket_id: int | None
     color: str | None
+    pr_number: str | None
+    completed_at: datetime | None
     notes: str | None
     created_at: datetime
     updated_at: datetime

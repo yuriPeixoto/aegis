@@ -250,28 +250,51 @@ class TicketService:
         self._db.add(event)
 
         if new_status == "pending_closure" and deployment_scheduled_at is not None:
-            from app.models.calendar_event import EVENT_TYPE_DEPLOYMENT, CalendarEvent
+            from app.models.calendar_event import EVENT_TYPE_TASK, CalendarEvent
 
             ticket.deployment_scheduled_at = deployment_scheduled_at
             if pr_number:
                 ticket.pr_number = pr_number
 
             agent_id = ticket.assigned_to_user_id or changed_by_user_id
-            notes = f"Chamado #{ticket.external_id}"
-            if pr_number:
-                notes += f" — PR #{pr_number}"
 
-            self._db.add(
-                CalendarEvent(
-                    type=EVENT_TYPE_DEPLOYMENT,
-                    agent_id=agent_id,
-                    event_date=deployment_scheduled_at.date(),
-                    start_time=deployment_scheduled_at.strftime("%H:%M"),
-                    source_id=ticket.source_id,
-                    ticket_id=ticket_id,
-                    notes=notes,
+            # Se já existe uma tarefa em aberto vinculada a este ticket (agendada
+            # via #602), a conclusão ATUALIZA ela em vez de criar um evento
+            # separado — a mesma tarefa que vivia na Agenda vira "concluída"
+            # (completed_at + pr_number), com hora e data ajustadas pro momento
+            # real do fechamento. Sem tarefa prévia, cria uma já concluída, pra
+            # todo fechamento deixar rastro na Agenda.
+            existing_task = (
+                await self._db.execute(
+                    select(CalendarEvent)
+                    .where(
+                        CalendarEvent.ticket_id == ticket_id,
+                        CalendarEvent.type == EVENT_TYPE_TASK,
+                        CalendarEvent.completed_at.is_(None),
+                    )
+                    .order_by(CalendarEvent.created_at.desc())
                 )
-            )
+            ).scalars().first()
+
+            if existing_task is not None:
+                existing_task.completed_at = deployment_scheduled_at
+                existing_task.event_date = deployment_scheduled_at.date()
+                existing_task.start_time = deployment_scheduled_at.strftime("%H:%M")
+                if pr_number:
+                    existing_task.pr_number = pr_number
+            else:
+                self._db.add(
+                    CalendarEvent(
+                        type=EVENT_TYPE_TASK,
+                        title=f"Chamado #{ticket.external_id}",
+                        agent_id=agent_id,
+                        event_date=deployment_scheduled_at.date(),
+                        start_time=deployment_scheduled_at.strftime("%H:%M"),
+                        ticket_id=ticket_id,
+                        pr_number=pr_number,
+                        completed_at=deployment_scheduled_at,
+                    )
+                )
             self._db.add(
                 TicketEvent(
                     ticket_id=ticket_id,

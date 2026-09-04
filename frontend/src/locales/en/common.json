@@ -183,10 +183,10 @@
       },
       "deployment": {
         "modalTitle": "Complete ticket",
-        "modalHint": "Inform when the update will be available and the linked PR. It will be automatically registered in the agenda.",
-        "scheduledAt": "Scheduled deployment",
+        "modalHint": "Inform the exact completion time and the linked PR, if any. The task in the Agenda is updated automatically (or created, if none was scheduled).",
+        "scheduledAt": "Completed at",
         "prNumber": "PR number",
-        "prPlaceholder": "e.g. #1234 or feature/fix-bug",
+        "prPlaceholder": "e.g. #1234 (leave blank if none)",
         "skipInfo": "Complete without informing",
         "confirm": "Confirm and complete"
       },
@@ -696,6 +696,7 @@
       "day": "Day"
     },
     "today": "Today",
+    "completedHint": "Completed task",
     "weekday": {
       "sun": "Sun",
       "mon": "Mon",
@@ -719,6 +720,10 @@
       "taskTitlePlaceholder": "What needs to be done...",
       "taskColor": "Color",
       "taskColorInherited": "Inherited from the linked ticket's tag",
+      "completedAt": "Completed at {{when}}",
+      "notCompletedYet": "Not completed yet",
+      "prNumber": "PR number",
+      "prPlaceholder": "e.g. #1234 (leave blank if none)",
       "notes": "Notes",
       "notes_placeholder": "Optional notes...",
       "delete": "Delete event",
