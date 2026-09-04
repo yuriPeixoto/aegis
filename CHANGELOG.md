@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] — 2026-09-04
+
+### Added
+- **Avatar/logo por cliente (Source)** — upload de imagem (JPEG/PNG/WebP/SVG, até 5MB) por cliente em Configurações → Clientes, exibido na inbox, no cabeçalho do chamado e no filtro de cliente. Sem logo, mantém o círculo com iniciais já usado pra usuários. Ticket Aegis #1306.
+
 ## [1.6.2] — 2026-09-04
 
 ### Fixed

@@ -34,6 +34,7 @@ import { MergeTicketModal } from '../components/inbox/MergeTicketModal'
 import TagSelector from '../components/inbox/TagSelector'
 import { Markdown } from '../components/common/Markdown'
 import { MarkdownEditor } from '../components/common/MarkdownEditor'
+import { Avatar } from '../components/common/Avatar'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   open:            ['in_progress', 'cancelled'],
@@ -476,6 +477,7 @@ export function TicketDetailPage() {
           {t('inbox.detail.back')}
         </button>
         <div className="w-px h-4 bg-brand-border" />
+        <Avatar name={ticket.source_name} avatar={ticket.source_logo} mediaPath="/media/logos" size="xs" />
         <span className="text-xs font-mono text-slate-300 bg-white/5 border border-white/15 px-2 py-0.5 rounded">
           {ticket.source_name}
         </span>

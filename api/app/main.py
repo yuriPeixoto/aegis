@@ -49,6 +49,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         StaticFiles(directory=str(avatar_dir)),
         name="avatars",
     )
+    logo_dir = Path(settings.upload_dir) / "logos"
+    logo_dir.mkdir(parents=True, exist_ok=True)
+    app.mount(
+        "/media/logos",
+        StaticFiles(directory=str(logo_dir)),
+        name="logos",
+    )
     yield
     logger.info("app: shutting down")
 

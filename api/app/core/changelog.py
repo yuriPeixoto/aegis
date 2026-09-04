@@ -15,6 +15,14 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.7.0",
+        "date": "2026-09-04",
+        "highlights": [
+            "Novo: cada cliente pode ter um avatar/logo, exibido na inbox, no "
+            "chamado e no filtro de cliente",
+        ],
+    },
+    {
         "version": "1.6.2",
         "date": "2026-09-04",
         "highlights": [

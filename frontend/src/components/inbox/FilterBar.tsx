@@ -5,6 +5,7 @@ import type { TicketFilters } from '../../types/ticket'
 import { useSources } from '../../hooks/useTickets'
 import { useTags } from '../../hooks/useTags'
 import { FilterSelect } from './FilterSelect'
+import { Avatar } from '../common/Avatar'
 
 interface FilterBarProps {
   filters: TicketFilters
@@ -87,6 +88,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         options={(Array.isArray(sources) ? sources : []).map((s) => ({
           value: s.id.toString(),
           label: s.name,
+          icon: <Avatar name={s.name} avatar={s.logo} mediaPath="/media/logos" size="xs" />,
         }))}
       />
       <FilterSelect

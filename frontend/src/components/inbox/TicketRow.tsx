@@ -1,5 +1,6 @@
 import { CheckSquare } from 'lucide-react'
 import type { Ticket } from '../../types/ticket'
+import { Avatar } from '../common/Avatar'
 import { StatusBadge } from './StatusBadge'
 import { PriorityBadge } from './PriorityBadge'
 import { TypeBadge } from './TypeBadge'
@@ -82,6 +83,7 @@ export function TicketRow({
       {/* Top row: source + type + date */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
+          <Avatar name={ticket.source_name} avatar={ticket.source_logo} mediaPath="/media/logos" size="xs" />
           <span className="text-xs font-mono text-slate-300 bg-white/5 border border-white/15 px-1.5 py-0.5 rounded">
             {ticket.source_name}
           </span>

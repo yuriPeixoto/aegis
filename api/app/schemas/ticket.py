@@ -30,6 +30,7 @@ class TicketResponse(BaseModel):
     id: int
     source_id: int
     source_name: str
+    source_logo: str | None = None
     external_id: str
     type: str | None
     priority: str | None

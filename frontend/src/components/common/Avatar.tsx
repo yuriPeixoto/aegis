@@ -35,16 +35,18 @@ interface AvatarProps {
   avatar?: string | null
   size?: keyof typeof SIZE_MAP
   className?: string
+  /** Static media folder the filename lives under. Defaults to user avatars. */
+  mediaPath?: '/media/avatars' | '/media/logos'
 }
 
-export function Avatar({ name, avatar, size = 'md', className = '' }: AvatarProps) {
+export function Avatar({ name, avatar, size = 'md', className = '', mediaPath = '/media/avatars' }: AvatarProps) {
   const { outer, text } = SIZE_MAP[size]
   const base = `${outer} rounded-full shrink-0 overflow-hidden ${className}`
 
   if (avatar) {
     return (
       <img
-        src={`/media/avatars/${avatar}`}
+        src={`${mediaPath}/${avatar}`}
         alt={name}
         className={`${base} object-cover`}
       />

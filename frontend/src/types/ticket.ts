@@ -50,6 +50,7 @@ export interface Ticket {
   id: number
   source_id: number
   source_name: string
+  source_logo: string | null
   external_id: string
   type: string | null
   priority: string | null

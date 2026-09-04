@@ -6,6 +6,7 @@ export interface Source {
   name: string
   slug: string
   is_active: boolean
+  logo: string | null
   webhook_url: string | null
   csat_enabled: boolean
   csat_sampling_pct: number
@@ -65,6 +66,24 @@ export function useUpdateSource(sourceId: number) {
   return useMutation({
     mutationFn: async (payload: SourceUpdatePayload) => {
       const { data } = await api.patch<Source>(`/sources/${sourceId}`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sources'] })
+    },
+  })
+}
+
+export function useUploadSourceLogo(sourceId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('logo', file)
+      const { data } = await api.post<Source>(`/sources/${sourceId}/logo`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {
