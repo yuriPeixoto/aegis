@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import and_, extract, select
+from sqlalchemy import and_, extract, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -20,6 +20,7 @@ class CalendarService:
     async def list_events(
         self,
         *,
+        viewer_id: int,
         year: int | None = None,
         month: int | None = None,
         event_type: str | None = None,
@@ -27,6 +28,11 @@ class CalendarService:
         from_date: date | None = None,
     ) -> list[CalendarEvent]:
         stmt = select(CalendarEvent).options(_TICKET_TAGS_OPTION)
+        # Tarefa é sempre individual — só o próprio dono vê a sua (mesmo admin,
+        # que se quiser visão de time usa os dashboards, não a Agenda).
+        # Plantão/treinamento continuam compartilhados: a equipe precisa saber
+        # quem está de plantão ou indisponível por treinamento.
+        stmt = stmt.where(or_(CalendarEvent.type != "task", CalendarEvent.agent_id == viewer_id))
         if year is not None:
             stmt = stmt.where(extract("year", CalendarEvent.event_date) == year)
         if month is not None:
