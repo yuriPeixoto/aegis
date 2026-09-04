@@ -693,6 +693,7 @@
     },
     "view": {
       "month": "Mês",
+      "week": "Semana",
       "day": "Dia"
     },
     "today": "Hoje",
