@@ -1,9 +1,11 @@
 import type { TFunction } from 'i18next'
-import type { CalendarEvent, CalendarEventType } from '../../types/calendar'
-import { DOT_COLORS, EVENT_COLORS, eventLabel, taskDisplayColor } from './colors'
+import type { MouseEvent } from 'react'
+import type { CalendarEvent } from '../../types/calendar'
+import { EventChip } from './EventChip'
+import { toMinutes } from './time'
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
-const ROW_HEIGHT = 56 // px por hora
+export const ROW_HEIGHT = 56 // px por hora
 const GRID_HEIGHT = HOURS.length * ROW_HEIGHT
 
 interface PositionedEvent {
@@ -12,11 +14,6 @@ interface PositionedEvent {
   height: number
   column: number
   columns: number
-}
-
-function toMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
 }
 
 // Agrupa eventos com horário em clusters de sobreposição e atribui coluna
@@ -85,45 +82,22 @@ interface DayViewProps {
   language: string
   t: TFunction
   onSlotClick: (time: string) => void
-  onEventClick: (ev: CalendarEvent, e: React.MouseEvent) => void
+  onEventClick: (ev: CalendarEvent, e: MouseEvent) => void
+  canDragEvent: (ev: CalendarEvent) => boolean
 }
 
-export function DayView({ events, language, t, onSlotClick, onEventClick }: DayViewProps) {
+export function DayView({ events, language, t, onSlotClick, onEventClick, canDragEvent }: DayViewProps) {
   const untimed = events.filter((ev) => !ev.start_time)
   const timed = layoutTimedEvents(events)
-
-  function renderEventChip(ev: CalendarEvent, style?: React.CSSProperties, className?: string) {
-    const isTask = ev.type === 'task'
-    const taskColor = isTask ? taskDisplayColor(ev) : null
-    return (
-      <button
-        key={ev.id}
-        onClick={(e) => onEventClick(ev, e)}
-        className={`text-left px-1.5 py-0.5 rounded text-[11px] font-medium truncate overflow-hidden ${
-          isTask ? 'border' : EVENT_COLORS[ev.type as CalendarEventType]
-        } ${className ?? ''}`}
-        style={{
-          ...(taskColor
-            ? { backgroundColor: `${taskColor}33`, color: taskColor, borderColor: `${taskColor}66` }
-            : {}),
-          ...style,
-        }}
-      >
-        <span
-          className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${!isTask ? DOT_COLORS[ev.type as CalendarEventType] : ''}`}
-          style={taskColor ? { backgroundColor: taskColor } : undefined}
-        />
-        {eventLabel(ev, t)}
-      </button>
-    )
-  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto rounded-xl border border-brand-border bg-brand-dark">
       {/* Eventos sem horário — faixa fixa no topo, tipo "dia inteiro" */}
       {untimed.length > 0 && (
         <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-brand-border bg-white/[0.02]">
-          {untimed.map((ev) => renderEventChip(ev))}
+          {untimed.map((ev) => (
+            <EventChip key={ev.id} event={ev} t={t} onClick={onEventClick} />
+          ))}
         </div>
       )}
 
@@ -158,7 +132,7 @@ export function DayView({ events, language, t, onSlotClick, onEventClick }: DayV
             </div>
           ))}
 
-          {/* Eventos posicionados por horário */}
+          {/* Eventos posicionados por horário — arrastáveis verticalmente (#597) */}
           {timed.map(({ event, top, height, column, columns }) => (
             <div
               key={event.id}
@@ -170,7 +144,14 @@ export function DayView({ events, language, t, onSlotClick, onEventClick }: DayV
                 width: `${100 / columns}%`,
               }}
             >
-              {renderEventChip(event, { height: '100%' }, 'w-full')}
+              <EventChip
+                event={event}
+                t={t}
+                onClick={onEventClick}
+                draggable={canDragEvent(event)}
+                className="w-full"
+                style={{ height: '100%' }}
+              />
             </div>
           ))}
         </div>
