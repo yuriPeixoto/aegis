@@ -13,6 +13,8 @@ import {
   useDeleteCalendarEvent,
 } from '../hooks/useCalendar'
 import type { CalendarEvent, CalendarEventCreate, CalendarEventUpdate, CalendarEventType } from '../types/calendar'
+import { DayView } from '../components/calendar/DayView'
+import { DEFAULT_TASK_COLOR, DOT_COLORS, EVENT_COLORS, eventLabel, taskDisplayColor } from '../components/calendar/colors'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -27,26 +29,14 @@ function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-
-const EVENT_COLORS: Record<CalendarEventType, string> = {
-  on_call:    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  training:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  deployment: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  task:       'bg-sky-500/20 text-sky-300 border border-sky-500/30',
+function parseDateStr(dateStr: string): { year: number; month: number } {
+  const [year, month] = dateStr.split('-').map(Number)
+  return { year, month: month - 1 }
 }
 
-const DOT_COLORS: Record<CalendarEventType, string> = {
-  on_call:    'bg-indigo-400',
-  training:   'bg-emerald-400',
-  deployment: 'bg-amber-400',
-  task:       'bg-sky-400',
-}
-
-// Cor de exibição de uma tarefa: override manual > cor da 1ª tag do ticket vinculado > padrão
-const DEFAULT_TASK_COLOR = '#38bdf8' // sky-400
-
-function taskDisplayColor(ev: CalendarEvent): string {
-  return ev.color ?? ev.ticket?.tags[0]?.color ?? DEFAULT_TASK_COLOR
+function addDays(dateStr: string, delta: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return toDateStr(new Date(y, m - 1, d + delta))
 }
 
 // ── Event Modal ───────────────────────────────────────────────────────────────
@@ -54,12 +44,13 @@ function taskDisplayColor(ev: CalendarEvent): string {
 interface ModalProps {
   event?: CalendarEvent | null
   initialDate?: string
+  initialTime?: string
   onClose: () => void
   isAdmin: boolean
   currentUserId: number
 }
 
-function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: ModalProps) {
+function EventModal({ event, initialDate, initialTime, onClose, isAdmin, currentUserId }: ModalProps) {
   const { t } = useTranslation()
   const { data: users = [] } = useAllUsers()
   const { data: sourcesData } = useSources()
@@ -74,7 +65,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
   const [title, setTitle] = useState(event?.title ?? '')
   const [agentId, setAgentId] = useState<number>(event?.agent_id ?? currentUserId)
   const [eventDate, setEventDate] = useState(event?.event_date ?? initialDate ?? '')
-  const [startTime, setStartTime] = useState(event?.start_time ?? '')
+  const [startTime, setStartTime] = useState(event?.start_time ?? initialTime ?? '')
   const [endTime, setEndTime] = useState(event?.end_time ?? '')
   const [sourceId, setSourceId] = useState<number | ''>(event?.source_id ?? '')
   const [color, setColor] = useState(event?.color ?? DEFAULT_TASK_COLOR)
@@ -371,13 +362,24 @@ export function CalendarPage() {
   const isAdmin = me?.role === 'admin'
 
   const today = new Date()
+  const todayStr = toDateStr(today)
+
+  const [viewMode, setViewMode] = useState<'month' | 'day'>('month')
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth()) // 0-indexed
+  const [dayDate, setDayDate] = useState(todayStr)
 
-  const { data: events = [], isLoading } = useCalendarEvents({ year, month: month + 1 })
+  // No modo dia, busca o mês de referência a partir de dayDate (pode ter
+  // cruzado pra outro mês via navegação dia-a-dia)
+  const queryPeriod = viewMode === 'day' ? parseDateStr(dayDate) : { year, month }
+  const { data: events = [], isLoading } = useCalendarEvents({
+    year: queryPeriod.year,
+    month: queryPeriod.month + 1,
+  })
 
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
   // Mapa: "YYYY-MM-DD" → CalendarEvent[]
@@ -405,8 +407,9 @@ export function CalendarPage() {
     else setMonth((m) => m + 1)
   }
 
-  function openNewEvent(dateStr: string) {
+  function openNewEvent(dateStr: string, time?: string) {
     setSelectedDate(dateStr)
+    setSelectedTime(time ?? null)
     setSelectedEvent(null)
     setModalOpen(true)
   }
@@ -415,16 +418,39 @@ export function CalendarPage() {
     e.stopPropagation()
     setSelectedEvent(ev)
     setSelectedDate(null)
+    setSelectedTime(null)
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setSelectedDate(null)
+    setSelectedTime(null)
     setSelectedEvent(null)
   }
 
-  const todayStr = toDateStr(today)
+  function openDayView(dateStr: string) {
+    setDayDate(dateStr)
+    setViewMode('day')
+  }
+
+  function prevDay() {
+    setDayDate((d) => addDays(d, -1))
+  }
+
+  function nextDay() {
+    setDayDate((d) => addDays(d, 1))
+  }
+
+  const selectedDayEvents = events.filter((ev) => ev.event_date === dayDate)
+
+  const dayLabel = (() => {
+    const { year: y, month: m } = parseDateStr(dayDate)
+    const d = Number(dayDate.split('-')[2])
+    return new Date(y, m, d).toLocaleDateString(i18n.language, {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    })
+  })()
 
   const WEEKDAYS = [
     t('calendar.weekday.sun'),
@@ -464,14 +490,56 @@ export function CalendarPage() {
               {t('calendar.type.task')}
             </span>
           </div>
-          {/* Navegação mês */}
-          <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-sm font-medium text-slate-200 capitalize w-36 text-center">{monthLabel}</span>
-          <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {/* Alternar Mês / Dia */}
+          <div className="flex items-center rounded-md border border-brand-border overflow-hidden mr-1">
+            <button
+              onClick={() => setViewMode('month')}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                viewMode === 'month' ? 'bg-brand-accent text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('calendar.view.month')}
+            </button>
+            <button
+              onClick={() => openDayView(viewMode === 'day' ? dayDate : todayStr)}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                viewMode === 'day' ? 'bg-brand-accent text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('calendar.view.day')}
+            </button>
+          </div>
+
+          {/* Navegação */}
+          {viewMode === 'month' ? (
+            <>
+              <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium text-slate-200 capitalize w-36 text-center">{monthLabel}</span>
+              <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={prevDay} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium text-slate-200 capitalize w-56 text-center truncate">{dayLabel}</span>
+              <button onClick={nextDay} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              {dayDate !== todayStr && (
+                <button
+                  onClick={() => setDayDate(todayStr)}
+                  className="ml-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-brand-border rounded-md transition-colors"
+                >
+                  {t('calendar.today')}
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -480,6 +548,14 @@ export function CalendarPage() {
         <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
           {t('common.loading')}
         </div>
+      ) : viewMode === 'day' ? (
+        <DayView
+          events={selectedDayEvents}
+          language={i18n.language}
+          t={t}
+          onSlotClick={(time) => openNewEvent(dayDate, time)}
+          onEventClick={openEditEvent}
+        />
       ) : (
         <div className="flex-1 flex flex-col min-h-0">
           {/* Cabeçalho dias da semana */}
@@ -508,7 +584,7 @@ export function CalendarPage() {
               return (
                 <div
                   key={dateStr}
-                  onClick={() => openNewEvent(dateStr)}
+                  onClick={() => openDayView(dateStr)}
                   className={`bg-brand-dark p-2 min-h-[100px] cursor-pointer group transition-colors hover:bg-white/[0.02] flex flex-col
                     ${isSat || isSun ? 'bg-white/[0.015]' : ''}
                   `}
@@ -557,14 +633,7 @@ export function CalendarPage() {
                             className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${!isTask ? DOT_COLORS[ev.type as CalendarEventType] : ''}`}
                             style={taskColor ? { backgroundColor: taskColor } : undefined}
                           />
-                          {ev.type === 'on_call'
-                            ? ev.agent.name
-                            : ev.type === 'deployment'
-                              ? (ev.notes ?? t('calendar.type.deployment'))
-                              : ev.type === 'task'
-                                ? (ev.title ?? t('calendar.type.task'))
-                                : ev.source?.name ?? ev.agent.name
-                          }
+                          {eventLabel(ev, t)}
                         </button>
                       )
                     })}
@@ -581,6 +650,7 @@ export function CalendarPage() {
         <EventModal
           event={selectedEvent}
           initialDate={selectedDate ?? undefined}
+          initialTime={selectedTime ?? undefined}
           onClose={closeModal}
           isAdmin={isAdmin}
           currentUserId={me.id}
