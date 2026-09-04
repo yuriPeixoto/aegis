@@ -34,6 +34,8 @@ export interface CalendarEvent {
   source_id: number | null
   ticket_id: number | null
   color: string | null
+  pr_number: string | null
+  completed_at: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -52,6 +54,7 @@ export interface CalendarEventCreate {
   source_id?: number | null
   ticket_id?: number | null
   color?: string | null
+  pr_number?: string | null
   notes?: string | null
 }
 
@@ -64,6 +67,7 @@ export interface CalendarEventUpdate {
   source_id?: number | null
   ticket_id?: number | null
   color?: string | null
+  pr_number?: string | null
   notes?: string | null
 }
 

@@ -183,10 +183,10 @@
       },
       "deployment": {
         "modalTitle": "Concluir chamado",
-        "modalHint": "Informe quando a atualização estará disponível e o PR vinculado. Será registrado automaticamente na agenda.",
-        "scheduledAt": "Deploy previsto",
+        "modalHint": "Informe a hora exata da conclusão e o PR vinculado, se houver. A tarefa na Agenda é atualizada automaticamente (ou criada, se não havia uma agendada).",
+        "scheduledAt": "Concluído em",
         "prNumber": "Número do PR",
-        "prPlaceholder": "ex: #1234 ou feature/fix-bug",
+        "prPlaceholder": "ex: #1234 (deixe em branco se não houver)",
         "skipInfo": "Concluir sem informar",
         "confirm": "Confirmar e concluir"
       },
@@ -696,6 +696,7 @@
       "day": "Dia"
     },
     "today": "Hoje",
+    "completedHint": "Tarefa concluída",
     "weekday": {
       "sun": "Dom",
       "mon": "Seg",
@@ -719,6 +720,10 @@
       "taskTitlePlaceholder": "O que precisa ser feito...",
       "taskColor": "Cor",
       "taskColorInherited": "Herdada da tag do chamado vinculado",
+      "completedAt": "Concluída em {{when}}",
+      "notCompletedYet": "Ainda não concluída",
+      "prNumber": "Número do PR",
+      "prPlaceholder": "ex: #1234 (deixe em branco se não houver)",
       "notes": "Observações",
       "notes_placeholder": "Observações opcionais...",
       "delete": "Excluir evento",

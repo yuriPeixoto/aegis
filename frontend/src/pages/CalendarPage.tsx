@@ -66,7 +66,7 @@ interface ModalProps {
 }
 
 function EventModal({ event, initialDate, initialTime, onClose, isAdmin, currentUserId }: ModalProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { data: users = [] } = useAllUsers()
   const { data: sourcesData } = useSources()
   const sources = sourcesData ?? []
@@ -84,6 +84,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   const [endTime, setEndTime] = useState(event?.end_time ?? '')
   const [sourceId, setSourceId] = useState<number | ''>(event?.source_id ?? '')
   const [color, setColor] = useState(event?.color ?? DEFAULT_TASK_COLOR)
+  const [prNumber, setPrNumber] = useState(event?.pr_number ?? '')
   const [notes, setNotes] = useState(event?.notes ?? '')
   const [error, setError] = useState('')
 
@@ -119,6 +120,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
           end_time: endTime || null,
           source_id: type === 'training' ? (sourceId !== '' ? Number(sourceId) : null) : null,
           color: type === 'task' ? color : undefined,
+          pr_number: type === 'task' && event?.ticket ? (prNumber || null) : undefined,
           notes: notes || null,
         }
         await updateMut.mutateAsync(payload)
@@ -227,6 +229,34 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
                   className="h-8 w-16 bg-brand-surface border border-brand-border rounded-md disabled:opacity-50"
                 />
               )}
+            </div>
+          )}
+
+          {/* Conclusão + PR — só tarefa vinculada a ticket (fechamento do #1250) */}
+          {type === 'task' && event?.ticket && (
+            <div className="rounded-md border border-brand-border bg-brand-surface/50 px-3 py-2 space-y-2">
+              {event.completed_at ? (
+                <p className="text-xs text-emerald-400 flex items-center gap-1.5">
+                  {t('calendar.modal.completedAt', {
+                    when: new Date(event.completed_at).toLocaleString(i18n.language, {
+                      dateStyle: 'short', timeStyle: 'short',
+                    }),
+                  })}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500">{t('calendar.modal.notCompletedYet')}</p>
+              )}
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.prNumber')}</label>
+                <input
+                  type="text"
+                  value={prNumber}
+                  onChange={(e) => setPrNumber(e.target.value)}
+                  disabled={!canEdit}
+                  placeholder={t('calendar.modal.prPlaceholder')}
+                  className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 placeholder-slate-600 disabled:opacity-50"
+                />
+              </div>
             </div>
           )}
 
@@ -403,6 +433,8 @@ export function CalendarPage() {
   )
 
   function canDragEvent(ev: CalendarEvent): boolean {
+    // Tarefa concluída é registro de fato (hora do fechamento) — não se arrasta
+    if (ev.completed_at) return false
     return !!me && canEditEvent(ev, isAdmin, me.id)
   }
 
