@@ -691,6 +691,11 @@
       "deployment": "Deploy",
       "task": "Tarefa"
     },
+    "view": {
+      "month": "Mês",
+      "day": "Dia"
+    },
+    "today": "Hoje",
     "weekday": {
       "sun": "Dom",
       "mon": "Seg",

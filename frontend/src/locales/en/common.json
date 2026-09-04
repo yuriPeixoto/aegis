@@ -691,6 +691,11 @@
       "deployment": "Deployment",
       "task": "Task"
     },
+    "view": {
+      "month": "Month",
+      "day": "Day"
+    },
+    "today": "Today",
     "weekday": {
       "sun": "Sun",
       "mon": "Mon",
