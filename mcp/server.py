@@ -14,6 +14,7 @@ from mcp import types
 BASE_URL = os.environ.get("AEGIS_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY: str | None = os.environ.get("AEGIS_API_KEY")  # preferido: chave pessoal, não expira
 TOKEN: str | None = None  # fallback (AEGIS_TOKEN ou login), preenchido no startup
+_MY_USER_ID: int | None = None  # cache de GET /auth/me, resolvido sob demanda (mine=true)
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +74,15 @@ async def _delete(path: str) -> None:
 # UI, se disponível) e nunca expira até ser rotacionada/revogada. Não requer
 # guardar a senha da conta em lugar nenhum. AEGIS_TOKEN e AEGIS_EMAIL+
 # AEGIS_PASSWORD seguem funcionando como fallback para compatibilidade.
+
+async def _my_user_id() -> int:
+    """Resolve e cacheia o id do usuário autenticado (pra filtro mine=true)."""
+    global _MY_USER_ID
+    if _MY_USER_ID is None:
+        me = await _get("/auth/me")
+        _MY_USER_ID = me["id"]
+    return _MY_USER_ID
+
 
 async def _resolve_token() -> str:
     env_token = os.environ.get("AEGIS_TOKEN")
@@ -190,7 +200,10 @@ async def _list_tools() -> list[types.Tool]:
             name="list_tickets",
             description=(
                 "Lista tickets do Aegis com filtros opcionais. "
-                "Use para ver tickets abertos, atribuídos a alguém, por status, prioridade ou busca textual."
+                "Use para ver tickets abertos, atribuídos a alguém, por status, prioridade ou busca textual. "
+                "Pra ver só a sua fila (o caso mais comum), use mine=true — evita puxar chamados de "
+                "colegas por padrão. Use assigned_to_user_id quando precisar olhar o ticket de um "
+                "colega pra dar uma mão. Combine limit+offset pra paginar além do primeiro lote."
             ),
             inputSchema={
                 "type": "object",
@@ -215,10 +228,29 @@ async def _list_tools() -> list[types.Tool]:
                         "type": "boolean",
                         "description": "Se true, retorna apenas tickets sem responsável",
                     },
+                    "mine": {
+                        "type": "boolean",
+                        "description": (
+                            "Se true, retorna só os tickets atribuídos a você (resolve seu próprio "
+                            "usuário via /auth/me). Atalho pra não precisar saber seu próprio ID."
+                        ),
+                    },
+                    "assigned_to_user_id": {
+                        "type": "integer",
+                        "description": (
+                            "Filtrar por um responsável específico (ID numérico do usuário) — "
+                            "pra ver os tickets de um colega. Ignorado se mine=true."
+                        ),
+                    },
                     "limit": {
                         "type": "integer",
-                        "description": "Quantidade máxima de resultados (default: 20, max: 50)",
+                        "description": "Quantidade máxima de resultados (default: 20, max: 100)",
                         "default": 20,
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Pula os N primeiros resultados — pra paginar além do primeiro lote (default: 0)",
+                        "default": 0,
                     },
                 },
                 "additionalProperties": False,
@@ -493,7 +525,12 @@ async def _dispatch(name: str, args: dict) -> str:
         for key in ("status", "priority", "search", "active_only", "unassigned"):
             if args.get(key) is not None:
                 params[key] = args[key]
-        params["limit"] = min(int(args.get("limit", 20)), 50)
+        if args.get("mine"):
+            params["assigned_to_user_id"] = await _my_user_id()
+        elif args.get("assigned_to_user_id") is not None:
+            params["assigned_to_user_id"] = args["assigned_to_user_id"]
+        params["limit"] = min(int(args.get("limit", 20)), 100)
+        params["offset"] = max(int(args.get("offset", 0)), 0)
 
         data = await _get("/tickets", params=params)
         items = data.get("items", [])
@@ -502,7 +539,11 @@ async def _dispatch(name: str, args: dict) -> str:
         if not items:
             return "Nenhum ticket encontrado com os filtros informados."
 
-        lines = [f"Encontrados {total} ticket(s). Exibindo {len(items)}:\n"]
+        shown_from = params["offset"] + 1
+        shown_to = params["offset"] + len(items)
+        lines = [f"Encontrados {total} ticket(s). Exibindo {shown_from}–{shown_to}"
+                 + (f" (use offset={shown_to} pra ver os próximos)" if shown_to < total else "")
+                 + ":\n"]
         for t in items:
             lines.append(_fmt_ticket(t))
             lines.append("")
