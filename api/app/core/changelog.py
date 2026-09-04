@@ -15,6 +15,15 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.6.1",
+        "date": "2026-09-04",
+        "highlights": [
+            "Novo: botão \"Agendar\" no chamado leva direto pra Agenda com o "
+            "chamado já pronto pra virar tarefa — ou busque o chamado direto "
+            "ao criar uma tarefa na Agenda",
+        ],
+    },
+    {
         "version": "1.6.0",
         "date": "2026-09-04",
         "highlights": [

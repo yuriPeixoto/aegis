@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1] — 2026-09-04
+
+### Added
+- **Agenda: atalho "Agendar" no chamado** — botão na tela do chamado leva direto pra Agenda com o chamado armado (banner); o modal de criação de tarefa ganha um campo de busca (`TicketPicker`) pra vincular qualquer chamado ativo do próprio usuário, preenchendo título e cor automaticamente. Ticket Aegis #1250 (item #602, fecha a checklist 11/11).
+
 ## [1.6.0] — 2026-09-04
 
 ### Added
