@@ -1,8 +1,16 @@
 import type { TFunction } from 'i18next'
 import type { MouseEvent } from 'react'
 import type { CalendarEvent } from '../../types/calendar'
+import type { CalendarReference } from '../../hooks/useSlaSettings'
 import { EventChip } from './EventChip'
 import { toMinutes } from './time'
+
+// ISO: 1=segunda .. 7=domingo. `dateStr` é "YYYY-MM-DD".
+function isoWeekday(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const jsDay = new Date(y, m - 1, d).getDay() // 0=domingo .. 6=sábado
+  return jsDay === 0 ? 7 : jsDay
+}
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 export const ROW_HEIGHT = 56 // px por hora
@@ -78,20 +86,36 @@ function formatHour(hour: number, language: string): string {
 }
 
 interface DayViewProps {
+  date: string
   events: CalendarEvent[]
   language: string
   t: TFunction
   onSlotClick: (time: string) => void
   onEventClick: (ev: CalendarEvent, e: MouseEvent) => void
   canDragEvent: (ev: CalendarEvent) => boolean
+  calendarReference?: CalendarReference
 }
 
-export function DayView({ events, language, t, onSlotClick, onEventClick, canDragEvent }: DayViewProps) {
+export function DayView({
+  date, events, language, t, onSlotClick, onEventClick, canDragEvent, calendarReference,
+}: DayViewProps) {
   const untimed = events.filter((ev) => !ev.start_time)
   const timed = layoutTimedEvents(events)
 
+  const holiday = calendarReference?.holidays.find((h) => h.date === date)
+  const businessHours = calendarReference?.business_hours
+  const isWorkDay = businessHours ? businessHours.work_days.includes(isoWeekday(date)) : true
+  const isDayOff = !!holiday || !isWorkDay
+
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto rounded-xl border border-brand-border bg-brand-dark">
+      {/* Fora do expediente / feriado (#600) — referência visual, não bloqueia nada */}
+      {isDayOff && (
+        <div className="px-3 py-2 border-b border-brand-border bg-slate-500/10 text-xs text-slate-400">
+          {holiday ? t('calendar.dayOff.holiday', { description: holiday.description }) : t('calendar.dayOff.weekend')}
+        </div>
+      )}
+
       {/* Eventos sem horário — faixa fixa no topo, tipo "dia inteiro" */}
       {untimed.length > 0 && (
         <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-brand-border bg-white/[0.02]">
@@ -118,9 +142,43 @@ export function DayView({ events, language, t, onSlotClick, onEventClick, canDra
 
         {/* Coluna de slots + eventos */}
         <div className="relative flex-1">
+          {/* Fora do expediente / almoço — referência visual (#600) */}
+          {businessHours && (
+            <div className="absolute inset-0 pointer-events-none z-0">
+              {isDayOff ? (
+                <div className="absolute inset-0 bg-black/25" />
+              ) : (
+                <>
+                  <div
+                    className="absolute left-0 right-0 top-0 bg-black/25"
+                    style={{ height: (toMinutes(businessHours.work_start) / 60) * ROW_HEIGHT }}
+                  />
+                  <div
+                    className="absolute left-0 right-0 bg-black/25"
+                    style={{
+                      top: (toMinutes(businessHours.work_end) / 60) * ROW_HEIGHT,
+                      bottom: 0,
+                    }}
+                  />
+                  {businessHours.lunch_start && businessHours.lunch_end && (
+                    <div
+                      className="absolute left-0 right-0 bg-amber-500/10 border-y border-amber-500/20"
+                      style={{
+                        top: (toMinutes(businessHours.lunch_start) / 60) * ROW_HEIGHT,
+                        height:
+                          ((toMinutes(businessHours.lunch_end) - toMinutes(businessHours.lunch_start)) / 60) *
+                          ROW_HEIGHT,
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Linhas de hora, clicáveis em blocos de 30min pra criar evento */}
           {HOURS.map((h) => (
-            <div key={h} className="border-b border-brand-border/60" style={{ height: ROW_HEIGHT }}>
+            <div key={h} className="relative border-b border-brand-border/60" style={{ height: ROW_HEIGHT }}>
               <button
                 onClick={() => onSlotClick(`${String(h).padStart(2, '0')}:00`)}
                 className="w-full h-1/2 hover:bg-white/[0.03] transition-colors block"

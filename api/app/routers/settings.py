@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.core.auth import AdminUser
+from app.core.auth import AdminUser, CurrentUser
 from app.core.dependencies import DbSession
 from app.models.business_hours import BusinessHoursConfig
 from app.models.global_setting import GlobalSetting
@@ -79,6 +79,15 @@ class SlaSettingsOut(BaseModel):
     holidays: list[HolidayOut]
 
 
+class CalendarReferenceOut(BaseModel):
+    """Expediente + feriados, sem as políticas de SLA — aberto a qualquer
+    usuário autenticado (não só admin), pra Agenda desenhar a referência
+    visual de dia útil/fora do expediente/feriado (#1250, item #600)."""
+
+    business_hours: BusinessHoursOut
+    holidays: list[HolidayOut]
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -100,6 +109,31 @@ def _parse_time(value: str) -> time:
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+
+@router.get("/calendar-reference", response_model=CalendarReferenceOut)
+async def get_calendar_reference(db: DbSession, _: CurrentUser) -> CalendarReferenceOut:
+    bh = (
+        await db.execute(select(BusinessHoursConfig).where(BusinessHoursConfig.id == 1))
+    ).scalar_one_or_none()
+    if bh is None:
+        raise HTTPException(status_code=404, detail="Business hours config not found")
+
+    holidays_rows = (await db.execute(select(SlaHoliday).order_by(SlaHoliday.date))).scalars().all()
+
+    return CalendarReferenceOut(
+        business_hours=BusinessHoursOut(
+            work_days=bh.work_days,
+            work_start=_time_str(bh.work_start),  # type: ignore[arg-type]
+            work_end=_time_str(bh.work_end),  # type: ignore[arg-type]
+            lunch_start=_time_str(bh.lunch_start),
+            lunch_end=_time_str(bh.lunch_end),
+            timezone=bh.timezone,
+        ),
+        holidays=[
+            HolidayOut(id=h.id, date=h.date, description=h.description) for h in holidays_rows
+        ],
+    )
 
 
 @router.get("/sla", response_model=SlaSettingsOut)

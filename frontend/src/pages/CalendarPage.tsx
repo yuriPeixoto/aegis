@@ -14,6 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { useMe } from '../hooks/useAuth'
+import { useCalendarReference } from '../hooks/useSlaSettings'
 import { useAllUsers } from '../hooks/useUsers'
 import { useSources } from '../hooks/useSources'
 import {
@@ -504,6 +505,7 @@ export function CalendarPage() {
   const { t, i18n } = useTranslation()
   const { data: me } = useMe()
   const isAdmin = me?.role === 'admin'
+  const { data: calendarReference } = useCalendarReference()
 
   const today = new Date()
   const todayStr = toDateStr(today)
@@ -753,12 +755,14 @@ export function CalendarPage() {
         </div>
       ) : viewMode === 'day' ? (
         <DayView
+          date={dayDate}
           events={selectedDayEvents}
           language={i18n.language}
           t={t}
           onSlotClick={(time) => openNewEvent(dayDate, time)}
           onEventClick={openEditEvent}
           canDragEvent={canDragEvent}
+          calendarReference={calendarReference}
         />
       ) : (
         <div className="flex-1 flex flex-col min-h-0">

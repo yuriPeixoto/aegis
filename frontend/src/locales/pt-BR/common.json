@@ -698,6 +698,10 @@
     "today": "Hoje",
     "completedHint": "Tarefa concluída",
     "recurringHint": "Tarefa recorrente",
+    "dayOff": {
+      "weekend": "Fora do expediente (fim de semana)",
+      "holiday": "Feriado — {{description}}"
+    },
     "weekday": {
       "sun": "Dom",
       "mon": "Seg",

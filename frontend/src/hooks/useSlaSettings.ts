@@ -27,6 +27,25 @@ export interface SlaSettings {
   holidays: Holiday[]
 }
 
+export interface CalendarReference {
+  business_hours: BusinessHours
+  holidays: Holiday[]
+}
+
+// Versão leve do /settings/sla (sem políticas de SLA) aberta a qualquer
+// usuário logado — usada pela Agenda pra sombrear fora do expediente/feriado
+// (#1250, item #600). Reaproveita o mesmo BusinessHoursConfig/SlaHoliday já
+// mantido em Configurações → SLA.
+export function useCalendarReference() {
+  return useQuery<CalendarReference>({
+    queryKey: ['calendar-reference'],
+    queryFn: async () => {
+      const { data } = await api.get<CalendarReference>('/settings/calendar-reference')
+      return data
+    },
+  })
+}
+
 export function useSlaSettings() {
   return useQuery<SlaSettings>({
     queryKey: ['sla-settings'],
