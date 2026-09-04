@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_validator, model_validator
 
 EVENT_TYPES = {"on_call", "training", "deployment", "task"}
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
+_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 class CalendarEventCreate(BaseModel):
@@ -18,6 +19,7 @@ class CalendarEventCreate(BaseModel):
     end_time: str | None = None
     source_id: int | None = None
     ticket_id: int | None = None
+    color: str | None = None
     notes: str | None = None
 
     @field_validator("type")
@@ -32,6 +34,13 @@ class CalendarEventCreate(BaseModel):
     def validate_time_format(cls, v: str | None) -> str | None:
         if v is not None and not _TIME_RE.match(v):
             raise ValueError("time must be in HH:MM format")
+        return v
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: str | None) -> str | None:
+        if v is not None and not _COLOR_RE.match(v):
+            raise ValueError("color must be a hex string like #RRGGBB")
         return v
 
     @model_validator(mode="after")
@@ -55,6 +64,7 @@ class CalendarEventUpdate(BaseModel):
     end_time: str | None = None
     source_id: int | None = None
     ticket_id: int | None = None
+    color: str | None = None
     notes: str | None = None
 
     @field_validator("start_time", "end_time")
@@ -62,6 +72,13 @@ class CalendarEventUpdate(BaseModel):
     def validate_time_format(cls, v: str | None) -> str | None:
         if v is not None and not _TIME_RE.match(v):
             raise ValueError("time must be in HH:MM format")
+        return v
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v: str | None) -> str | None:
+        if v is not None and not _COLOR_RE.match(v):
+            raise ValueError("color must be a hex string like #RRGGBB")
         return v
 
 
@@ -80,6 +97,22 @@ class SourceSlim(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TagSlim(BaseModel):
+    id: int
+    name: str
+    color: str
+
+    model_config = {"from_attributes": True}
+
+
+class TicketSlim(BaseModel):
+    id: int
+    external_id: str
+    tags: list[TagSlim]
+
+    model_config = {"from_attributes": True}
+
+
 class CalendarEventResponse(BaseModel):
     id: int
     type: str
@@ -90,10 +123,12 @@ class CalendarEventResponse(BaseModel):
     end_time: str | None
     source_id: int | None
     ticket_id: int | None
+    color: str | None
     notes: str | None
     created_at: datetime
     updated_at: datetime
     agent: AgentSlim
     source: SourceSlim | None
+    ticket: TicketSlim | None
 
     model_config = {"from_attributes": True}

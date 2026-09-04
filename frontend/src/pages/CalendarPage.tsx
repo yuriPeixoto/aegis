@@ -42,6 +42,13 @@ const DOT_COLORS: Record<CalendarEventType, string> = {
   task:       'bg-sky-400',
 }
 
+// Cor de exibição de uma tarefa: override manual > cor da 1ª tag do ticket vinculado > padrão
+const DEFAULT_TASK_COLOR = '#38bdf8' // sky-400
+
+function taskDisplayColor(ev: CalendarEvent): string {
+  return ev.color ?? ev.ticket?.tags[0]?.color ?? DEFAULT_TASK_COLOR
+}
+
 // ── Event Modal ───────────────────────────────────────────────────────────────
 
 interface ModalProps {
@@ -70,8 +77,12 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
   const [startTime, setStartTime] = useState(event?.start_time ?? '')
   const [endTime, setEndTime] = useState(event?.end_time ?? '')
   const [sourceId, setSourceId] = useState<number | ''>(event?.source_id ?? '')
+  const [color, setColor] = useState(event?.color ?? DEFAULT_TASK_COLOR)
   const [notes, setNotes] = useState(event?.notes ?? '')
   const [error, setError] = useState('')
+
+  // Cor da tag do ticket vinculado, se houver — tem prioridade sobre a cor manual
+  const inheritedColor = event?.ticket?.tags[0]?.color ?? null
 
   const canEditOnCall = isAdmin
   const canEditOwned = isAdmin || (event?.agent_id === currentUserId)
@@ -91,6 +102,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
           start_time: startTime || null,
           end_time: endTime || null,
           source_id: type === 'training' ? (sourceId !== '' ? Number(sourceId) : null) : null,
+          color: type === 'task' ? color : null,
           notes: notes || null,
         }
         await createMut.mutateAsync(payload)
@@ -102,6 +114,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
           start_time: startTime || null,
           end_time: endTime || null,
           source_id: type === 'training' ? (sourceId !== '' ? Number(sourceId) : null) : null,
+          color: type === 'task' ? color : undefined,
           notes: notes || null,
         }
         await updateMut.mutateAsync(payload)
@@ -186,6 +199,30 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
                 placeholder={t('calendar.modal.taskTitlePlaceholder')}
                 className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 placeholder-slate-600 disabled:opacity-50"
               />
+            </div>
+          )}
+
+          {/* Cor — só para tarefa; se o ticket vinculado já tem tag, a cor vem de lá */}
+          {type === 'task' && (
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.taskColor')}</label>
+              {inheritedColor ? (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span
+                    className="w-4 h-4 rounded border border-brand-border inline-block"
+                    style={{ backgroundColor: inheritedColor }}
+                  />
+                  {t('calendar.modal.taskColorInherited')}
+                </div>
+              ) : (
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  disabled={!canEdit}
+                  className="h-8 w-16 bg-brand-surface border border-brand-border rounded-md disabled:opacity-50"
+                />
+              )}
             </div>
           )}
 
@@ -496,23 +533,41 @@ export function CalendarPage() {
 
                   {/* Eventos do dia */}
                   <div className="flex flex-col gap-0.5 flex-1">
-                    {dayEvents.map((ev) => (
-                      <button
-                        key={ev.id}
-                        onClick={(e) => openEditEvent(ev, e)}
-                        className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] font-medium truncate ${EVENT_COLORS[ev.type as CalendarEventType]}`}
-                      >
-                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${DOT_COLORS[ev.type as CalendarEventType]}`} />
-                        {ev.type === 'on_call'
-                          ? ev.agent.name
-                          : ev.type === 'deployment'
-                            ? (ev.notes ?? t('calendar.type.deployment'))
-                            : ev.type === 'task'
-                              ? (ev.title ?? t('calendar.type.task'))
-                              : ev.source?.name ?? ev.agent.name
-                        }
-                      </button>
-                    ))}
+                    {dayEvents.map((ev) => {
+                      const isTask = ev.type === 'task'
+                      const taskColor = isTask ? taskDisplayColor(ev) : null
+                      return (
+                        <button
+                          key={ev.id}
+                          onClick={(e) => openEditEvent(ev, e)}
+                          className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] font-medium truncate ${
+                            isTask ? 'border' : EVENT_COLORS[ev.type as CalendarEventType]
+                          }`}
+                          style={
+                            taskColor
+                              ? {
+                                  backgroundColor: `${taskColor}33`,
+                                  color: taskColor,
+                                  borderColor: `${taskColor}66`,
+                                }
+                              : undefined
+                          }
+                        >
+                          <span
+                            className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${!isTask ? DOT_COLORS[ev.type as CalendarEventType] : ''}`}
+                            style={taskColor ? { backgroundColor: taskColor } : undefined}
+                          />
+                          {ev.type === 'on_call'
+                            ? ev.agent.name
+                            : ev.type === 'deployment'
+                              ? (ev.notes ?? t('calendar.type.deployment'))
+                              : ev.type === 'task'
+                                ? (ev.title ?? t('calendar.type.task'))
+                                : ev.source?.name ?? ev.agent.name
+                          }
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )

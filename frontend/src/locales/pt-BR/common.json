@@ -712,6 +712,8 @@
       "select_client": "Selecione um cliente...",
       "taskTitle": "Título",
       "taskTitlePlaceholder": "O que precisa ser feito...",
+      "taskColor": "Cor",
+      "taskColorInherited": "Herdada da tag do chamado vinculado",
       "notes": "Observações",
       "notes_placeholder": "Observações opcionais...",
       "delete": "Excluir evento",

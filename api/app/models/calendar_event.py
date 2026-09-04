@@ -10,6 +10,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.source import Source
+    from app.models.ticket import Ticket
     from app.models.user import User
 
 EVENT_TYPE_ON_CALL = "on_call"
@@ -38,6 +39,7 @@ class CalendarEvent(Base):
     ticket_id: Mapped[int | None] = mapped_column(
         ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
     )
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # override manual, "#RRGGBB"
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -49,4 +51,7 @@ class CalendarEvent(Base):
     agent: Mapped[User] = relationship("User", foreign_keys=[agent_id], lazy="selectin")
     source: Mapped[Source | None] = relationship(
         "Source", foreign_keys=[source_id], lazy="selectin"
+    )
+    ticket: Mapped[Ticket | None] = relationship(
+        "Ticket", foreign_keys=[ticket_id], lazy="selectin"
     )
