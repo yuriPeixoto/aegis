@@ -688,7 +688,8 @@
     "type": {
       "on_call": "On-call",
       "training": "Training",
-      "deployment": "Deployment"
+      "deployment": "Deployment",
+      "task": "Task"
     },
     "weekday": {
       "sun": "Sun",
@@ -709,6 +710,8 @@
       "end_time": "End",
       "client": "Client",
       "select_client": "Select a client...",
+      "taskTitle": "Title",
+      "taskTitlePlaceholder": "What needs to be done...",
       "notes": "Notes",
       "notes_placeholder": "Optional notes...",
       "delete": "Delete event",

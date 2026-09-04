@@ -32,12 +32,14 @@ const EVENT_COLORS: Record<CalendarEventType, string> = {
   on_call:    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
   training:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   deployment: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  task:       'bg-sky-500/20 text-sky-300 border border-sky-500/30',
 }
 
 const DOT_COLORS: Record<CalendarEventType, string> = {
   on_call:    'bg-indigo-400',
   training:   'bg-emerald-400',
   deployment: 'bg-amber-400',
+  task:       'bg-sky-400',
 }
 
 // ── Event Modal ───────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
 
   const isNew = !event
   const [type, setType] = useState<CalendarEventType>(event?.type ?? 'on_call')
+  const [title, setTitle] = useState(event?.title ?? '')
   const [agentId, setAgentId] = useState<number>(event?.agent_id ?? currentUserId)
   const [eventDate, setEventDate] = useState(event?.event_date ?? initialDate ?? '')
   const [startTime, setStartTime] = useState(event?.start_time ?? '')
@@ -71,8 +74,8 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
   const [error, setError] = useState('')
 
   const canEditOnCall = isAdmin
-  const canEditTraining = isAdmin || (event?.agent_id === currentUserId)
-  const canEdit = event ? (event.type === 'on_call' ? canEditOnCall : canEditTraining) : true
+  const canEditOwned = isAdmin || (event?.agent_id === currentUserId)
+  const canEdit = event ? (event.type === 'on_call' ? canEditOnCall : canEditOwned) : true
   const canDelete = canEdit
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,6 +85,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
       if (isNew) {
         const payload: CalendarEventCreate = {
           type,
+          title: type === 'task' ? title : null,
           agent_id: agentId,
           event_date: eventDate,
           start_time: startTime || null,
@@ -92,6 +96,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
         await createMut.mutateAsync(payload)
       } else {
         const payload: CalendarEventUpdate = {
+          title: type === 'task' ? title : undefined,
           agent_id: agentId,
           event_date: eventDate,
           start_time: startTime || null,
@@ -140,7 +145,7 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
             <div>
               <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.type')}</label>
               <div className="flex gap-2">
-                {(['on_call', 'training'] as CalendarEventType[]).map((tp) => (
+                {(['task', 'on_call', 'training'] as CalendarEventType[]).map((tp) => (
                   <button
                     key={tp}
                     type="button"
@@ -153,7 +158,9 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
                       ${type === tp
                         ? tp === 'on_call'
                           ? 'bg-indigo-500/30 border-indigo-500 text-indigo-300'
-                          : 'bg-emerald-500/30 border-emerald-500 text-emerald-300'
+                          : tp === 'training'
+                            ? 'bg-emerald-500/30 border-emerald-500 text-emerald-300'
+                            : 'bg-sky-500/30 border-sky-500 text-sky-300'
                         : 'border-brand-border text-slate-400 hover:text-slate-200'
                       }
                       ${tp === 'on_call' && !isAdmin ? 'opacity-40 cursor-not-allowed' : ''}
@@ -163,6 +170,22 @@ function EventModal({ event, initialDate, onClose, isAdmin, currentUserId }: Mod
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Título — só para tarefa */}
+          {type === 'task' && (
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.taskTitle')}</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                disabled={!canEdit}
+                placeholder={t('calendar.modal.taskTitlePlaceholder')}
+                className="w-full bg-brand-surface border border-brand-border rounded-md px-3 py-2 text-sm text-slate-200 placeholder-slate-600 disabled:opacity-50"
+              />
             </div>
           )}
 
@@ -399,6 +422,10 @@ export function CalendarPage() {
               <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
               {t('calendar.type.deployment')}
             </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" />
+              {t('calendar.type.task')}
+            </span>
           </div>
           {/* Navegação mês */}
           <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
@@ -480,7 +507,9 @@ export function CalendarPage() {
                           ? ev.agent.name
                           : ev.type === 'deployment'
                             ? (ev.notes ?? t('calendar.type.deployment'))
-                            : ev.source?.name ?? ev.agent.name
+                            : ev.type === 'task'
+                              ? (ev.title ?? t('calendar.type.task'))
+                              : ev.source?.name ?? ev.agent.name
                         }
                       </button>
                     ))}

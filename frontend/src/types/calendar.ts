@@ -1,4 +1,4 @@
-export type CalendarEventType = 'on_call' | 'training' | 'deployment'
+export type CalendarEventType = 'on_call' | 'training' | 'deployment' | 'task'
 
 export interface AgentSlim {
   id: number
@@ -14,6 +14,7 @@ export interface SourceSlim {
 export interface CalendarEvent {
   id: number
   type: CalendarEventType
+  title: string | null
   agent_id: number
   event_date: string        // "YYYY-MM-DD"
   start_time: string | null // "HH:MM"
@@ -29,20 +30,24 @@ export interface CalendarEvent {
 
 export interface CalendarEventCreate {
   type: CalendarEventType
+  title?: string | null
   agent_id: number
   event_date: string
   start_time?: string | null
   end_time?: string | null
   source_id?: number | null
+  ticket_id?: number | null
   notes?: string | null
 }
 
 export interface CalendarEventUpdate {
+  title?: string | null
   agent_id?: number
   event_date?: string
   start_time?: string | null
   end_time?: string | null
   source_id?: number | null
+  ticket_id?: number | null
   notes?: string | null
 }
 

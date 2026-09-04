@@ -688,7 +688,8 @@
     "type": {
       "on_call": "Plantão",
       "training": "Treinamento",
-      "deployment": "Deploy"
+      "deployment": "Deploy",
+      "task": "Tarefa"
     },
     "weekday": {
       "sun": "Dom",
@@ -709,6 +710,8 @@
       "end_time": "Fim",
       "client": "Cliente",
       "select_client": "Selecione um cliente...",
+      "taskTitle": "Título",
+      "taskTitlePlaceholder": "O que precisa ser feito...",
       "notes": "Observações",
       "notes_placeholder": "Observações opcionais...",
       "delete": "Excluir evento",

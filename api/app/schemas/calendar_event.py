@@ -5,17 +5,19 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, field_validator, model_validator
 
-EVENT_TYPES = {"on_call", "training", "deployment"}
+EVENT_TYPES = {"on_call", "training", "deployment", "task"}
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
 
 
 class CalendarEventCreate(BaseModel):
     type: str
+    title: str | None = None
     agent_id: int
     event_date: date
     start_time: str | None = None
     end_time: str | None = None
     source_id: int | None = None
+    ticket_id: int | None = None
     notes: str | None = None
 
     @field_validator("type")
@@ -32,21 +34,27 @@ class CalendarEventCreate(BaseModel):
             raise ValueError("time must be in HH:MM format")
         return v
 
-    ticket_id: int | None = None
-
     @model_validator(mode="after")
     def training_requires_source(self) -> CalendarEventCreate:
         if self.type == "training" and self.source_id is None:
             raise ValueError("training events require a source_id")
         return self
 
+    @model_validator(mode="after")
+    def task_requires_title(self) -> CalendarEventCreate:
+        if self.type == "task" and not (self.title and self.title.strip()):
+            raise ValueError("task events require a title")
+        return self
+
 
 class CalendarEventUpdate(BaseModel):
+    title: str | None = None
     agent_id: int | None = None
     event_date: date | None = None
     start_time: str | None = None
     end_time: str | None = None
     source_id: int | None = None
+    ticket_id: int | None = None
     notes: str | None = None
 
     @field_validator("start_time", "end_time")
@@ -75,6 +83,7 @@ class SourceSlim(BaseModel):
 class CalendarEventResponse(BaseModel):
     id: int
     type: str
+    title: str | None
     agent_id: int
     event_date: date
     start_time: str | None
