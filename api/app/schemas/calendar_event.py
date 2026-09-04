@@ -2,12 +2,32 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 EVENT_TYPES = {"on_call", "training", "deployment", "task"}
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
 _COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+# Recorrência é uma feature de baixo uso (confirmado com o usuário) — série
+# materializada (linhas reais e independentes) com um teto de segurança, em
+# vez de expansão virtual em tempo de leitura. Ver #599.
+MAX_RECURRENCE_OCCURRENCES = 104  # ~2 anos semanais
+
+
+class RecurrenceRule(BaseModel):
+    freq: Literal["daily", "weekly", "monthly"]
+    interval: int = Field(default=1, ge=1, le=52)
+    byweekday: list[int] | None = None  # 0=domingo .. 6=sábado, só pra freq=weekly
+    until: date | None = None  # inclusive; se ausente, usa o teto de segurança
+
+    @field_validator("byweekday")
+    @classmethod
+    def validate_byweekday(cls, v: list[int] | None) -> list[int] | None:
+        if v is not None and any(d < 0 or d > 6 for d in v):
+            raise ValueError("byweekday must contain values between 0 (Sunday) and 6 (Saturday)")
+        return v
 
 
 class CalendarEventCreate(BaseModel):
@@ -23,6 +43,7 @@ class CalendarEventCreate(BaseModel):
     pr_number: str | None = None
     completed_at: datetime | None = None
     notes: str | None = None
+    recurrence: RecurrenceRule | None = None
 
     @field_validator("type")
     @classmethod
@@ -55,6 +76,18 @@ class CalendarEventCreate(BaseModel):
     def task_requires_title(self) -> CalendarEventCreate:
         if self.type == "task" and not (self.title and self.title.strip()):
             raise ValueError("task events require a title")
+        return self
+
+    @model_validator(mode="after")
+    def recurrence_only_for_task(self) -> CalendarEventCreate:
+        if self.recurrence is not None and self.type != "task":
+            raise ValueError("recurrence is only supported for task events")
+        return self
+
+    @model_validator(mode="after")
+    def byweekday_only_for_weekly(self) -> CalendarEventCreate:
+        if self.recurrence and self.recurrence.byweekday and self.recurrence.freq != "weekly":
+            raise ValueError("byweekday is only valid for freq=weekly")
         return self
 
 
@@ -130,6 +163,7 @@ class CalendarEventResponse(BaseModel):
     color: str | None
     pr_number: str | None
     completed_at: datetime | None
+    recurrence_group_id: str | None
     notes: str | None
     created_at: datetime
     updated_at: datetime

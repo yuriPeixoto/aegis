@@ -41,6 +41,19 @@ export function useCreateCalendarEvent() {
   })
 }
 
+export function useCreateRecurringCalendarEvents() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: CalendarEventCreate) => {
+      const { data } = await api.post<CalendarEvent[]>('/calendar/events/recurring', payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}
+
 export function useUpdateCalendarEvent(eventId: number) {
   const queryClient = useQueryClient()
   return useMutation({

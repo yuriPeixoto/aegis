@@ -697,6 +697,7 @@
     },
     "today": "Today",
     "completedHint": "Completed task",
+    "recurringHint": "Recurring task",
     "weekday": {
       "sun": "Sun",
       "mon": "Mon",
@@ -724,6 +725,15 @@
       "notCompletedYet": "Not completed yet",
       "prNumber": "PR number",
       "prPlaceholder": "e.g. #1234 (leave blank if none)",
+      "repeat": "Repeat",
+      "repeatEvery": "Every",
+      "repeatFreq": {
+        "daily": "day(s)",
+        "weekly": "week(s)",
+        "monthly": "month(s)"
+      },
+      "repeatUntil": "Repeat until (optional)",
+      "repeatUntilHint": "Leave blank to repeat for up to ~2 years (safety cap)",
       "notes": "Notes",
       "notes_placeholder": "Optional notes...",
       "delete": "Delete event",
