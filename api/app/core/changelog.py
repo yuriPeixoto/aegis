@@ -15,6 +15,15 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.6.2",
+        "date": "2026-09-04",
+        "highlights": [
+            "Correção: a Agenda agora guarda o horário real em que você começou "
+            "a atender um chamado, e não apaga mais esse horário quando o "
+            "chamado é fechado",
+        ],
+    },
+    {
         "version": "1.6.1",
         "date": "2026-09-04",
         "highlights": [
