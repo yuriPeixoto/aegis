@@ -15,13 +15,17 @@ if TYPE_CHECKING:
 EVENT_TYPE_ON_CALL = "on_call"
 EVENT_TYPE_TRAINING = "training"
 EVENT_TYPE_DEPLOYMENT = "deployment"
+EVENT_TYPE_TASK = "task"
 
 
 class CalendarEvent(Base):
     __tablename__ = "calendar_events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    type: Mapped[str] = mapped_column(String(20), nullable=False)  # on_call | training | deployment
+    type: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # on_call | training | deployment | task
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     agent_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )

@@ -81,15 +81,15 @@ async def update_event(
             status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can edit on-call events"
         )
 
-    # training: agent só edita o próprio
+    # training / task: agent só edita o próprio
     if (
-        event.type == "training"
+        event.type in ("training", "task")
         and current_user.role != ROLE_ADMIN
         and event.agent_id != current_user.id
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only edit your own training events",
+            detail="You can only edit your own events",
         )
 
     # Verifica conflito de on_call se a data mudar
@@ -139,13 +139,13 @@ async def delete_event(
         )
 
     if (
-        event.type == "training"
+        event.type in ("training", "task")
         and current_user.role != ROLE_ADMIN
         and event.agent_id != current_user.id
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own training events",
+            detail="You can only delete your own events",
         )
 
     await svc.delete(event_id)
