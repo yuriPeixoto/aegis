@@ -33,6 +33,7 @@ import type {
   RecurrenceRule,
 } from '../types/calendar'
 import { DayView, ROW_HEIGHT } from '../components/calendar/DayView'
+import { WeekView } from '../components/calendar/WeekView'
 import { DEFAULT_TASK_COLOR } from '../components/calendar/colors'
 import { canEditEvent } from '../components/calendar/permissions'
 import { EventChip } from '../components/calendar/EventChip'
@@ -60,6 +61,14 @@ function parseDateStr(dateStr: string): { year: number; month: number } {
 function addDays(dateStr: string, delta: number): string {
   const [y, m, d] = dateStr.split('-').map(Number)
   return toDateStr(new Date(y, m - 1, d + delta))
+}
+
+// 7 datas (domingo a sábado) da semana que contém dateStr
+function getWeekDates(dateStr: string): string[] {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const weekday = new Date(y, m - 1, d).getDay() // 0=domingo .. 6=sábado
+  const sunday = addDays(dateStr, -weekday)
+  return Array.from({ length: 7 }, (_, i) => addDays(sunday, i))
 }
 
 // ── Event Modal ───────────────────────────────────────────────────────────────
@@ -510,18 +519,28 @@ export function CalendarPage() {
   const today = new Date()
   const todayStr = toDateStr(today)
 
-  const [viewMode, setViewMode] = useState<'month' | 'day'>('month')
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month')
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth()) // 0-indexed
   const [dayDate, setDayDate] = useState(todayStr)
 
-  // No modo dia, busca o mês de referência a partir de dayDate (pode ter
-  // cruzado pra outro mês via navegação dia-a-dia)
-  const queryPeriod = viewMode === 'day' ? parseDateStr(dayDate) : { year, month }
-  const { data: events = [], isLoading } = useCalendarEvents({
-    year: queryPeriod.year,
-    month: queryPeriod.month + 1,
-  })
+  // Semana que contém dayDate (domingo a sábado) — usada pelo modo 'week'
+  const weekDates = getWeekDates(dayDate)
+
+  // No modo dia/semana, busca a partir de dayDate (pode ter cruzado pra
+  // outro mês via navegação). Semana usa from_date (sem upper bound —
+  // volume é baixo) e filtra no cliente pro intervalo exato da semana.
+  const queryFilters =
+    viewMode === 'week'
+      ? { from_date: weekDates[0] }
+      : viewMode === 'day'
+        ? { year: parseDateStr(dayDate).year, month: parseDateStr(dayDate).month + 1 }
+        : { year, month: month + 1 }
+  const { data: rawEvents = [], isLoading } = useCalendarEvents(queryFilters)
+  const events =
+    viewMode === 'week'
+      ? rawEvents.filter((ev) => ev.event_date >= weekDates[0] && ev.event_date <= weekDates[6])
+      : rawEvents
 
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -561,17 +580,27 @@ export function CalendarPage() {
       toast.error(detail ?? t('calendar.modal.error_generic'))
     }
 
-    if (viewMode === 'day') {
-      // Arrastar verticalmente reagenda o horário (mantém a duração)
-      if (!ev.start_time || e.delta.y === 0) return
+    if (viewMode === 'day' || viewMode === 'week') {
+      // Vertical reagenda o horário (mantém a duração); na semana, soltar
+      // numa coluna de outro dia (#608) também muda a data
+      if (!ev.start_time) return
       const deltaMinutes = Math.round(((e.delta.y / ROW_HEIGHT) * 60) / 15) * 15
-      if (deltaMinutes === 0) return
+
+      let newDate = ev.event_date
+      if (viewMode === 'week') {
+        const overIdStr = e.over?.id as string | undefined
+        if (overIdStr?.startsWith('day:')) newDate = overIdStr.slice('day:'.length)
+      }
+
+      if (deltaMinutes === 0 && newDate === ev.event_date) return
+
       const newStartMin = clampMinutes(toMinutes(ev.start_time) + deltaMinutes)
       const payload: CalendarEventUpdate = { start_time: fromMinutes(newStartMin) }
       if (ev.end_time) {
         const duration = toMinutes(ev.end_time) - toMinutes(ev.start_time)
         payload.end_time = fromMinutes(clampMinutes(newStartMin + duration))
       }
+      if (newDate !== ev.event_date) payload.event_date = newDate
       rescheduleMut.mutate({ id: ev.id, payload }, { onError: reportError })
       return
     }
@@ -646,6 +675,14 @@ export function CalendarPage() {
     setDayDate((d) => addDays(d, 1))
   }
 
+  function prevWeek() {
+    setDayDate((d) => addDays(d, -7))
+  }
+
+  function nextWeek() {
+    setDayDate((d) => addDays(d, 7))
+  }
+
   const selectedDayEvents = events.filter((ev) => ev.event_date === dayDate)
 
   const dayLabel = (() => {
@@ -654,6 +691,15 @@ export function CalendarPage() {
     return new Date(y, m, d).toLocaleDateString(i18n.language, {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     })
+  })()
+
+  const weekLabel = (() => {
+    const fmtShort = (dateStr: string) => {
+      const { year: y, month: m } = parseDateStr(dateStr)
+      const d = Number(dateStr.split('-')[2])
+      return new Date(y, m, d).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })
+    }
+    return `${fmtShort(weekDates[0])} – ${fmtShort(weekDates[6])}`
   })()
 
   const WEEKDAYS = [
@@ -706,6 +752,14 @@ export function CalendarPage() {
               {t('calendar.view.month')}
             </button>
             <button
+              onClick={() => setViewMode('week')}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                viewMode === 'week' ? 'bg-brand-accent text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t('calendar.view.week')}
+            </button>
+            <button
               onClick={() => openDayView(viewMode === 'day' ? dayDate : todayStr)}
               className={`px-2.5 py-1 text-xs font-medium transition-colors ${
                 viewMode === 'day' ? 'bg-brand-accent text-white' : 'text-slate-400 hover:text-slate-200'
@@ -725,6 +779,24 @@ export function CalendarPage() {
               <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </button>
+            </>
+          ) : viewMode === 'week' ? (
+            <>
+              <button onClick={prevWeek} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm font-medium text-slate-200 capitalize w-40 text-center truncate">{weekLabel}</span>
+              <button onClick={nextWeek} className="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              {!weekDates.includes(todayStr) && (
+                <button
+                  onClick={() => setDayDate(todayStr)}
+                  className="ml-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-200 border border-brand-border rounded-md transition-colors"
+                >
+                  {t('calendar.today')}
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -760,6 +832,18 @@ export function CalendarPage() {
           language={i18n.language}
           t={t}
           onSlotClick={(time) => openNewEvent(dayDate, time)}
+          onEventClick={openEditEvent}
+          canDragEvent={canDragEvent}
+          calendarReference={calendarReference}
+        />
+      ) : viewMode === 'week' ? (
+        <WeekView
+          weekDates={weekDates}
+          todayStr={todayStr}
+          events={events}
+          language={i18n.language}
+          t={t}
+          onSlotClick={(date, time) => openNewEvent(date, time)}
           onEventClick={openEditEvent}
           canDragEvent={canDragEvent}
           calendarReference={calendarReference}

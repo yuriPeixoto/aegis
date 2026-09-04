@@ -693,6 +693,7 @@
     },
     "view": {
       "month": "Month",
+      "week": "Week",
       "day": "Day"
     },
     "today": "Today",
