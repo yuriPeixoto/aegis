@@ -11,6 +11,18 @@ export interface SourceSlim {
   name: string
 }
 
+export interface TagSlim {
+  id: number
+  name: string
+  color: string
+}
+
+export interface TicketSlim {
+  id: number
+  external_id: string
+  tags: TagSlim[]
+}
+
 export interface CalendarEvent {
   id: number
   type: CalendarEventType
@@ -21,11 +33,13 @@ export interface CalendarEvent {
   end_time: string | null
   source_id: number | null
   ticket_id: number | null
+  color: string | null
   notes: string | null
   created_at: string
   updated_at: string
   agent: AgentSlim
   source: SourceSlim | null
+  ticket: TicketSlim | null
 }
 
 export interface CalendarEventCreate {
@@ -37,6 +51,7 @@ export interface CalendarEventCreate {
   end_time?: string | null
   source_id?: number | null
   ticket_id?: number | null
+  color?: string | null
   notes?: string | null
 }
 
@@ -48,6 +63,7 @@ export interface CalendarEventUpdate {
   end_time?: string | null
   source_id?: number | null
   ticket_id?: number | null
+  color?: string | null
   notes?: string | null
 }
 

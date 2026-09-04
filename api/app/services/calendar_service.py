@@ -4,9 +4,13 @@ from datetime import date
 
 from sqlalchemy import and_, extract, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.calendar_event import CalendarEvent
+from app.models.ticket import Ticket
 from app.schemas.calendar_event import CalendarEventCreate, CalendarEventUpdate
+
+_TICKET_TAGS_OPTION = selectinload(CalendarEvent.ticket).selectinload(Ticket.tags)
 
 
 class CalendarService:
@@ -22,7 +26,7 @@ class CalendarService:
         agent_id: int | None = None,
         from_date: date | None = None,
     ) -> list[CalendarEvent]:
-        stmt = select(CalendarEvent)
+        stmt = select(CalendarEvent).options(_TICKET_TAGS_OPTION)
         if year is not None:
             stmt = stmt.where(extract("year", CalendarEvent.event_date) == year)
         if month is not None:
@@ -38,14 +42,22 @@ class CalendarService:
         return list(result.scalars().all())
 
     async def get(self, event_id: int) -> CalendarEvent | None:
-        return await self._db.get(CalendarEvent, event_id)
+        # populate_existing força reload mesmo se o objeto já estiver expirado
+        # no identity map (ex.: logo após um commit em create()/update()) —
+        # sem isso, db.get() pode devolver o objeto antigo sem os eager loads.
+        return await self._db.get(
+            CalendarEvent, event_id, options=[_TICKET_TAGS_OPTION], populate_existing=True
+        )
 
     async def create(self, data: CalendarEventCreate) -> CalendarEvent:
         event = CalendarEvent(**data.model_dump())
         self._db.add(event)
         await self._db.commit()
-        await self._db.refresh(event)
-        return event
+        # refresh() não recarrega relacionamentos aninhados (ticket.tags) —
+        # busca de novo via get(), que já traz o eager load certo.
+        created = await self.get(event.id)
+        assert created is not None
+        return created
 
     async def update(self, event_id: int, data: CalendarEventUpdate) -> CalendarEvent | None:
         event = await self.get(event_id)
@@ -54,8 +66,9 @@ class CalendarService:
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(event, field, value)
         await self._db.commit()
-        await self._db.refresh(event)
-        return event
+        updated = await self.get(event_id)
+        assert updated is not None
+        return updated
 
     async def delete(self, event_id: int) -> bool:
         event = await self.get(event_id)

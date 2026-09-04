@@ -712,6 +712,8 @@
       "select_client": "Select a client...",
       "taskTitle": "Title",
       "taskTitlePlaceholder": "What needs to be done...",
+      "taskColor": "Color",
+      "taskColorInherited": "Inherited from the linked ticket's tag",
       "notes": "Notes",
       "notes_placeholder": "Optional notes...",
       "delete": "Delete event",
