@@ -190,6 +190,7 @@
         "skipInfo": "Concluir sem informar",
         "confirm": "Confirmar e concluir"
       },
+      "schedule": "Agendar",
       "back": "Caixa de Entrada",
       "description": "Descrição",
       "attachments": "Anexos",
@@ -699,6 +700,7 @@
     "today": "Hoje",
     "completedHint": "Tarefa concluída",
     "recurringHint": "Tarefa recorrente",
+    "armedTicket": "Agendando: #{{external_id}} — {{subject}}. Clique num horário livre pra criar a tarefa já vinculada.",
     "dayOff": {
       "weekend": "Fora do expediente (fim de semana)",
       "holiday": "Feriado — {{description}}"
@@ -722,6 +724,8 @@
       "end_time": "Fim",
       "client": "Cliente",
       "select_client": "Selecione um cliente...",
+      "linkedTicket": "Chamado vinculado (opcional)",
+      "ticketPickerPlaceholder": "Buscar por assunto ou # do chamado...",
       "taskTitle": "Título",
       "taskTitlePlaceholder": "O que precisa ser feito...",
       "taskColor": "Cor",

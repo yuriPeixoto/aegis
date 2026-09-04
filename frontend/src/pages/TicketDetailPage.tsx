@@ -756,6 +756,16 @@ export function TicketDetailPage() {
               </button>
             )}
 
+            {/* Agendar (#602) — leva pra Agenda com o ticket já "armado" pro próximo slot clicado */}
+            <button
+              type="button"
+              onClick={() => navigate(`/agenda?ticketId=${ticket.id}`)}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-brand-accent transition-colors"
+            >
+              <CalendarClock className="w-3.5 h-3.5" />
+              {t('inbox.detail.schedule')}
+            </button>
+
             {/* Assignee */}
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <UserCircle className="w-3.5 h-3.5 shrink-0" />

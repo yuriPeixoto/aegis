@@ -190,6 +190,7 @@
         "skipInfo": "Complete without informing",
         "confirm": "Confirm and complete"
       },
+      "schedule": "Schedule",
       "back": "Inbox",
       "description": "Description",
       "attachments": "Attachments",
@@ -699,6 +700,7 @@
     "today": "Today",
     "completedHint": "Completed task",
     "recurringHint": "Recurring task",
+    "armedTicket": "Scheduling: #{{external_id}} — {{subject}}. Click an open slot to create the linked task.",
     "dayOff": {
       "weekend": "Outside business hours (weekend)",
       "holiday": "Holiday — {{description}}"
@@ -722,6 +724,8 @@
       "end_time": "End",
       "client": "Client",
       "select_client": "Select a client...",
+      "linkedTicket": "Linked ticket (optional)",
+      "ticketPickerPlaceholder": "Search by subject or ticket #...",
       "taskTitle": "Title",
       "taskTitlePlaceholder": "What needs to be done...",
       "taskColor": "Color",

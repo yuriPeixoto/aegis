@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +38,10 @@ import { DEFAULT_TASK_COLOR } from '../components/calendar/colors'
 import { canEditEvent } from '../components/calendar/permissions'
 import { EventChip } from '../components/calendar/EventChip'
 import { MonthDayCell } from '../components/calendar/MonthDayCell'
+import { TicketPicker } from '../components/calendar/TicketPicker'
 import { toMinutes, fromMinutes, clampMinutes } from '../components/calendar/time'
+import { useTicket } from '../hooks/useTickets'
+import type { Ticket } from '../types/ticket'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -77,12 +80,16 @@ interface ModalProps {
   event?: CalendarEvent | null
   initialDate?: string
   initialTime?: string
+  initialTicket?: Ticket | null
   onClose: () => void
+  onCreateSuccess?: () => void
   isAdmin: boolean
   currentUserId: number
 }
 
-function EventModal({ event, initialDate, initialTime, onClose, isAdmin, currentUserId }: ModalProps) {
+function EventModal({
+  event, initialDate, initialTime, initialTicket, onClose, onCreateSuccess, isAdmin, currentUserId,
+}: ModalProps) {
   const { t, i18n } = useTranslation()
   const { data: users = [] } = useAllUsers()
   const { data: sourcesData } = useSources()
@@ -94,8 +101,9 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   const deleteMut = useDeleteCalendarEvent()
 
   const isNew = !event
-  const [type, setType] = useState<CalendarEventType>(event?.type ?? 'on_call')
-  const [title, setTitle] = useState(event?.title ?? '')
+  const [type, setType] = useState<CalendarEventType>(event?.type ?? (initialTicket ? 'task' : 'on_call'))
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(initialTicket ?? null)
+  const [title, setTitle] = useState(event?.title ?? initialTicket?.subject ?? '')
   const [agentId, setAgentId] = useState<number>(event?.agent_id ?? currentUserId)
   const [eventDate, setEventDate] = useState(event?.event_date ?? initialDate ?? '')
   const [startTime, setStartTime] = useState(event?.start_time ?? initialTime ?? '')
@@ -113,8 +121,15 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
   const [repeatWeekdays, setRepeatWeekdays] = useState<number[]>([])
   const [repeatUntil, setRepeatUntil] = useState('')
 
-  // Cor da tag do ticket vinculado, se houver — tem prioridade sobre a cor manual
-  const inheritedColor = event?.ticket?.tags[0]?.color ?? null
+  // Cor da tag do ticket vinculado, se houver — tem prioridade sobre a cor manual.
+  // Na edição vem de event.ticket (já salvo); ao criar via #602, vem do ticket
+  // escolhido no picker antes mesmo de salvar.
+  const inheritedColor = event?.ticket?.tags[0]?.color ?? selectedTicket?.tags[0]?.color ?? null
+
+  function handleSelectTicket(ticket: Ticket | null) {
+    setSelectedTicket(ticket)
+    if (ticket && !title) setTitle(ticket.subject)
+  }
 
   const canEdit = event ? canEditEvent(event, isAdmin, currentUserId) : true
   const canDelete = canEdit
@@ -132,7 +147,8 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
           start_time: startTime || null,
           end_time: endTime || null,
           source_id: type === 'training' ? (sourceId !== '' ? Number(sourceId) : null) : null,
-          color: type === 'task' ? color : null,
+          color: type === 'task' ? (inheritedColor ? null : color) : null,
+          ticket_id: type === 'task' ? (selectedTicket?.id ?? null) : null,
           notes: notes || null,
         }
         if (type === 'task' && repeatEnabled) {
@@ -146,6 +162,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
         } else {
           await createMut.mutateAsync(payload)
         }
+        onCreateSuccess?.()
       } else {
         const payload: CalendarEventUpdate = {
           title: type === 'task' ? title : undefined,
@@ -154,7 +171,7 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
           start_time: startTime || null,
           end_time: endTime || null,
           source_id: type === 'training' ? (sourceId !== '' ? Number(sourceId) : null) : null,
-          color: type === 'task' ? color : undefined,
+          color: type === 'task' ? (inheritedColor ? null : color) : undefined,
           pr_number: type === 'task' && event?.ticket ? (prNumber || null) : undefined,
           notes: notes || null,
         }
@@ -225,6 +242,20 @@ function EventModal({ event, initialDate, initialTime, onClose, isAdmin, current
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Chamado vinculado — só ao criar uma tarefa nova (#602) */}
+          {isNew && type === 'task' && (
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">{t('calendar.modal.linkedTicket')}</label>
+              <TicketPicker
+                currentUserId={currentUserId}
+                selected={selectedTicket}
+                onSelect={handleSelectTicket}
+                disabled={!canEdit}
+                t={t}
+              />
             </div>
           )}
 
@@ -516,6 +547,20 @@ export function CalendarPage() {
   const isAdmin = me?.role === 'admin'
   const { data: calendarReference } = useCalendarReference()
 
+  // Ticket "armado" pro agendamento em 1 passo (#602) — chega via
+  // /agenda?ticketId=123, deep-link do botão "Agendar" na tela do chamado.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const armedTicketId = searchParams.get('ticketId')
+  const { data: armedTicket } = useTicket(armedTicketId ? Number(armedTicketId) : null)
+
+  function clearArmedTicket() {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('ticketId')
+      return next
+    })
+  }
+
   const today = new Date()
   const todayStr = toDateStr(today)
 
@@ -715,6 +760,21 @@ export function CalendarPage() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
     <div className="flex flex-col gap-6 h-full">
+      {/* Ticket armado pro agendamento em 1 passo (#602) */}
+      {armedTicket && (
+        <div className="flex items-center justify-between px-3 py-2 rounded-md bg-brand-accent/10 border border-brand-accent/30">
+          <p className="text-xs text-slate-300">
+            {t('calendar.armedTicket', { external_id: armedTicket.external_id, subject: armedTicket.subject })}
+          </p>
+          <button
+            onClick={clearArmedTicket}
+            className="text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -926,6 +986,8 @@ export function CalendarPage() {
           event={selectedEvent}
           initialDate={selectedDate ?? undefined}
           initialTime={selectedTime ?? undefined}
+          initialTicket={selectedEvent ? null : (armedTicket ?? null)}
+          onCreateSuccess={armedTicket ? clearArmedTicket : undefined}
           onClose={closeModal}
           isAdmin={isAdmin}
           currentUserId={me.id}
