@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] — 2026-09-04
+
+### Added
+- **Agenda: tipo de tarefa genérico** — pra planejamento pessoal do dia a dia, além dos tipos já existentes (plantão, treinamento, deploy). Título livre, cor própria ou herdada da tag do chamado vinculado (`ticket_id`, já existente na tabela, agora exposto na API de criação/edição). Ticket Aegis #1250 (itens #594/#595).
+- **Agenda: visões de dia e semana** — grid por hora (24h), ao lado do grid mensal já existente. A visão semanal mostra os 7 dias lado a lado na mesma grade, adicionada a pedido do usuário por ser o modo preferido dele de planejamento. Ticket Aegis #1250 (itens #596/#608).
+- **Agenda: arrastar-e-soltar** — reagenda uma tarefa arrastando pra outro horário (dia/semana) ou outro dia (mês/semana), via `@dnd-kit/core`. Reusa o `PATCH /v1/calendar/events/{id}` já existente, sem endpoint novo. Ticket Aegis #1250 (item #597).
+- **Agenda: tarefa é sempre privada** — só o dono vê a própria tarefa na Agenda, mesmo admin; plantão e treinamento continuam compartilhados com a equipe (a equipe precisa saber quem está de plantão ou indisponível por treinamento). Ticket Aegis #1250 (item #598).
+- **Agenda: recorrência de tarefas** — repetição diária/semanal/mensal, com dias da semana e data-limite opcionais. Série materializada (cada ocorrência é uma linha independente com teto de segurança de ~2 anos) — editar ou excluir uma ocorrência não afeta as outras. Ticket Aegis #1250 (item #599).
+- **Agenda: referência de expediente e feriados** — as visões de dia/semana sombreiam fora do horário de atendimento e o almoço da equipe, e marcam fins de semana/feriados cadastrados. Reaproveita `BusinessHoursConfig`/`SlaHoliday`, já mantidos em Configurações → SLA — sem CRUD novo, só um endpoint de leitura aberto a qualquer usuário (`GET /v1/settings/calendar-reference`). Ticket Aegis #1250 (item #600).
+- **Fechamento de chamado atualiza a tarefa vinculada na Agenda** — em vez de criar um evento `type="deployment"` separado, o fechamento (`pending_closure` com data e PR) agora atualiza a tarefa já agendada pro chamado — ou cria uma já concluída, se nenhuma existia. Ganha hora de conclusão, PR (campo próprio agora, antes texto solto em `notes`), ícone de concluída e opacidade reduzida, e para de poder ser arrastada (é registro de fato, não plano). Ticket Aegis #1250 (item #607).
+
+### Changed
+- `pr_number` do `CalendarEvent` deixa de ser texto livre dentro de `notes` e vira campo próprio, estruturado.
+
 ## [1.5.1] — 2026-09-03
 
 ### Fixed

@@ -15,6 +15,18 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.6.0",
+        "date": "2026-09-04",
+        "highlights": [
+            "Novo: Agenda reformulada — visões de dia e semana, com arrastar-e-soltar "
+            "pra reorganizar tarefas por horário e por dia",
+            "Novo: tarefas pessoais na Agenda são privadas (só você vê as suas), "
+            "podem ganhar cor própria e opção de repetição",
+            "Novo: a Agenda mostra o horário de expediente e os feriados, e marca a "
+            "tarefa como concluída automaticamente quando o chamado correspondente fecha",
+        ],
+    },
+    {
         "version": "1.5.1",
         "date": "2026-09-03",
         "highlights": [
