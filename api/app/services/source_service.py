@@ -1,8 +1,10 @@
 import secrets
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.security import generate_api_key, hash_api_key, verify_api_key
 from app.models.source import Source
 from app.schemas.source import SourceCreate, SourceUpdate
@@ -43,6 +45,18 @@ class SourceService:
             source.webhook_url = data.webhook_url or None  # empty string → NULL
         if data.webhook_url_internal is not None:
             source.webhook_url_internal = data.webhook_url_internal or None  # empty string → NULL
+        await self._db.commit()
+        await self._db.refresh(source)
+        return source
+
+    async def update_logo(self, source_id: int, logo_filename: str) -> Source | None:
+        source = await self.get_by_id(source_id)
+        if source is None:
+            return None
+        if source.logo:
+            old_path = Path(settings.upload_dir) / "logos" / source.logo
+            old_path.unlink(missing_ok=True)
+        source.logo = logo_filename
         await self._db.commit()
         await self._db.refresh(source)
         return source

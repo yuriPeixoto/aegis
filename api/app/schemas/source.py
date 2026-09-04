@@ -15,6 +15,7 @@ class SourceResponse(BaseModel):
     name: str
     slug: str
     is_active: bool
+    logo: str | None = None
     webhook_url: str | None = None
     webhook_url_internal: str | None = None
     csat_enabled: bool = False

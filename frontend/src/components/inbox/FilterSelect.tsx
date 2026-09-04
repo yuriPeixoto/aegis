@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
 
 interface Option {
   value: string
   label: string
+  icon?: ReactNode
 }
 
 interface FilterSelectProps {
@@ -52,7 +53,10 @@ export function FilterSelect({ value, onChange, placeholder, options, minWidth }
               : 'bg-brand-surface/60 border-brand-border text-slate-400 hover:border-slate-500 hover:text-slate-300'
           }`}
       >
-        <span>{selected ? selected.label : placeholder}</span>
+        <span className="flex items-center gap-1.5 min-w-0">
+          {selected?.icon}
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
+        </span>
         <ChevronDown
           className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-brand-purple' : ''}`}
         />
@@ -94,7 +98,10 @@ export function FilterSelect({ value, onChange, placeholder, options, minWidth }
                   : 'text-slate-300 hover:text-slate-100 hover:bg-white/5'
                 }`}
             >
-              <span>{o.label}</span>
+              <span className="flex items-center gap-1.5 min-w-0">
+                {o.icon}
+                <span className="truncate">{o.label}</span>
+              </span>
               {o.value === value && <Check className="w-3.5 h-3.5 shrink-0" />}
             </button>
           ))}

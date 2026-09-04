@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   useSources,
   useCreateSource,
   useUpdateSource,
+  useUploadSourceLogo,
   useRegenerateSourceKey,
   type SourceCreated,
   type Source,
 } from '../../hooks/useSources'
+import { Avatar } from '../../components/common/Avatar'
 import { inputCls, Modal, Field, FormError, ModalActions } from './shared'
 
 interface SourceRowProps {
@@ -23,7 +25,10 @@ function SourceRow({ source, onEdit }: SourceRowProps) {
   return (
     <tr className="border-b border-slate-800">
       <td className="py-2.5 text-slate-200">
-        {source.name}
+        <div className="flex items-center gap-2">
+          <Avatar name={source.name} avatar={source.logo} mediaPath="/media/logos" size="xs" />
+          {source.name}
+        </div>
         {!source.is_active && (
           <span className="ml-2 text-[10px] text-slate-500 border border-slate-700 rounded px-1 py-0.5">
             inativa
@@ -107,7 +112,9 @@ function EditSourceModal({
 }) {
   const { t } = useTranslation()
   const updateSource = useUpdateSource(source.id)
+  const uploadLogo = useUploadSourceLogo(source.id)
   const regenerateKey = useRegenerateSourceKey(source.id)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState(source.name)
   const [webhookUrl, setWebhookUrl] = useState(source.webhook_url ?? '')
   const [csatEnabled, setCsatEnabled] = useState(source.csat_enabled)
@@ -137,6 +144,33 @@ function EditSourceModal({
         <Field label={t('settings.sources.fieldSlug')}>
           <div className={`${inputCls} text-slate-500 font-mono cursor-not-allowed`}>{source.slug}</div>
           <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugImmutable')}</p>
+        </Field>
+        <Field label={t('settings.sources.fieldLogo')}>
+          <div className="flex items-center gap-3">
+            <Avatar name={source.name} avatar={source.logo} mediaPath="/media/logos" size="lg" />
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) uploadLogo.mutate(file)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadLogo.isPending}
+                className="text-xs px-2.5 py-1.5 rounded border border-slate-700 text-slate-300 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+              >
+                {uploadLogo.isPending ? t('settings.sources.logoUploading') : t('settings.sources.logoUpload')}
+              </button>
+              <FormError error={uploadLogo.error} fallback={t('settings.sources.errorGeneric')} />
+            </div>
+          </div>
         </Field>
         <Field label={t('settings.sources.fieldWebhookUrl')}>
           <input type="url" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} className={inputCls} placeholder="https://..." />

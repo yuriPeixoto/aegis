@@ -248,7 +248,7 @@ export interface BulkUpdatePayload {
 
 export function useBulkUpdateTickets() {
   const queryClient = useQueryClient()
-  return useMutation<any, Error, BulkUpdatePayload>({
+  return useMutation<unknown, Error, BulkUpdatePayload>({
     mutationFn: async (payload) => {
       const { data } = await api.post('/tickets/bulk-update', payload)
       return data
@@ -279,7 +279,7 @@ export function useUploadAttachment(ticketId: number) {
 }
 
 export function useSources() {
-  return useQuery<{ id: number; name: string; slug: string }[]>({
+  return useQuery<{ id: number; name: string; slug: string; logo: string | null }[]>({
     queryKey: ['sources'],
     queryFn: async () => {
       const { data } = await api.get('/sources')
@@ -294,7 +294,7 @@ export interface InternalTicketPayload {
   description: string
   type: string
   priority: string
-  meta?: Record<string, any>
+  meta?: Record<string, unknown>
   source_id?: number | null
   assign_to_me?: boolean
 }

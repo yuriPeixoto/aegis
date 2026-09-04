@@ -20,6 +20,7 @@ class Source(Base):
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     api_key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    logo: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sla_hours: Mapped[int | None] = mapped_column(nullable=True)
     webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     webhook_url_internal: Mapped[str | None] = mapped_column(String(500), nullable=True)
