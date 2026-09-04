@@ -8,6 +8,10 @@ import type { TicketListResponse } from '../types/ticket'
 
 const POLL_INTERVAL = 30_000
 
+// Mirrors TicketService._TERMINAL_STATUSES (api/app/services/ticket_service.py) —
+// notifications are about tickets needing attention, not ones already closed.
+const TERMINAL_STATUSES = new Set(['resolved', 'closed', 'cancelled', 'merged'])
+
 // ── localStorage keys ─────────────────────────────────────────────────────────
 const PREF_OS     = 'aegis-notif-os'
 const PREF_BADGE  = 'aegis-notif-badge'
@@ -86,7 +90,7 @@ export function useInboundNotifications() {
     queryKey: ['tickets-notify'],
     queryFn: async () => {
       const { data } = await api.get<TicketListResponse>('/tickets', {
-        params: { limit: 100 },
+        params: { limit: 100, active_only: true },
       })
       return data
     },
@@ -130,6 +134,7 @@ export function useInboundNotifications() {
     data.items.forEach((ticket) => {
       if (knownIdsRef.current!.has(ticket.id)) return
       if (ticket.priority !== 'high' && ticket.priority !== 'urgent') return
+      if (TERMINAL_STATUSES.has(ticket.status)) return
       // Agents only see tickets assigned to them
       if (!isAdmin && ticket.assigned_to?.id !== me.id) return
 
@@ -148,6 +153,7 @@ export function useInboundNotifications() {
     // ── 2. New client messages on existing tickets ────────────────────────────
     data.items.forEach((ticket) => {
       if (!ticket.last_inbound_at) return
+      if (TERMINAL_STATUSES.has(ticket.status)) return
       if (!isAdmin && ticket.assigned_to?.id !== me.id) return
 
       const prev = prevInboundRef.current![ticket.id]
