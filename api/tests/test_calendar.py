@@ -3,11 +3,39 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.main import app
+from app.services.user_service import UserService
 
 
 def unique_slug() -> str:
     return f"cal-src-{uuid.uuid4().hex[:8]}"
+
+
+@pytest.fixture
+async def other_agent_user(db_session: AsyncSession) -> dict:
+    email = f"other-agent-{uuid.uuid4().hex[:8]}@aegis.test"
+    password = "OtherAgentP@ss1"
+    user = await UserService(db_session).create(
+        email=email, password=password, name="Other Agent", role="agent", must_change_password=False
+    )
+    return {"id": user.id, "email": email, "password": password}
+
+
+@pytest.fixture
+async def other_agent_client(client: AsyncClient, other_agent_user: dict) -> AsyncClient:
+    resp = await client.post(
+        "/v1/auth/login",
+        json={"email": other_agent_user["email"], "password": other_agent_user["password"]},
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {resp.json()['access_token']}"},
+    ) as ac:
+        yield ac
 
 
 @pytest.fixture
@@ -337,3 +365,82 @@ async def test_closing_ticket_allows_null_pr_number(
     linked = next(e for e in events if e["ticket_id"] == ticket_id)
     assert linked["pr_number"] is None
     assert linked["completed_at"] is not None
+
+
+# ── Visibilidade por usuário (#598) ─────────────────────────────────────────────
+# Tarefa é sempre individual (só o dono vê a própria, nem admin vê a de outro
+# na Agenda). Plantão/treinamento continuam compartilhados com toda a equipe.
+
+
+@pytest.mark.asyncio
+async def test_task_not_visible_to_other_agents(
+    agent_client: AsyncClient, agent_user: dict, other_agent_client: AsyncClient
+) -> None:
+    create = await agent_client.post(
+        "/v1/calendar/events",
+        json={
+            "type": "task",
+            "title": "Tarefa privada do agent",
+            "agent_id": agent_user["id"],
+            "event_date": "2026-09-15",
+        },
+    )
+    assert create.status_code == 201
+    task_id = create.json()["id"]
+
+    own_view = await agent_client.get("/v1/calendar/events", params={"year": 2026, "month": 9})
+    assert any(e["id"] == task_id for e in own_view.json())
+
+    other_view = await other_agent_client.get(
+        "/v1/calendar/events", params={"year": 2026, "month": 9}
+    )
+    assert all(e["id"] != task_id for e in other_view.json())
+
+
+@pytest.mark.asyncio
+async def test_task_not_visible_to_admin_either(
+    agent_client: AsyncClient, agent_user: dict, admin_client: AsyncClient
+) -> None:
+    create = await agent_client.post(
+        "/v1/calendar/events",
+        json={
+            "type": "task",
+            "title": "Tarefa privada do agent",
+            "agent_id": agent_user["id"],
+            "event_date": "2026-09-15",
+        },
+    )
+    assert create.status_code == 201
+    task_id = create.json()["id"]
+
+    admin_view = await admin_client.get("/v1/calendar/events", params={"year": 2026, "month": 9})
+    assert all(e["id"] != task_id for e in admin_view.json())
+
+
+@pytest.mark.asyncio
+async def test_on_call_and_training_stay_shared(
+    admin_client: AsyncClient, agent_user: dict, source_with_key: dict, other_agent_client: AsyncClient
+) -> None:
+    on_call = await admin_client.post(
+        "/v1/calendar/events",
+        json={"type": "on_call", "agent_id": agent_user["id"], "event_date": "2026-09-19"},
+    )
+    assert on_call.status_code == 201
+    on_call_id = on_call.json()["id"]
+
+    training = await admin_client.post(
+        "/v1/calendar/events",
+        json={
+            "type": "training",
+            "agent_id": agent_user["id"],
+            "event_date": "2026-09-19",
+            "source_id": source_with_key["id"],
+        },
+    )
+    assert training.status_code == 201
+    training_id = training.json()["id"]
+
+    view = await other_agent_client.get("/v1/calendar/events", params={"year": 2026, "month": 9})
+    ids = [e["id"] for e in view.json()]
+    assert on_call_id in ids
+    assert training_id in ids

@@ -22,7 +22,7 @@ router = APIRouter(prefix="/v1/calendar", tags=["calendar"])
 @router.get("/events", response_model=list[CalendarEventResponse])
 async def list_events(
     db: DbSession,
-    _: CurrentUser,
+    current_user: CurrentUser,
     year: int | None = Query(default=None),
     month: int | None = Query(default=None, ge=1, le=12),
     type: str | None = Query(default=None),
@@ -30,6 +30,7 @@ async def list_events(
     from_date: date | None = Query(default=None),
 ) -> list[CalendarEventResponse]:
     events = await CalendarService(db).list_events(
+        viewer_id=current_user.id,
         year=year,
         month=month,
         event_type=type,
