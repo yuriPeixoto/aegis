@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] — 2026-09-14
+
+### Added
+- **Cliente e Módulo/Serviço** — nova entidade `Cliente` (índice local, distinto de `Source`/Integração — ver ADR-012), com vínculo opcional a uma integração. Catálogo de `Módulo/Serviço` (Telemetria, Checklist Suite, Gestão de Frotas, Jornada, Painel de Abastecimentos, Painel de Manutenções — cadastro livre, admin pode adicionar outros) ativável por cliente. Telas novas em Configurações → Clientes/Módulos. Ticket Aegis #1307.
+
+### Changed
+- **Renomeada a tela "Clientes" (Source) para "Integrações"** — para não colidir com a nova entidade Cliente. Mesmo efeito em todos os outros lugares que rotulavam Source como "Cliente" (relatórios do dashboard, filtro de notificações, seletor de treinamento, formulário de chamado interno).
+
 ## [1.7.0] — 2026-09-04
 
 ### Added

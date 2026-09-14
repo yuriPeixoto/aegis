@@ -59,7 +59,7 @@
     "subject": "Assunto",
     "status": "Status",
     "priority": "Prioridade",
-    "client": "Cliente",
+    "client": "Integração",
     "date": "Data",
     "tickets": "chamados",
     "noData": "Nenhum dado no período.",
@@ -242,7 +242,7 @@
       "descriptionPlaceholder": "Explique com detalhes o que aconteceu ou o que poderia melhorar...",
       "descriptionMarkdownHint": "Suporta Markdown: **negrito**, *itálico*, listas, links e `código`.",
       "attachFiles": "Anexar arquivos",
-      "client": "Cliente",
+      "client": "Integração",
       "clientPlaceholder": "— Aegis interno (padrão) —",
       "assignToMe": "Atribuir a mim"
     }
@@ -316,8 +316,8 @@
       "opened": "Abertos",
       "resolved": "Resolvidos",
       "mttrLabel": "MTTR (h)",
-      "bySource": "Por Cliente",
-      "colSource": "Cliente"
+      "bySource": "Por Integração",
+      "colSource": "Integração"
     },
     "alert": {
       "overdue": "{{count}} chamados em atraso",
@@ -353,7 +353,7 @@
       "colResolved": "Resolvidos (30d)"
     },
     "byClient": {
-      "title": "Volume por Cliente"
+      "title": "Volume por Integração"
     },
     "byPriority": {
       "title": "Por Prioridade"
@@ -392,7 +392,9 @@
     "nav": {
       "title": "Configurações",
       "users": "Usuários",
-      "sources": "Clientes",
+      "clientes": "Clientes",
+      "modulos": "Módulos",
+      "sources": "Integrações",
       "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
@@ -438,11 +440,54 @@
         "viewer": "Visualizador"
       }
     },
-    "sources": {
+    "clientes": {
       "title": "Clientes",
-      "subtitle": "Sistemas externos que enviam chamados para o Aegis.",
+      "subtitle": "Índice de clientes da Unitop — nome, status e vínculo opcional com uma integração.",
       "new": "Adicionar cliente",
       "empty": "Nenhum cliente cadastrado.",
+      "colName": "Nome",
+      "colStatus": "Status",
+      "colSource": "Integração",
+      "colModulos": "Módulos",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "activate": "Ativar",
+      "deactivate": "Desativar",
+      "noSource": "sem integração",
+      "noSourceOption": "Nenhuma — cliente sem integração",
+      "noModulos": "nenhum",
+      "modalTitle": "Adicionar Cliente",
+      "editTitle": "Editar Cliente",
+      "fieldName": "Nome do cliente",
+      "fieldActive": "Cliente ativo",
+      "fieldSource": "Integração vinculada (opcional)",
+      "sourceHint": "Um cliente pode não ter integração (atendido só por WhatsApp/ligação) — esse campo é só referência rápida.",
+      "modulosTitle": "Módulos",
+      "modulosCount": "{{on}} de {{total}} ativos",
+      "modulosHint": "Desativar aqui não apaga chamados antigos do módulo — só deixa de contar nas métricas atuais.",
+      "cancel": "Cancelar",
+      "create": "Adicionar",
+      "creating": "Adicionando...",
+      "errorGeneric": "Algo deu errado. Tente novamente."
+    },
+    "modulos": {
+      "title": "Módulos",
+      "subtitle": "Catálogo de produtos e serviços da Unitop, ativáveis por cliente.",
+      "new": "Novo módulo",
+      "empty": "Nenhum módulo cadastrado.",
+      "colName": "Módulo",
+      "colClientes": "Clientes usando",
+      "clientesUsando_one": "{{count}} cliente",
+      "clientesUsando_other": "{{count}} clientes",
+      "modalTitle": "Novo Módulo",
+      "fieldName": "Nome do módulo",
+      "fieldNamePlaceholder": "ex: Maestro, Cronwatch..."
+    },
+    "sources": {
+      "title": "Integrações",
+      "subtitle": "Sistemas externos que enviam chamados para o Aegis.",
+      "new": "Adicionar integração",
+      "empty": "Nenhuma integração cadastrada.",
       "colName": "Nome",
       "colSlug": "Identificador",
       "colStatus": "Status",
@@ -451,13 +496,13 @@
       "inactive": "Inativo",
       "activate": "Ativar",
       "deactivate": "Desativar",
-      "modalTitle": "Adicionar Cliente",
-      "editTitle": "Editar Cliente",
-      "fieldName": "Nome do cliente",
+      "modalTitle": "Adicionar Integração",
+      "editTitle": "Editar Integração",
+      "fieldName": "Nome da integração",
       "fieldSlug": "Identificador",
       "slugHint": "Apenas letras minúsculas, números e hífens. Usado internamente.",
       "slugImmutable": "O identificador não pode ser alterado após a criação.",
-      "fieldLogo": "Logo do cliente",
+      "fieldLogo": "Logo",
       "logoUpload": "Enviar logo",
       "logoUploading": "Enviando...",
       "fieldWebhookUrl": "Webhook de retorno (opcional)",
@@ -467,10 +512,10 @@
       "creating": "Adicionando...",
       "errorGeneric": "Algo deu errado. Tente novamente.",
       "csatTitle": "Pesquisa de satisfação (CSAT)",
-      "csatEnable": "Ativar CSAT para este cliente",
+      "csatEnable": "Ativar CSAT para esta integração",
       "csatSampling": "Amostrar",
       "csatSamplingHint": "% dos tickets resolvidos",
-      "csatDescription": "Quando ativado, Aegis envia um webhook {{req}} ao resolver um ticket (conforme amostragem). O cliente exibe o banner de avaliação e envia a nota de volta via evento {{sub}}.",
+      "csatDescription": "Quando ativado, Aegis envia um webhook {{req}} ao resolver um ticket (conforme amostragem). O sistema de origem exibe o banner de avaliação e envia a nota de volta via evento {{sub}}.",
       "regenTitle": "Regenerar chaves de integração",
       "regenWarning": "A chave atual será invalidada imediatamente. Todos os sistemas que usam esta source precisarão ser atualizados.",
       "regenButton": "Quero regenerar as chaves",
@@ -648,8 +693,8 @@
   "notificationsPage": {
     "title": "Notificações",
     "subtitle": "Todas as suas notificações em um só lugar",
-    "search": "Buscar por chamado, cliente ou autor...",
-    "allClients": "Todos os clientes",
+    "search": "Buscar por chamado, integração ou autor...",
+    "allClients": "Todas as integrações",
     "filter": {
       "all": "Todas",
       "unread": "Não lidas",
@@ -725,8 +770,8 @@
       "date": "Data",
       "start_time": "Início",
       "end_time": "Fim",
-      "client": "Cliente",
-      "select_client": "Selecione um cliente...",
+      "client": "Integração",
+      "select_client": "Selecione uma integração...",
       "linkedTicket": "Chamado vinculado (opcional)",
       "ticketPickerPlaceholder": "Buscar por assunto ou # do chamado...",
       "taskTitle": "Título",
@@ -785,7 +830,7 @@
       "modality": "Modalidade",
       "type": "Tipo",
       "areaSector": "Área / Setor atendido",
-      "client": "Cliente",
+      "client": "Integração",
       "instructor": "Instrutor",
       "instructorTitle": "Cargo / Depto do instrutor",
       "moduleName": "Módulo",

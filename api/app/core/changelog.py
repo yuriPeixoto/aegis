@@ -15,6 +15,16 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.8.0",
+        "date": "2026-09-14",
+        "highlights": [
+            "Novo: cadastro de Clientes e de Módulos/Serviços em Configurações, "
+            "distinto das integrações técnicas",
+            "A tela \"Clientes\" que gerenciava integrações agora se chama "
+            "\"Integrações\", pra não confundir com o cadastro novo",
+        ],
+    },
+    {
         "version": "1.7.0",
         "date": "2026-09-04",
         "highlights": [

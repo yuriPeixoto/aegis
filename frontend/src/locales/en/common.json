@@ -71,7 +71,7 @@
     "subject": "Subject",
     "status": "Status",
     "priority": "Priority",
-    "client": "Client",
+    "client": "Integration",
     "date": "Date",
     "tickets": "tickets",
     "noData": "No data for this period.",
@@ -242,7 +242,7 @@
       "descriptionPlaceholder": "Explain in detail what happened or what could be improved...",
       "descriptionMarkdownHint": "Supports Markdown: **bold**, *italic*, lists, links and `code`.",
       "attachFiles": "Attach files",
-      "client": "Client",
+      "client": "Integration",
       "clientPlaceholder": "— Aegis internal (default) —",
       "assignToMe": "Assign to me"
     }
@@ -316,8 +316,8 @@
       "opened": "Opened",
       "resolved": "Resolved",
       "mttrLabel": "MTTR (h)",
-      "bySource": "By Client",
-      "colSource": "Client"
+      "bySource": "By Integration",
+      "colSource": "Integration"
     },
     "alert": {
       "overdue": "{{count}} overdue tickets",
@@ -353,7 +353,7 @@
       "colResolved": "Resolved (30d)"
     },
     "byClient": {
-      "title": "Volume by Client"
+      "title": "Volume by Integration"
     },
     "byPriority": {
       "title": "By Priority"
@@ -392,7 +392,9 @@
     "nav": {
       "title": "Settings",
       "users": "Users",
-      "sources": "Clients",
+      "clientes": "Clients",
+      "modulos": "Modules",
+      "sources": "Integrations",
       "tags": "Tags",
       "sla": "SLA",
       "autoClose": "Auto-close",
@@ -438,11 +440,54 @@
         "viewer": "Viewer"
       }
     },
-    "sources": {
+    "clientes": {
       "title": "Clients",
-      "subtitle": "External systems that send tickets to Aegis.",
+      "subtitle": "Unitop's client index — name, status and an optional link to an integration.",
       "new": "Add client",
       "empty": "No clients registered yet.",
+      "colName": "Name",
+      "colStatus": "Status",
+      "colSource": "Integration",
+      "colModulos": "Modules",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "noSource": "no integration",
+      "noSourceOption": "None — client without integration",
+      "noModulos": "none",
+      "modalTitle": "Add Client",
+      "editTitle": "Edit Client",
+      "fieldName": "Client name",
+      "fieldActive": "Client active",
+      "fieldSource": "Linked integration (optional)",
+      "sourceHint": "A client may have no integration (served only by phone/WhatsApp) — this field is just a quick reference.",
+      "modulosTitle": "Modules",
+      "modulosCount": "{{on}} of {{total}} active",
+      "modulosHint": "Turning this off doesn't delete past tickets for the module — it just stops counting toward current metrics.",
+      "cancel": "Cancel",
+      "create": "Add",
+      "creating": "Adding...",
+      "errorGeneric": "Something went wrong. Try again."
+    },
+    "modulos": {
+      "title": "Modules",
+      "subtitle": "Catalog of Unitop products and services, activatable per client.",
+      "new": "New module",
+      "empty": "No modules registered yet.",
+      "colName": "Module",
+      "colClientes": "Clients using it",
+      "clientesUsando_one": "{{count}} client",
+      "clientesUsando_other": "{{count}} clients",
+      "modalTitle": "New Module",
+      "fieldName": "Module name",
+      "fieldNamePlaceholder": "e.g. Maestro, Cronwatch..."
+    },
+    "sources": {
+      "title": "Integrations",
+      "subtitle": "External systems that send tickets to Aegis.",
+      "new": "Add integration",
+      "empty": "No integrations registered yet.",
       "colName": "Name",
       "colSlug": "Identifier",
       "colStatus": "Status",
@@ -451,13 +496,13 @@
       "inactive": "Inactive",
       "activate": "Activate",
       "deactivate": "Deactivate",
-      "modalTitle": "Add Client",
-      "editTitle": "Edit Client",
-      "fieldName": "Client name",
+      "modalTitle": "Add Integration",
+      "editTitle": "Edit Integration",
+      "fieldName": "Integration name",
       "fieldSlug": "Identifier",
       "slugHint": "Lowercase letters, numbers and hyphens only. Used internally.",
       "slugImmutable": "The identifier cannot be changed after creation.",
-      "fieldLogo": "Client logo",
+      "fieldLogo": "Logo",
       "logoUpload": "Upload logo",
       "logoUploading": "Uploading...",
       "fieldWebhookUrl": "Callback webhook (optional)",
@@ -467,10 +512,10 @@
       "creating": "Adding...",
       "errorGeneric": "Something went wrong. Try again.",
       "csatTitle": "Satisfaction survey (CSAT)",
-      "csatEnable": "Enable CSAT for this client",
+      "csatEnable": "Enable CSAT for this integration",
       "csatSampling": "Sample",
       "csatSamplingHint": "% of resolved tickets",
-      "csatDescription": "When enabled, Aegis sends a {{req}} webhook on ticket resolution (per sampling rate). The client shows a rating banner and sends the score back via {{sub}} event.",
+      "csatDescription": "When enabled, Aegis sends a {{req}} webhook on ticket resolution (per sampling rate). The source system shows a rating banner and sends the score back via {{sub}} event.",
       "regenTitle": "Regenerate integration keys",
       "regenWarning": "The current key will be immediately invalidated. All systems using this source will need to be updated.",
       "regenButton": "I want to regenerate the keys",
@@ -648,8 +693,8 @@
   "notificationsPage": {
     "title": "Notifications",
     "subtitle": "All your notifications in one place",
-    "search": "Search by ticket, client or author...",
-    "allClients": "All clients",
+    "search": "Search by ticket, integration or author...",
+    "allClients": "All integrations",
     "filter": {
       "all": "All",
       "unread": "Unread",
@@ -725,8 +770,8 @@
       "date": "Date",
       "start_time": "Start",
       "end_time": "End",
-      "client": "Client",
-      "select_client": "Select a client...",
+      "client": "Integration",
+      "select_client": "Select an integration...",
       "linkedTicket": "Linked ticket (optional)",
       "ticketPickerPlaceholder": "Search by subject or ticket #...",
       "taskTitle": "Title",
@@ -785,7 +830,7 @@
       "modality": "Modality",
       "type": "Type",
       "areaSector": "Area / Sector served",
-      "client": "Client",
+      "client": "Integration",
       "instructor": "Instructor",
       "instructorTitle": "Instructor title / dept",
       "moduleName": "Module",
