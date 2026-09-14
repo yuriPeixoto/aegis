@@ -1,10 +1,12 @@
 import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Users, Plug, Clock, Trash2, MessageSquare, Tag as TagIcon, AlertTriangle, Bell } from 'lucide-react'
+import { Users, Building2, Blocks, Plug, Clock, Trash2, MessageSquare, Tag as TagIcon, AlertTriangle, Bell } from 'lucide-react'
 import { useMe } from '../../hooks/useAuth'
 
 const TABS = [
   { path: 'users',         label: 'settings.nav.users',           icon: Users         },
+  { path: 'clientes',      label: 'settings.nav.clientes',        icon: Building2     },
+  { path: 'modulos',       label: 'settings.nav.modulos',         icon: Blocks        },
   { path: 'sources',       label: 'settings.nav.sources',         icon: Plug          },
   { path: 'tags',          label: 'settings.nav.tags',            icon: TagIcon       },
   { path: 'sla',           label: 'settings.nav.sla',             icon: Clock         },

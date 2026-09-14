@@ -23,6 +23,8 @@ import { AgentsTab } from '../pages/dashboard/AgentsTab'
 import { SettingsLayout } from '../pages/settings/SettingsLayout'
 import { UsersTab } from '../pages/settings/UsersTab'
 import { SourcesTab } from '../pages/settings/SourcesTab'
+import { ClientesTab } from '../pages/settings/ClientesTab'
+import { ModulosTab } from '../pages/settings/ModulosTab'
 import { TagsTab } from '../pages/settings/TagsTab'
 import { SlaTab } from '../pages/settings/SlaTab'
 import { AutoCloseTab } from '../pages/settings/AutoCloseTab'
@@ -68,6 +70,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="users" replace /> },
           { path: 'users',         element: <UsersTab /> },
+          { path: 'clientes',      element: <ClientesTab /> },
+          { path: 'modulos',       element: <ModulosTab /> },
           { path: 'sources',       element: <SourcesTab /> },
           { path: 'tags',          element: <TagsTab /> },
           { path: 'sla',           element: <SlaTab /> },
