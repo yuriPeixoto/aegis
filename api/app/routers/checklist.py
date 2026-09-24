@@ -61,9 +61,7 @@ async def create_checklist_item(
 ) -> ChecklistItemResponse:
     ticket = await _get_ticket_or_404(db, ticket_id)
 
-    item = await ChecklistService(db).create_item(
-        ticket_id, body.text, created_by=current_user.id
-    )
+    item = await ChecklistService(db).create_item(ticket_id, body.text, created_by=current_user.id)
     db.add(
         TicketEvent(
             ticket_id=ticket_id,

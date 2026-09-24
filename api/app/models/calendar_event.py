@@ -39,8 +39,10 @@ class CalendarEvent(Base):
     ticket_id: Mapped[int | None] = mapped_column(
         ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
     )
-    color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # override manual, "#RRGGBB"
-    pr_number: Mapped[str | None] = mapped_column(String(200), nullable=True)  # PR vinculado, se houver
+    # override manual, "#RRGGBB"
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    # PR vinculado, se houver
+    pr_number: Mapped[str | None] = mapped_column(String(200), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )  # tarefa concluída (fechamento do ticket) — presença = "feita"

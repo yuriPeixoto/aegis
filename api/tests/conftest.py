@@ -76,6 +76,7 @@ async def _override_get_db() -> AsyncSession:  # type: ignore[override]
 
 app.dependency_overrides[get_db] = _override_get_db
 
+
 # ticket_sync_hooks opens its own session directly (it fires from a background
 # asyncio task, outside any request, so it can't go through the get_db
 # dependency override above) — left pointed at app.core.database.AsyncSessionLocal
