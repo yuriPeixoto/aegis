@@ -11,7 +11,11 @@ def test_daily_recurrence_respects_interval_and_until() -> None:
         date(2026, 9, 1), RecurrenceRule(freq="daily", interval=2, until=date(2026, 9, 9))
     )
     assert dates == [
-        date(2026, 9, 1), date(2026, 9, 3), date(2026, 9, 5), date(2026, 9, 7), date(2026, 9, 9),
+        date(2026, 9, 1),
+        date(2026, 9, 3),
+        date(2026, 9, 5),
+        date(2026, 9, 7),
+        date(2026, 9, 9),
     ]
 
 

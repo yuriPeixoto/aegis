@@ -20,8 +20,8 @@ APP_CHANGELOG: list[dict] = [
         "highlights": [
             "Novo: cadastro de Clientes e de Módulos/Serviços em Configurações, "
             "distinto das integrações técnicas",
-            "A tela \"Clientes\" que gerenciava integrações agora se chama "
-            "\"Integrações\", pra não confundir com o cadastro novo",
+            'A tela "Clientes" que gerenciava integrações agora se chama '
+            '"Integrações", pra não confundir com o cadastro novo',
         ],
     },
     {
@@ -45,7 +45,7 @@ APP_CHANGELOG: list[dict] = [
         "version": "1.6.1",
         "date": "2026-09-04",
         "highlights": [
-            "Novo: botão \"Agendar\" no chamado leva direto pra Agenda com o "
+            'Novo: botão "Agendar" no chamado leva direto pra Agenda com o '
             "chamado já pronto pra virar tarefa — ou busque o chamado direto "
             "ao criar uma tarefa na Agenda",
         ],

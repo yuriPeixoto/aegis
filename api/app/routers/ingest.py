@@ -4,7 +4,12 @@ from fastapi import APIRouter, status
 
 from app.core.auth import CurrentSource
 from app.core.dependencies import DbSession
-from app.schemas.ingest import IngestResponse, TicketEventPayload, TicketIngestPayload
+from app.schemas.ingest import (
+    IngestResponse,
+    TicketEventPayload,
+    TicketIngestPayload,
+    TicketStatusSnapshot,
+)
 from app.services.ingest_service import IngestService
 
 router = APIRouter(prefix="/v1/ingest", tags=["ingest"])
@@ -49,3 +54,26 @@ async def ingest_ticket_event(
 ) -> dict[str, int]:
     event = await IngestService(db).record_event(source, data)
     return {"event_id": event.id}
+
+
+@router.get(
+    "/tickets/status",
+    response_model=list[TicketStatusSnapshot],
+    summary="Snapshot of this source's tickets' current status, for drift reconciliation",
+)
+async def ticket_status_snapshot(
+    source: CurrentSource,
+    db: DbSession,
+) -> list[TicketStatusSnapshot]:
+    """A source system calls this periodically to compare against its own local
+    state and catch drift the normal push-based sync missed — the failure mode
+    that motivated this endpoint (Aegis #1436/#1437): a bug on either side can
+    silently stop a ticket's status from ever reaching the other system again,
+    with nothing erroring or logging loudly enough to notice."""
+    tickets = await IngestService(db).list_status_snapshot(source)
+    return [
+        TicketStatusSnapshot(
+            external_id=t.external_id, status=t.status, last_synced_at=t.last_synced_at
+        )
+        for t in tickets
+    ]

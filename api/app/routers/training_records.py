@@ -194,9 +194,7 @@ async def get_public_summary(token: str, db: DbSession) -> PublicTrainingSummary
 
 
 @public_router.post("/{token}", status_code=status.HTTP_204_NO_CONTENT)
-async def sign_public(
-    token: str, data: PublicSignRequest, db: DbSession, request: Request
-) -> None:
+async def sign_public(token: str, data: PublicSignRequest, db: DbSession, request: Request) -> None:
     svc = TrainingRecordService(db)
     try:
         participant = await svc.sign_by_token(token, data, signer_ip=_client_ip(request))
