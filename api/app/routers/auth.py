@@ -10,7 +10,13 @@ from app.core.auth import CurrentUser
 from app.core.config import settings
 from app.core.dependencies import DbSession
 from app.core.security import create_access_token
-from app.schemas.auth import ApiKeyResponse, ChangelogSeenRequest, LoginRequest, TokenResponse, UserResponse
+from app.schemas.auth import (
+    ApiKeyResponse,
+    ChangelogSeenRequest,
+    LoginRequest,
+    TokenResponse,
+    UserResponse,
+)
 from app.services.user_service import UserService
 
 _AVATAR_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}

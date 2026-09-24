@@ -13,6 +13,7 @@ from sqlalchemy.pool import NullPool
 import app.models  # noqa: F401 — registers all models on Base.metadata
 from app.core.database import Base, get_db
 from app.main import app
+from app.services import ticket_sync_hooks
 from app.services.user_service import UserService
 
 
@@ -74,6 +75,17 @@ async def _override_get_db() -> AsyncSession:  # type: ignore[override]
 
 
 app.dependency_overrides[get_db] = _override_get_db
+
+
+# ticket_sync_hooks opens its own session directly (it fires from a background
+# asyncio task, outside any request, so it can't go through the get_db
+# dependency override above) — left pointed at app.core.database.AsyncSessionLocal
+# (settings.database_url, i.e. the dev "aegis" DB), any test that changes a
+# ticket's status would make it reach into the wrong database in the
+# background. Every test gets this rewired to the test DB automatically.
+@pytest.fixture(autouse=True)
+def _ticket_sync_hooks_use_test_db(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ticket_sync_hooks, "AsyncSessionLocal", _TestSession)
 
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────

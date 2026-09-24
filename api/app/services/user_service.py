@@ -6,7 +6,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import generate_api_key, hash_api_key, hash_password, verify_api_key, verify_password
+from app.core.security import (
+    generate_api_key,
+    hash_api_key,
+    hash_password,
+    verify_api_key,
+    verify_password,
+)
 from app.models.user import User
 
 

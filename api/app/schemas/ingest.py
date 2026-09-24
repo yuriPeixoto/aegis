@@ -42,3 +42,13 @@ class IngestResponse(BaseModel):
     ticket_id: int
     external_id: str
     created: bool  # True = new ticket, False = updated existing
+
+
+class TicketStatusSnapshot(BaseModel):
+    """One ticket's current Aegis status, for a source system's own drift
+    reconciliation sweep (see Aegis #1436/#1437 — the whole reason to check
+    for drift is that a bug can silently desync the two sides)."""
+
+    external_id: str
+    status: str
+    last_synced_at: datetime

@@ -39,9 +39,7 @@ async def test_list_requires_auth(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_create_and_get_training_record(admin_client: AsyncClient, admin_user: dict) -> None:
-    resp = await admin_client.post(
-        "/v1/training-records", json=_record_payload(admin_user["id"])
-    )
+    resp = await admin_client.post("/v1/training-records", json=_record_payload(admin_user["id"]))
     assert resp.status_code == 201, resp.text
     data = resp.json()
     assert data["training_name"] == "Treinamento Checklist Suite"

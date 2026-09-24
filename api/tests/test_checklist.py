@@ -42,9 +42,7 @@ async def ingested_ticket(client: AsyncClient, source_with_key: dict) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_create_checklist_item(
-    admin_client: AsyncClient, ingested_ticket: dict
-) -> None:
+async def test_create_checklist_item(admin_client: AsyncClient, ingested_ticket: dict) -> None:
     ticket_id = ingested_ticket["ticket_id"]
     resp = await admin_client.post(
         f"/v1/tickets/{ticket_id}/checklist", json={"text": "Ajustar migration"}
@@ -84,9 +82,7 @@ async def test_toggle_checklist_item_updates_progress(
 
 
 @pytest.mark.asyncio
-async def test_delete_checklist_item(
-    admin_client: AsyncClient, ingested_ticket: dict
-) -> None:
+async def test_delete_checklist_item(admin_client: AsyncClient, ingested_ticket: dict) -> None:
     ticket_id = ingested_ticket["ticket_id"]
     item = (
         await admin_client.post(
@@ -102,9 +98,7 @@ async def test_delete_checklist_item(
 
 
 @pytest.mark.asyncio
-async def test_checklist_item_not_found(
-    admin_client: AsyncClient, ingested_ticket: dict
-) -> None:
+async def test_checklist_item_not_found(admin_client: AsyncClient, ingested_ticket: dict) -> None:
     ticket_id = ingested_ticket["ticket_id"]
     resp = await admin_client.patch(
         f"/v1/tickets/{ticket_id}/checklist/999999", json={"is_done": True}

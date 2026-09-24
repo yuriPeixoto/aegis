@@ -132,3 +132,12 @@ class Ticket(Base):
         # Unique ticket per source — prevents duplicate ingestion
         UniqueConstraint("source_id", "external_id", name="uq_ticket_source_external"),
     )
+
+    # Transient, never persisted. Deliberately NOT a PEP 526 (`name: Type`)
+    # annotation — the declarative mapper scans every one of those and would
+    # otherwise try (and fail) to treat this as a column; a type comment keeps
+    # mypy happy about the type without SQLAlchemy ever seeing it. Set
+    # per-instance by whichever service method changes `status` right before
+    # it does, so ticket_sync_hooks can report who made the change to the
+    # source system's webhook instead of a generic "Aegis". See Aegis #1436/#1437.
+    _status_change_actor = None  # type: str | None

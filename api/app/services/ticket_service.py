@@ -224,6 +224,7 @@ class TicketService:
         comment: str | None = None,
         deployment_scheduled_at: datetime | None = None,
         pr_number: str | None = None,
+        changed_by_name: str | None = None,
     ) -> tuple[Ticket | None, str | None]:
         """Return (ticket, None) on success, or (None, error_message) on failure."""
         ticket = await self.get_ticket(ticket_id)
@@ -235,6 +236,9 @@ class TicketService:
             return None, f"transition_invalid:{ticket.status}>{new_status}"
 
         old_status = ticket.status
+        # Read by ticket_sync_hooks before commit — lets the webhook relayed to
+        # the source system report who made the change instead of just "Aegis".
+        ticket._status_change_actor = changed_by_name
         ticket.status = new_status
 
         now = datetime.now(UTC)
@@ -260,16 +264,20 @@ class TicketService:
             # início do trabalho — o horário planejado (ex: 08h-12h) vira o
             # horário real em que o atendimento de fato começou.
             task_started = (
-                await self._db.execute(
-                    select(CalendarEvent)
-                    .where(
-                        CalendarEvent.ticket_id == ticket_id,
-                        CalendarEvent.type == EVENT_TYPE_TASK,
-                        CalendarEvent.completed_at.is_(None),
+                (
+                    await self._db.execute(
+                        select(CalendarEvent)
+                        .where(
+                            CalendarEvent.ticket_id == ticket_id,
+                            CalendarEvent.type == EVENT_TYPE_TASK,
+                            CalendarEvent.completed_at.is_(None),
+                        )
+                        .order_by(CalendarEvent.created_at.desc())
                     )
-                    .order_by(CalendarEvent.created_at.desc())
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
 
             if task_started is not None:
                 local_now = now.astimezone(_LOCAL_TZ)
@@ -294,16 +302,20 @@ class TicketService:
             # concluída (início = fim, é só um ponto no tempo), pra todo
             # fechamento deixar rastro na Agenda.
             existing_task = (
-                await self._db.execute(
-                    select(CalendarEvent)
-                    .where(
-                        CalendarEvent.ticket_id == ticket_id,
-                        CalendarEvent.type == EVENT_TYPE_TASK,
-                        CalendarEvent.completed_at.is_(None),
+                (
+                    await self._db.execute(
+                        select(CalendarEvent)
+                        .where(
+                            CalendarEvent.ticket_id == ticket_id,
+                            CalendarEvent.type == EVENT_TYPE_TASK,
+                            CalendarEvent.completed_at.is_(None),
+                        )
+                        .order_by(CalendarEvent.created_at.desc())
                     )
-                    .order_by(CalendarEvent.created_at.desc())
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
 
             closure_time = deployment_scheduled_at.strftime("%H:%M")
 
@@ -376,6 +388,7 @@ class TicketService:
             if status and ticket.status != status:
                 # We skip transition validation for bulk updates to allow "cleanup" actions
                 old_status = ticket.status
+                ticket._status_change_actor = changed_by_user_name
                 ticket.status = status
                 self._db.add(
                     TicketEvent(
@@ -637,6 +650,7 @@ class TicketService:
         # perpetually overdue in the dashboard/KPIs after being folded into the target
         # (#1287: a merged ticket kept its old sla_due_at forever, with no way to
         # re-run it short of a manual SQL fix).
+        source._status_change_actor = merged_by_name
         source.status = "merged"
         source.merged_into_ticket_id = target_ticket_id
         source.merged_at = now

@@ -69,7 +69,9 @@ async def _ingest_ticket_open(admin_client: AsyncClient, source_with_key: dict) 
 async def _ingest_ticket_in_progress(admin_client: AsyncClient, source_with_key: dict) -> int:
     """Ingesta um ticket e avança pra in_progress (pré-requisito de pending_closure)."""
     ticket_id = await _ingest_ticket_open(admin_client, source_with_key)
-    resp = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
+    resp = await admin_client.patch(
+        f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"}
+    )
     assert resp.status_code == 200
     return ticket_id
 
@@ -301,12 +303,17 @@ async def test_starting_ticket_moves_scheduled_task_to_real_start(
     link = await admin_client.patch(f"/v1/calendar/events/{task_id}", json={"ticket_id": ticket_id})
     assert link.status_code == 200
 
-    resp = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
+    resp = await admin_client.patch(
+        f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"}
+    )
     assert resp.status_code == 200
 
     today_local = date.today().isoformat()
     events = (
-        await admin_client.get("/v1/calendar/events", params={"year": date.today().year, "month": date.today().month})
+        await admin_client.get(
+            "/v1/calendar/events",
+            params={"year": date.today().year, "month": date.today().month},
+        )
     ).json()
     updated = next(e for e in events if e["id"] == task_id)
     assert updated["event_date"] == today_local
@@ -326,7 +333,9 @@ async def test_reopening_ticket_does_not_touch_already_completed_task(
     )
     assert close.status_code == 200
 
-    reopen = await admin_client.patch(f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"})
+    reopen = await admin_client.patch(
+        f"/v1/tickets/{ticket_id}/status", json={"status": "in_progress"}
+    )
     assert reopen.status_code == 200
 
     events = (
@@ -391,9 +400,7 @@ async def test_closing_ticket_updates_existing_scheduled_task_instead_of_duplica
     task_id = scheduled.json()["id"]
 
     # Vincula manualmente (simula o que o #602 fará) e fecha o chamado
-    link = await admin_client.patch(
-        f"/v1/calendar/events/{task_id}", json={"ticket_id": ticket_id}
-    )
+    link = await admin_client.patch(f"/v1/calendar/events/{task_id}", json={"ticket_id": ticket_id})
     assert link.status_code == 200
 
     resp = await admin_client.patch(
@@ -492,7 +499,10 @@ async def test_task_not_visible_to_admin_either(
 
 @pytest.mark.asyncio
 async def test_on_call_and_training_stay_shared(
-    admin_client: AsyncClient, agent_user: dict, source_with_key: dict, other_agent_client: AsyncClient
+    admin_client: AsyncClient,
+    agent_user: dict,
+    source_with_key: dict,
+    other_agent_client: AsyncClient,
 ) -> None:
     on_call = await admin_client.post(
         "/v1/calendar/events",
@@ -545,7 +555,10 @@ async def test_create_recurring_task_materializes_each_occurrence(
     assert resp.status_code == 201
     events = resp.json()
     assert [e["event_date"] for e in events] == [
-        "2026-09-07", "2026-09-14", "2026-09-21", "2026-09-28",
+        "2026-09-07",
+        "2026-09-14",
+        "2026-09-21",
+        "2026-09-28",
     ]
     group_ids = {e["recurrence_group_id"] for e in events}
     assert len(group_ids) == 1

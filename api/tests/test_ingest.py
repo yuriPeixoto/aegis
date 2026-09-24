@@ -319,3 +319,48 @@ async def test_ingest_event_status_changed_stores_gf_ambiguous_substatus(
     ticket = ticket_resp.json()
     assert ticket["status"] == "pending_closure"
     assert ticket["source_metadata"]["gf_status_raw"] == "aguardando_validacao_cliente"
+
+
+@pytest.mark.asyncio
+async def test_ticket_status_snapshot_scoped_to_own_source(
+    client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """Aegis #1436/#1437: drift-reconciliation endpoint a source system polls to
+    catch a ticket whose status silently stopped syncing. Must be scoped to the
+    requesting source only — never another source's tickets."""
+    other_source_resp = await admin_client.post(
+        "/v1/sources", json={"name": "Other Source", "slug": unique_slug()}
+    )
+    assert other_source_resp.status_code == 201
+    other_key = other_source_resp.json()["api_key"]
+
+    external_id = unique_external_id()
+    headers = {"X-Aegis-Key": source_with_key["api_key"]}
+    await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": external_id, "status": "in_progress", "subject": "Snapshot test"},
+    )
+    await client.post(
+        "/v1/ingest/tickets",
+        headers={"X-Aegis-Key": other_key},
+        json={
+            "external_id": unique_external_id(),
+            "status": "open",
+            "subject": "Other source's ticket",
+        },
+    )
+
+    resp = await client.get("/v1/ingest/tickets/status", headers=headers)
+    assert resp.status_code == 200
+    snapshot = resp.json()
+    assert len(snapshot) == 1
+    assert snapshot[0]["external_id"] == external_id
+    assert snapshot[0]["status"] == "in_progress"
+    assert "last_synced_at" in snapshot[0]
+
+
+@pytest.mark.asyncio
+async def test_ticket_status_snapshot_requires_source_key(client: AsyncClient) -> None:
+    resp = await client.get("/v1/ingest/tickets/status")
+    assert resp.status_code == 401
