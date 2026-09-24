@@ -198,6 +198,13 @@ class IngestService:
         await self._db.refresh(ticket)
         return ticket, False
 
+    async def list_status_snapshot(self, source: Source) -> list[Ticket]:
+        """All of this source's tickets' current status — a source system uses
+        this for its own drift reconciliation sweep, comparing against its
+        local state. See Aegis #1436/#1437."""
+        result = await self._db.execute(select(Ticket).where(Ticket.source_id == source.id))
+        return list(result.scalars().all())
+
     async def _apply_critical_source_alert(
         self, ticket: Ticket, tag_name: str, recipient_email: str, source_name: str
     ) -> None:
