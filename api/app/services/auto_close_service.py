@@ -76,6 +76,7 @@ class AutoCloseService:
 
             # Update ticket
             old_status = ticket.status
+            ticket._status_change_actor = "Aegis (fechamento automático por inatividade)"
             ticket.status = "resolved"
             ticket.resolved_at = now
             ticket.last_synced_at = now

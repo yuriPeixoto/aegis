@@ -221,6 +221,7 @@ async def update_ticket_status(
         comment=body.comment,
         deployment_scheduled_at=body.deployment_scheduled_at,
         pr_number=body.pr_number,
+        changed_by_name=current_user.name,
     )
     if error == "not_found":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
@@ -228,19 +229,8 @@ async def update_ticket_status(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=error)
     assert ticket is not None
 
-    if ticket.source and ticket.source.webhook_url:
-        background_tasks.add_task(
-            dispatch_webhook,
-            webhook_url=ticket.source.webhook_url,
-            webhook_secret=ticket.source.webhook_secret,
-            event_type="status_changed",
-            payload={
-                "external_id": ticket.external_id,
-                "status": body.status,
-                "changed_by": current_user.name,
-            },
-            webhook_url_internal=ticket.source.webhook_url_internal,
-        )
+    # Relaying the status change to ticket.source's webhook is handled by
+    # ticket_sync_hooks (SQLAlchemy after_commit) now — see Aegis #1436/#1437.
 
     # CSAT request: send when ticket is resolved/closed and source has CSAT enabled
     _CSAT_TRIGGER_STATUSES = {"resolved", "closed"}
@@ -507,24 +497,12 @@ async def bulk_update_tickets(
         comment=body.comment,
     )
 
-    # Dispatch webhooks for each updated ticket
+    # Status changes are relayed by ticket_sync_hooks (SQLAlchemy after_commit) now —
+    # see Aegis #1436/#1437. It also fixes this route previously sending event_type
+    # "status_updated" instead of "status_changed", which the GF-side webhook
+    # receiver never recognized (AegisWebhookController only matches "status_changed").
     for ticket in updated_tickets:
         if ticket.source and ticket.source.webhook_url:
-            # Determine which webhooks to send based on what changed
-            if body.status:
-                background_tasks.add_task(
-                    dispatch_webhook,
-                    webhook_url=ticket.source.webhook_url,
-                    webhook_secret=ticket.source.webhook_secret,
-                    event_type="status_updated",
-                    payload={
-                        "external_id": ticket.external_id,
-                        "status": body.status,
-                        "changed_by": current_user.name,
-                        **({"comment": body.comment} if body.comment else {}),
-                    },
-                    webhook_url_internal=ticket.source.webhook_url_internal,
-                )
             if body.priority:
                 background_tasks.add_task(
                     dispatch_webhook,

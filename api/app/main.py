@@ -33,6 +33,9 @@ from app.routers import (
     views,
 )
 from app.routers import settings as settings_router
+from app.services import (
+    ticket_sync_hooks,  # noqa: F401 — import registers the SQLAlchemy status-change hook (Aegis #1436/#1437)
+)
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,

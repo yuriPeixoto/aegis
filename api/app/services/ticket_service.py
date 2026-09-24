@@ -224,6 +224,7 @@ class TicketService:
         comment: str | None = None,
         deployment_scheduled_at: datetime | None = None,
         pr_number: str | None = None,
+        changed_by_name: str | None = None,
     ) -> tuple[Ticket | None, str | None]:
         """Return (ticket, None) on success, or (None, error_message) on failure."""
         ticket = await self.get_ticket(ticket_id)
@@ -235,6 +236,9 @@ class TicketService:
             return None, f"transition_invalid:{ticket.status}>{new_status}"
 
         old_status = ticket.status
+        # Read by ticket_sync_hooks before commit — lets the webhook relayed to
+        # the source system report who made the change instead of just "Aegis".
+        ticket._status_change_actor = changed_by_name
         ticket.status = new_status
 
         now = datetime.now(UTC)
@@ -376,6 +380,7 @@ class TicketService:
             if status and ticket.status != status:
                 # We skip transition validation for bulk updates to allow "cleanup" actions
                 old_status = ticket.status
+                ticket._status_change_actor = changed_by_user_name
                 ticket.status = status
                 self._db.add(
                     TicketEvent(
@@ -637,6 +642,7 @@ class TicketService:
         # perpetually overdue in the dashboard/KPIs after being folded into the target
         # (#1287: a merged ticket kept its old sla_due_at forever, with no way to
         # re-run it short of a manual SQL fix).
+        source._status_change_actor = merged_by_name
         source.status = "merged"
         source.merged_into_ticket_id = target_ticket_id
         source.merged_at = now
