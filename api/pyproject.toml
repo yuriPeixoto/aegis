@@ -1,5 +1,10 @@
 [tool.ruff]
-target-version = "py314"
+# Servidor de produção roda Python 3.11 (Debian, /opt/aegis/api/venv/bin/python3.11) —
+# só CI/dev usam 3.14. target-version errado (py314) já quebrou produção uma vez:
+# ruff format() removeu parênteses em `except (A, B):` por serem opcionais no 3.14
+# (PEP 758), gerando SyntaxError no 3.11 do servidor. NUNCA subir isso pra além de
+# py311 sem migrar produção primeiro.
+target-version = "py311"
 line-length = 100
 src = ["app", "tests"]
 
@@ -11,7 +16,7 @@ ignore = ["B008"]
 known-first-party = ["app"]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.11"  # ver comentário em [tool.ruff] — precisa bater com produção
 strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
