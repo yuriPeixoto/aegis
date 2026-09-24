@@ -98,7 +98,7 @@ async def send_message(
 
     try:
         parsed_mentions: list[int] = json.loads(mentioned_user_ids)
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         parsed_mentions = []
 
     message = await MessageService(db).create_outbound(
