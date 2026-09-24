@@ -77,8 +77,7 @@ class CalendarService:
         base_fields = data.model_dump(exclude={"recurrence", "event_date"})
 
         events = [
-            CalendarEvent(**base_fields, event_date=d, recurrence_group_id=group_id)
-            for d in dates
+            CalendarEvent(**base_fields, event_date=d, recurrence_group_id=group_id) for d in dates
         ]
         self._db.add_all(events)
         await self._db.commit()

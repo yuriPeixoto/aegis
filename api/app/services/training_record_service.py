@@ -131,9 +131,7 @@ class TrainingRecordService:
 
     # ── Participants ─────────────────────────────────────────────────────────
 
-    async def add_participant(
-        self, record_id: int, data: ParticipantCreate
-    ) -> TrainingParticipant:
+    async def add_participant(self, record_id: int, data: ParticipantCreate) -> TrainingParticipant:
         participant = TrainingParticipant(
             training_record_id=record_id,
             name=data.name,

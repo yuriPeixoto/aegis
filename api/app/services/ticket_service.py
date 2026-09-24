@@ -264,16 +264,20 @@ class TicketService:
             # início do trabalho — o horário planejado (ex: 08h-12h) vira o
             # horário real em que o atendimento de fato começou.
             task_started = (
-                await self._db.execute(
-                    select(CalendarEvent)
-                    .where(
-                        CalendarEvent.ticket_id == ticket_id,
-                        CalendarEvent.type == EVENT_TYPE_TASK,
-                        CalendarEvent.completed_at.is_(None),
+                (
+                    await self._db.execute(
+                        select(CalendarEvent)
+                        .where(
+                            CalendarEvent.ticket_id == ticket_id,
+                            CalendarEvent.type == EVENT_TYPE_TASK,
+                            CalendarEvent.completed_at.is_(None),
+                        )
+                        .order_by(CalendarEvent.created_at.desc())
                     )
-                    .order_by(CalendarEvent.created_at.desc())
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
 
             if task_started is not None:
                 local_now = now.astimezone(_LOCAL_TZ)
@@ -298,16 +302,20 @@ class TicketService:
             # concluída (início = fim, é só um ponto no tempo), pra todo
             # fechamento deixar rastro na Agenda.
             existing_task = (
-                await self._db.execute(
-                    select(CalendarEvent)
-                    .where(
-                        CalendarEvent.ticket_id == ticket_id,
-                        CalendarEvent.type == EVENT_TYPE_TASK,
-                        CalendarEvent.completed_at.is_(None),
+                (
+                    await self._db.execute(
+                        select(CalendarEvent)
+                        .where(
+                            CalendarEvent.ticket_id == ticket_id,
+                            CalendarEvent.type == EVENT_TYPE_TASK,
+                            CalendarEvent.completed_at.is_(None),
+                        )
+                        .order_by(CalendarEvent.created_at.desc())
                     )
-                    .order_by(CalendarEvent.created_at.desc())
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
 
             closure_time = deployment_scheduled_at.strftime("%H:%M")
 

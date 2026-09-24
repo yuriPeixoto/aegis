@@ -78,7 +78,10 @@ async def _ingest_stale_ticket(
 async def senior_agent(db_session: AsyncSession) -> dict:
     email = f"senior-{uuid.uuid4().hex[:8]}@aegis.test"
     user = await UserService(db_session).create(
-        email=email, password="SeniorP@ss1", name="Senior Agent", role="agent",
+        email=email,
+        password="SeniorP@ss1",
+        name="Senior Agent",
+        role="agent",
         must_change_password=False,
     )
     await UserService(db_session).update(user.id, is_senior=True)
@@ -163,9 +166,7 @@ async def test_no_update_rule_still_fires_for_high_priority(
 
     result = await EscalationService(db_session).run()
 
-    assert any(
-        f"ticket#{ticket_id}" in a and _NO_UPDATE_RULE in a for a in result["actions_taken"]
-    )
+    assert any(f"ticket#{ticket_id}" in a and _NO_UPDATE_RULE in a for a in result["actions_taken"])
     msg_result = await db_session.execute(
         select(TicketMessage).where(TicketMessage.ticket_id == ticket_id)
     )
@@ -187,9 +188,7 @@ async def test_repeated_escalation_updates_existing_note_instead_of_piling_up(
     ticket_id = await _ingest_stale_ticket(
         client, db_session, source_with_key["api_key"], priority="urgent"
     )
-    ticket = (
-        await db_session.execute(select(Ticket).where(Ticket.id == ticket_id))
-    ).scalar_one()
+    ticket = (await db_session.execute(select(Ticket).where(Ticket.id == ticket_id))).scalar_one()
     rule = no_update_rules["high"]
     service = EscalationService(db_session)
 

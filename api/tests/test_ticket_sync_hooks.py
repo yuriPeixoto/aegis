@@ -31,7 +31,11 @@ def captured_webhook_calls(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
     calls: list[dict] = []
 
     async def fake_dispatch_webhook(
-        *, webhook_url: str, webhook_secret: str | None, event_type: str, payload: dict,
+        *,
+        webhook_url: str,
+        webhook_secret: str | None,
+        event_type: str,
+        payload: dict,
         webhook_url_internal: str | None = None,
     ) -> None:
         calls.append({"event_type": event_type, "payload": payload})
