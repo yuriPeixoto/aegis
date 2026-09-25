@@ -11,6 +11,7 @@ from app.schemas.ingest import (
     TicketStatusSnapshot,
 )
 from app.services.ingest_service import IngestService
+from app.services.status_mapping import status_for_source
 
 router = APIRouter(prefix="/v1/ingest", tags=["ingest"])
 
@@ -73,7 +74,9 @@ async def ticket_status_snapshot(
     tickets = await IngestService(db).list_status_snapshot(source)
     return [
         TicketStatusSnapshot(
-            external_id=t.external_id, status=t.status, last_synced_at=t.last_synced_at
+            external_id=t.external_id,
+            status=status_for_source(t.status),
+            last_synced_at=t.last_synced_at,
         )
         for t in tickets
     ]
