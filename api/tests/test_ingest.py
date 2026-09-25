@@ -364,3 +364,39 @@ async def test_ticket_status_snapshot_scoped_to_own_source(
 async def test_ticket_status_snapshot_requires_source_key(client: AsyncClient) -> None:
     resp = await client.get("/v1/ingest/tickets/status")
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_ticket_status_snapshot_reports_merged_as_closed(
+    client: AsyncClient, admin_client: AsyncClient, source_with_key: dict
+) -> None:
+    """Aegis #1447: a snapshot devolvia o status "merged" cru, que não existe no
+    vocabulário do GF (TicketStatus::toAegisStatus() nunca produz esse valor) —
+    todo ticket merged aparecia como drift pra sempre, mesmo com o lado GF
+    correto. Snapshot precisa da mesma normalização merged->closed que o
+    webhook já aplica (ver app.services.status_mapping)."""
+    headers = {"X-Aegis-Key": source_with_key["api_key"]}
+    external_id = unique_external_id()
+    create_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": external_id, "status": "in_progress", "subject": "Merge me"},
+    )
+    ticket_id = create_resp.json()["ticket_id"]
+
+    target_resp = await client.post(
+        "/v1/ingest/tickets",
+        headers=headers,
+        json={"external_id": unique_external_id(), "status": "open", "subject": "Merge target"},
+    )
+    target_id = target_resp.json()["ticket_id"]
+
+    merge_resp = await admin_client.post(
+        f"/v1/tickets/{ticket_id}/merge", json={"target_ticket_id": target_id}
+    )
+    assert merge_resp.status_code == 200
+
+    resp = await client.get("/v1/ingest/tickets/status", headers=headers)
+    assert resp.status_code == 200
+    snapshot = {item["external_id"]: item["status"] for item in resp.json()}
+    assert snapshot[external_id] == "closed"
