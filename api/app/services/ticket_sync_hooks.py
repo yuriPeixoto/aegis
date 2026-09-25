@@ -26,20 +26,12 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import AsyncSessionLocal
 from app.models.ticket import Ticket
+from app.services.status_mapping import status_for_source
 from app.services.webhook_service import dispatch_webhook
 
 logger = logging.getLogger(__name__)
 
 _PENDING_KEY = "_ticket_status_changes"
-
-# Aegis statuses with no equivalent in the GF status vocabulary
-# (AegisWebhookController::handleStatusChanged only maps in_progress/
-# pending_closure/resolved/closed/cancelled). A merged ticket is, from the
-# client's point of view in the source system, wrapped up — report it as
-# closed rather than leaving the source ticket stuck forever. See Aegis #1437.
-_STATUS_OVERRIDES_FOR_SOURCE: dict[str, str] = {
-    "merged": "closed",
-}
 
 
 @event.listens_for(Session, "before_flush")
@@ -110,7 +102,7 @@ async def _notify_source_of_status_change(
     if ticket is None or ticket.source is None or not ticket.source.webhook_url:
         return
 
-    reported_status = _STATUS_OVERRIDES_FOR_SOURCE.get(new_status, new_status)
+    reported_status = status_for_source(new_status)
 
     # dispatch_webhook already catches and logs its own failures — nothing to
     # add here beyond letting the (already logged) old_status show up if we

@@ -121,7 +121,7 @@ async def test_merge_ticket_relays_as_closed_to_source(
     notificar o sistema de origem — o ticket ficava travado pra sempre no último
     status sincronizado (achado via #SUP-2026-0670). "merged" também não tem
     equivalente no GF, então é reportado como "closed" (ver
-    _STATUS_OVERRIDES_FOR_SOURCE)."""
+    app.services.status_mapping.STATUS_OVERRIDES_FOR_SOURCE)."""
     target_resp = await client.post(
         "/v1/ingest/tickets",
         headers={"X-Aegis-Key": source_with_webhook["api_key"]},
