@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app.models.ticket import Ticket
@@ -25,7 +25,7 @@ class TicketEvent(Base):
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Full raw payload as received from the source system
-    payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # When the event occurred in the source system (may differ from ingestion time)
     occurred_at: Mapped[datetime] = mapped_column(

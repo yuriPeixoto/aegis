@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -30,7 +30,7 @@ async def get_agent_analytics(
     from_date: Annotated[date | None, Query(alias="from")] = None,
     to_date: Annotated[date | None, Query(alias="to")] = None,
     granularity: Annotated[Granularity, Query()] = "day",
-) -> dict:
+) -> dict[str, Any]:
     if current_user.role != "admin" and current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -58,5 +58,5 @@ async def get_overview_analytics(
     from_date: Annotated[date | None, Query(alias="from")] = None,
     to_date: Annotated[date | None, Query(alias="to")] = None,
     granularity: Annotated[Granularity, Query()] = "day",
-) -> dict:
+) -> dict[str, Any]:
     return await AnalyticsService(db).get_overview(from_date, to_date, granularity)

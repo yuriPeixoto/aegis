@@ -37,7 +37,7 @@ class MarkSelectedRequest(BaseModel):
     ids: list[int]
 
 
-def _to_response(n: object) -> NotificationResponse:  # type: ignore[type-arg]
+def _to_response(n: object) -> NotificationResponse:
     source_id: int | None = None
     source_name: str | None = None
     ticket = getattr(n, "ticket", None)

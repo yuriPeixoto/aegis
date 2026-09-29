@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -86,7 +87,7 @@ class EscalationService:
 
     # ── Run ───────────────────────────────────────────────────────────────────
 
-    async def run(self) -> dict:
+    async def run(self) -> dict[str, Any]:
         """Evaluate all active rules against active tickets. Called by cron."""
         now = datetime.now(tz=UTC)
         rules_result = await self._db.execute(

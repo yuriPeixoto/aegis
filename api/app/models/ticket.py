@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app.models.source import Source
@@ -47,7 +47,7 @@ class Ticket(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Raw payload from source — preserved without modification
-    source_metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    source_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Timestamps from the source system
     source_created_at: Mapped[datetime | None] = mapped_column(
