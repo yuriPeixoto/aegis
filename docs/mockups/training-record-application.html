@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Aplicação de Treinamento</title>
+<style>
+  :root {
+    --azul: #1F4E79;
+    --azul-claro: #D9E2F0;
+    --cinza: #6b7280;
+    --borda: #cbd5e1;
+    --fundo: #f1f5f9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Calibri, Arial, sans-serif; }
+  body { background: var(--fundo); color: #1e293b; padding: 20px; }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 24px; margin-bottom: 20px; }
+
+  header.card { display: flex; align-items: center; gap: 16px; border-top: 6px solid var(--azul); }
+  .logo-box { width: 90px; height: 60px; border: 2px dashed var(--borda); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--cinza); font-size: 12px; cursor: pointer; overflow: hidden; flex-shrink: 0; }
+  .logo-box img { max-width: 100%; max-height: 100%; }
+  header h1 { color: var(--azul); font-size: 20px; }
+  header p { color: var(--cinza); font-size: 13px; }
+
+  h2 { color: var(--azul); font-size: 15px; text-transform: uppercase; border-bottom: 2px solid var(--azul); padding-bottom: 6px; margin-bottom: 16px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--azul); margin-bottom: 4px; text-transform: uppercase; }
+  input[type=text], input[type=date], input[type=time], input[type=email], select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; font-size: 14px; background: #fff;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  th { background: var(--azul); color: #fff; font-size: 12px; padding: 8px; text-align: left; }
+  td { border: 1px solid var(--borda); padding: 6px; vertical-align: middle; }
+  td input, td textarea { border: none; background: transparent; padding: 6px; }
+  td input:focus, td textarea:focus { outline: 1px solid var(--azul); }
+  .num { width: 36px; text-align: center; color: var(--cinza); font-size: 13px; }
+
+  .btn { border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-add { background: var(--azul-claro); color: var(--azul); }
+  .btn-primary { background: var(--azul); color: #fff; }
+  .btn-danger { background: transparent; color: #dc2626; font-size: 16px; padding: 2px 8px; }
+  .btn-ghost { background: #e2e8f0; color: #334155; }
+
+  .sig-cell { width: 190px; }
+  canvas.sig { border: 1px solid var(--borda); border-radius: 4px; background: #fafafa; cursor: crosshair; display: block; touch-action: none; }
+  .sig-clear { font-size: 11px; color: var(--cinza); background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+  .toolbar { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; position: sticky; bottom: 12px; }
+  .toolbar .card-bar { background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.15); padding: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .sig-final { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .sig-final .bloco { text-align: center; }
+  .sig-final canvas { width: 100%; }
+  .sig-final .titulo { font-size: 12px; font-weight: 600; color: var(--azul); margin-top: 6px; text-transform: uppercase; }
+
+  .badge { display: inline-block; background: var(--azul-claro); color: var(--azul); font-size: 11px; font-weight: 700; border-radius: 20px; padding: 2px 10px; margin-left: 8px; }
+
+  @media (max-width: 640px) { .grid, .sig-final { grid-template-columns: 1fr; } }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+    .toolbar, .btn-add, .btn-danger, .sig-clear, .no-print { display: none !important; }
+    input, select, textarea { border: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="card">
+    <div class="logo-box" onclick="document.getElementById('logoInput').click()" title="Clique para inserir logo">
+      <span id="logoPlaceholder">+ LOGO</span>
+    </div>
+    <input type="file" id="logoInput" accept="image/*" hidden onchange="carregarLogo(this)">
+    <div>
+      <h1>Registro de Aplicação de Treinamento</h1>
+      <p>Treinamento de Sistema — preencha, colete as assinaturas e imprima ou salve em PDF</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>1. Identificação do Treinamento</h2>
+    <div class="grid">
+      <div class="full"><label>Nome do treinamento</label><input type="text" id="f-nome" placeholder="Ex.: Treinamento do Sistema ERP — Módulo Financeiro"></div>
+      <div><label>Sistema / módulo treinado</label><input type="text"></div>
+      <div><label>Versão do sistema</label><input type="text"></div>
+      <div><label>Data de aplicação</label><input type="date"></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1"><label>Início</label><input type="time"></div>
+        <div style="flex:1"><label>Término</label><input type="time"></div>
+      </div>
+      <div><label>Carga horária total</label><input type="text" placeholder="Ex.: 4h"></div>
+      <div><label>Local / modalidade</label>
+        <select><option value="">Selecione…</option><option>Presencial</option><option>Online (ao vivo)</option><option>Online (gravado)</option><option>Híbrido</option></select>
+      </div>
+      <div><label>Tipo de treinamento</label>
+        <select><option value="">Selecione…</option><option>Inicial (integração)</option><option>Reciclagem</option><option>Atualização de versão</option><option>Nova funcionalidade</option></select>
+      </div>
+      <div><label>Área / setor atendido</label><input type="text"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Treinador / Instrutor</h2>
+    <div class="grid">
+      <div><label>Nome do treinador</label><input type="text"></div>
+      <div><label>Cargo / função</label><input type="text"></div>
+      <div><label>Empresa / departamento</label><input type="text"></div>
+      <div><label>E-mail / telefone</label><input type="text"></div>
+      <div class="full"><label>Qualificação / formação</label><input type="text"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Módulos e Assuntos Abordados <span class="badge" id="count-mod">0</span></h2>
+    <table id="tbl-modulos">
+      <thead><tr><th class="num">Nº</th><th style="width:28%">Módulo</th><th>Assuntos / conteúdos abordados</th><th style="width:90px">Duração</th><th class="no-print" style="width:36px"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn btn-add" onclick="addModulo()">+ Adicionar módulo</button>
+  </section>
+
+  <section class="card">
+    <h2>4. Lista de Presença <span class="badge" id="count-part">0</span></h2>
+    <p style="font-size:12px;font-style:italic;color:var(--cinza);margin-bottom:10px;">
+      Declaro que participei do treinamento acima descrito e que compreendi o conteúdo abordado.
+    </p>
+    <table id="tbl-participantes">
+      <thead><tr><th class="num">Nº</th><th>Nome completo</th><th style="width:18%">Cargo</th><th style="width:15%">Setor</th><th class="sig-cell">Assinatura</th><th class="no-print" style="width:36px"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn btn-add" onclick="addParticipante()">+ Adicionar participante</button>
+  </section>
+
+  <section class="card">
+    <h2>5. Avaliação e Observações</h2>
+    <div class="grid">
+      <div><label>Método de avaliação</label>
+        <select><option value="">Selecione…</option><option>Prova teórica</option><option>Avaliação prática</option><option>Observação direta</option><option>Não aplicável</option></select>
+      </div>
+      <div><label>Resultado geral / aproveitamento</label><input type="text" placeholder="Ex.: 92% de aproveitamento"></div>
+      <div class="full"><label>Observações gerais</label><textarea placeholder="Dúvidas recorrentes, pontos a reforçar, pendências…"></textarea></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. Validação</h2>
+    <div class="sig-final">
+      <div class="bloco">
+        <canvas class="sig" width="380" height="100" data-sig></canvas>
+        <button class="sig-clear" onclick="limparSig(this)">limpar</button>
+        <div class="titulo">Assinatura do Treinador / Instrutor</div>
+      </div>
+      <div class="bloco">
+        <canvas class="sig" width="380" height="100" data-sig></canvas>
+        <button class="sig-clear" onclick="limparSig(this)">limpar</button>
+        <div class="titulo">Assinatura do Responsável (RH / Gestor)</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toolbar no-print">
+    <div class="card-bar">
+      <button class="btn btn-ghost" onclick="exportarJSON()">Exportar dados (.json)</button>
+      <button class="btn btn-primary" onclick="window.print()">Imprimir / Salvar PDF</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------- Linhas dinâmicas ----------
+function addModulo() {
+  const tb = document.querySelector('#tbl-modulos tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="num"></td>
+    <td><input type="text" placeholder="Ex.: Cadastros"></td>
+    <td><input type="text" placeholder="Ex.: Cadastro de clientes, fornecedores e produtos"></td>
+    <td><input type="text" placeholder="1h"></td>
+    <td class="no-print"><button class="btn btn-danger" onclick="removerLinha(this,'mod')" title="Remover">×</button></td>`;
+  tb.appendChild(tr);
+  renumerar('#tbl-modulos', 'count-mod');
+}
+
+function addParticipante() {
+  const tb = document.querySelector('#tbl-participantes tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="num"></td>
+    <td><input type="text" placeholder="Nome completo"></td>
+    <td><input type="text"></td>
+    <td><input type="text"></td>
+    <td class="sig-cell">
+      <canvas class="sig" width="180" height="50" data-sig></canvas>
+      <button class="sig-clear" onclick="limparSig(this)">limpar</button>
+    </td>
+    <td class="no-print"><button class="btn btn-danger" onclick="removerLinha(this,'part')" title="Remover">×</button></td>`;
+  tb.appendChild(tr);
+  initSig(tr.querySelector('canvas'));
+  renumerar('#tbl-participantes', 'count-part');
+}
+
+function removerLinha(btn, tipo) {
+  btn.closest('tr').remove();
+  renumerar(tipo === 'mod' ? '#tbl-modulos' : '#tbl-participantes', tipo === 'mod' ? 'count-mod' : 'count-part');
+}
+
+function renumerar(sel, badgeId) {
+  const linhas = document.querySelectorAll(sel + ' tbody tr');
+  linhas.forEach((tr, i) => tr.querySelector('.num').textContent = i + 1);
+  document.getElementById(badgeId).textContent = linhas.length;
+}
+
+// ---------- Assinatura (canvas) ----------
+function initSig(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
+  let desenhando = false;
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: (p.clientX - r.left) * (canvas.width / r.width), y: (p.clientY - r.top) * (canvas.height / r.height) };
+  }
+  function inicio(e) { desenhando = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+  function mover(e)  { if (!desenhando) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+  function fim()     { desenhando = false; }
+
+  canvas.addEventListener('mousedown', inicio);
+  canvas.addEventListener('mousemove', mover);
+  window.addEventListener('mouseup', fim);
+  canvas.addEventListener('touchstart', inicio, { passive: false });
+  canvas.addEventListener('touchmove', mover, { passive: false });
+  canvas.addEventListener('touchend', fim);
+}
+
+function limparSig(btn) {
+  const c = btn.parentElement.querySelector('canvas');
+  c.getContext('2d').clearRect(0, 0, c.width, c.height);
+}
+
+// ---------- Exportar dados ----------
+function exportarJSON() {
+  const dados = { geradoEm: new Date().toISOString(), campos: {}, modulos: [], participantes: [] };
+  document.querySelectorAll('section input[type=text], section input[type=date], section input[type=time], section select, section textarea').forEach((el, i) => {
+    if (!el.closest('table')) {
+      const rotulo = el.closest('div')?.querySelector('label')?.textContent || ('campo' + i);
+      dados.campos[rotulo] = el.value;
+    }
+  });
+  document.querySelectorAll('#tbl-modulos tbody tr').forEach(tr => {
+    const [mod, assuntos, dur] = [...tr.querySelectorAll('input')].map(i => i.value);
+    dados.modulos.push({ modulo: mod, assuntos, duracao: dur });
+  });
+  document.querySelectorAll('#tbl-participantes tbody tr').forEach(tr => {
+    const [nome, cargo, setor] = [...tr.querySelectorAll('input')].map(i => i.value);
+    const assinatura = tr.querySelector('canvas').toDataURL();
+    dados.participantes.push({ nome, cargo, setor, assinatura });
+  });
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'registro_treinamento.json';
+  a.click();
+}
+
+// ---------- Logo ----------
+function carregarLogo(input) {
+  const f = input.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const box = document.querySelector('.logo-box');
+    box.innerHTML = '<img src="' + e.target.result + '">';
+  };
+  r.readAsDataURL(f);
+}
+
+// ---------- Inicialização ----------
+document.querySelectorAll('canvas[data-sig]').forEach(initSig);
+for (let i = 0; i < 3; i++) addModulo();
+for (let i = 0; i < 5; i++) addParticipante();
+</script>
+</body>
+</html>
