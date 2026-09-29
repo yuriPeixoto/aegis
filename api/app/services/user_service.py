@@ -147,7 +147,7 @@ class UserService:
             select(User).where(User.is_active.is_(True), User.api_key_hash.is_not(None))
         )
         for user in result.scalars().all():
-            if verify_api_key(plain_key, user.api_key_hash):
+            if user.api_key_hash and verify_api_key(plain_key, user.api_key_hash):
                 return user
         return None
 
