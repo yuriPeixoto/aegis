@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -26,7 +26,7 @@ class CannedResponse(Base):
     #   "priority": "high",
     #   "assigned_to_user_id": 123
     # }
-    actions: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    actions: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     created_by_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True

@@ -4,6 +4,7 @@ import json
 import random
 from contextlib import suppress
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile, status
 
@@ -179,7 +180,7 @@ async def create_internal_ticket(
     project: str | None = Form(None),
     files: list[UploadFile] = File(default=[]),
 ) -> TicketDetailResponse:
-    meta_dict: dict | None = None
+    meta_dict: dict[str, Any] | None = None
     if meta:
         with suppress(ValueError):
             meta_dict = json.loads(meta)

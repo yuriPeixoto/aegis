@@ -91,10 +91,13 @@ class CalendarReferenceOut(BaseModel):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
+TIME_FORMAT = "%H:%M"
+
+
 def _time_str(t: time | None) -> str | None:
     if t is None:
         return None
-    return t.strftime("%H:%M")
+    return t.strftime(TIME_FORMAT)
 
 
 def _parse_time(value: str) -> time:
@@ -124,8 +127,8 @@ async def get_calendar_reference(db: DbSession, _: CurrentUser) -> CalendarRefer
     return CalendarReferenceOut(
         business_hours=BusinessHoursOut(
             work_days=bh.work_days,
-            work_start=_time_str(bh.work_start),  # type: ignore[arg-type]
-            work_end=_time_str(bh.work_end),  # type: ignore[arg-type]
+            work_start=bh.work_start.strftime(TIME_FORMAT),
+            work_end=bh.work_end.strftime(TIME_FORMAT),
             lunch_start=_time_str(bh.lunch_start),
             lunch_end=_time_str(bh.lunch_end),
             timezone=bh.timezone,
@@ -151,8 +154,8 @@ async def get_sla_settings(db: DbSession, _admin: AdminUser) -> SlaSettingsOut:
     return SlaSettingsOut(
         business_hours=BusinessHoursOut(
             work_days=bh.work_days,
-            work_start=_time_str(bh.work_start),  # type: ignore[arg-type]
-            work_end=_time_str(bh.work_end),  # type: ignore[arg-type]
+            work_start=bh.work_start.strftime(TIME_FORMAT),
+            work_end=bh.work_end.strftime(TIME_FORMAT),
             lunch_start=_time_str(bh.lunch_start),
             lunch_end=_time_str(bh.lunch_end),
             timezone=bh.timezone,
@@ -197,8 +200,8 @@ async def update_business_hours(
 
     return BusinessHoursOut(
         work_days=bh.work_days,
-        work_start=_time_str(bh.work_start),  # type: ignore[arg-type]
-        work_end=_time_str(bh.work_end),  # type: ignore[arg-type]
+        work_start=bh.work_start.strftime(TIME_FORMAT),
+        work_end=bh.work_end.strftime(TIME_FORMAT),
         lunch_start=_time_str(bh.lunch_start),
         lunch_end=_time_str(bh.lunch_end),
         timezone=bh.timezone,

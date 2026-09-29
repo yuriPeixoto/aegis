@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.source import Source
 from app.models.ticket import Ticket
@@ -23,7 +24,7 @@ _TRUNC: dict[Granularity, str] = {
 }
 
 
-def _active_src_subq():
+def _active_src_subq() -> ColumnElement[bool]:
     return Ticket.source_id.in_(select(Source.id).where(Source.is_active.is_(True)))
 
 
@@ -63,7 +64,7 @@ class AnalyticsService:
         from_date: date | None = None,
         to_date: date | None = None,
         granularity: Granularity = "day",
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         start, end = _parse_range(from_date, to_date)
         now = datetime.now(UTC)
         _src = _active_src_subq()
@@ -264,7 +265,7 @@ class AnalyticsService:
         from_date: date | None = None,
         to_date: date | None = None,
         granularity: Granularity = "day",
-    ) -> dict:
+    ) -> dict[str, Any]:
         start, end = _parse_range(from_date, to_date)
         _src = _active_src_subq()
         trunc = _TRUNC[granularity]

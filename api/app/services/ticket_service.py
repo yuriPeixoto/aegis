@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, func, select
@@ -183,7 +184,7 @@ class TicketService:
 
         ticket.assigned_to_user_id = user_id
 
-        event_payload: dict = {
+        event_payload: dict[str, Any] = {
             "assigned_by": assigned_by_name,
             "assigned_to": new_assignee_name,
         }
@@ -473,7 +474,7 @@ class TicketService:
         priority: str,
         user_id: int,
         user_name: str | None = None,
-        meta: dict | None = None,
+        meta: dict[str, Any] | None = None,
         source_id: int | None = None,
         assign_to_me: bool = False,
         tag_names: list[str] | None = None,

@@ -92,7 +92,7 @@ class CannedResponseService:
 
         vars_map["ticket.requester.name"] = str(requester_name)
 
-        def replace(match):
+        def replace(match: re.Match[str]) -> str:
             var_name = match.group(1).strip()
             # Unknown variables keep their original {{var}} text.
             # Known variables that resolve to empty return empty string.

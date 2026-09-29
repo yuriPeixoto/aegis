@@ -39,7 +39,7 @@ class TicketMessage(Base):
     )
 
     # List of user IDs @mentioned in this message (used for internal notes)
-    mentioned_user_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    mentioned_user_ids: Mapped[list[int]] = mapped_column(JSONB, nullable=False, default=list)
 
     # ID of the message in the source system — used to prevent duplicate ingestion
     source_message_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
