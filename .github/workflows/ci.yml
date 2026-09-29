@@ -43,7 +43,7 @@ jobs:
         run: ruff format --check api/app api/tests
 
       - name: mypy
-        run: mypy api/app
+        run: mypy --config-file api/pyproject.toml api/app
         env:
           MYPYPATH: api
 
