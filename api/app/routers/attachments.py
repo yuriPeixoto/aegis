@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import quote
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
 from app.core.auth import CurrentUser
@@ -23,9 +23,12 @@ async def upload_attachment(
     file: UploadFile,
     db: DbSession,
     current_user: CurrentUser,
+    is_internal: bool = Form(False),
 ) -> AttachmentResponse:
     try:
-        attachment = await AttachmentService(db).upload(ticket_id, file, current_user.id)
+        attachment = await AttachmentService(db).upload(
+            ticket_id, file, current_user.id, is_internal=is_internal
+        )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)) from e
     return AttachmentResponse.model_validate(attachment)

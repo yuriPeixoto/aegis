@@ -24,6 +24,9 @@ class MessageService:
             select(TicketMessage)
             .where(TicketMessage.id == message_id)
             .options(selectinload(TicketMessage.attachments))
+            # expire_on_commit=False: without this the identity map hands back the
+            # message loaded before the upload, with its attachments still empty
+            .execution_options(populate_existing=True)
         )
         return result.scalar_one()
 

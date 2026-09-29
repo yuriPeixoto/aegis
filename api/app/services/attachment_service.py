@@ -45,6 +45,7 @@ class AttachmentService:
         ticket_id: int,
         file: UploadFile,
         user_id: int,
+        is_internal: bool = False,
     ) -> TicketAttachment:
         content_type = file.content_type or "application/octet-stream"
         if content_type not in ALLOWED_CONTENT_TYPES:
@@ -71,6 +72,7 @@ class AttachmentService:
             stored_path=relative_path,
             content_type=content_type,
             size_bytes=len(content),
+            is_internal=is_internal,
         )
         self._db.add(attachment)
         await self._db.commit()

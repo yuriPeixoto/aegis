@@ -261,10 +261,11 @@ export function useBulkUpdateTickets() {
 
 export function useUploadAttachment(ticketId: number) {
   const queryClient = useQueryClient()
-  return useMutation<TicketAttachment, Error, File>({
-    mutationFn: async (file) => {
+  return useMutation<TicketAttachment, Error, { file: File; isInternal: boolean }>({
+    mutationFn: async ({ file, isInternal }) => {
       const form = new FormData()
       form.append('file', file)
+      form.append('is_internal', String(isInternal))
       const { data } = await api.post<TicketAttachment>(
         `/tickets/${ticketId}/attachments`,
         form,

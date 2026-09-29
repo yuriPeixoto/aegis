@@ -184,6 +184,7 @@ function ImageLightboxModal({
 }
 
 function MessageAttachments({ attachments }: { attachments: TicketMessage['attachments'] }) {
+  const { t } = useTranslation()
   const [lightboxAtt, setLightboxAtt] = useState<{ download_url: string; filename: string } | null>(null)
 
   if (!attachments || attachments.length === 0) return null
@@ -193,11 +194,15 @@ function MessageAttachments({ attachments }: { attachments: TicketMessage['attac
       {attachments.map((att) => {
         const isImage = att.content_type.startsWith('image/')
         return (
-          <div key={att.id} className="group relative flex flex-col gap-1 max-w-sm">
+          <div key={att.id} className="group relative flex flex-col gap-1 max-w-sm" title={att.is_internal ? t('inbox.detail.internalAttachment') : undefined}>
             {isImage ? (
               <button
                 onClick={() => setLightboxAtt(att)}
-                className="block rounded-lg overflow-hidden border border-white/10 hover:border-brand-accent/50 transition-all active:scale-[0.98] text-left"
+                className={`block rounded-lg overflow-hidden border transition-all active:scale-[0.98] text-left ${
+                  att.is_internal
+                    ? 'border-amber-700/40 hover:border-amber-600/70'
+                    : 'border-white/10 hover:border-brand-accent/50'
+                }`}
               >
                 <SecureImage
                   url={att.download_url}
@@ -208,7 +213,11 @@ function MessageAttachments({ attachments }: { attachments: TicketMessage['attac
             ) : (
               <button
                 onClick={() => triggerAttachmentDownload(att)}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-3 py-2 transition-colors text-left w-full active:scale-[0.98]"
+                className={`flex items-center gap-2 border rounded-lg px-3 py-2 transition-colors text-left w-full active:scale-[0.98] ${
+                  att.is_internal
+                    ? 'bg-amber-950/40 hover:bg-amber-950/60 border-amber-700/40'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10'
+                }`}
               >
                 <FileIcon contentType={att.content_type} />
                 <div className="flex-1 min-w-0">
@@ -701,8 +710,12 @@ export function TicketDetailPage() {
               </div>
             </div>
             {replyFile && (
-              <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs text-slate-300">
-                <Paperclip className="w-3 h-3 text-brand-purple shrink-0" />
+              <div
+                className={`flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg border text-xs text-slate-300 ${
+                  isInternal ? 'bg-amber-950/40 border-amber-700/40' : 'bg-white/5 border-white/10'
+                }`}
+              >
+                <Paperclip className={`w-3 h-3 shrink-0 ${isInternal ? 'text-amber-500' : 'text-brand-purple'}`} />
                 <span className="truncate flex-1">{replyFile.name}</span>
                 <button
                   type="button"
