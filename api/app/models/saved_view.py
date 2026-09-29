@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -20,7 +21,7 @@ class SavedView(Base):
     )
     is_shared: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # Serialised TicketFilters; assigned_to accepts "me"|"unassigned"|null
-    filters: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    filters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

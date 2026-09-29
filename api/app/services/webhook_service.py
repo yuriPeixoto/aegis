@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import logging
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -15,7 +16,7 @@ async def dispatch_webhook(
     webhook_url: str,
     webhook_secret: str | None,
     event_type: str,
-    payload: dict,
+    payload: dict[str, Any],
     webhook_url_internal: str | None = None,
 ) -> None:
     """Fire-and-forget: send a signed webhook to a source system.

@@ -13,7 +13,9 @@ O v1.0.0 (lançamento inicial) não entra aqui — está documentado no CHANGELO
 
 from __future__ import annotations
 
-APP_CHANGELOG: list[dict] = [
+from typing import Any
+
+APP_CHANGELOG: list[dict[str, Any]] = [
     {
         "version": "1.9.0",
         "date": "2026-09-29",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -21,7 +22,7 @@ class TicketIngestPayload(BaseModel):
     status: str = Field(..., max_length=100)
     subject: str = Field(..., min_length=1, max_length=500)
     description: str | None = None
-    source_metadata: dict | None = None
+    source_metadata: dict[str, Any] | None = None
     source_created_at: datetime | None = None
     source_updated_at: datetime | None = None
     assigned_to_user_id: int | None = None
@@ -34,7 +35,7 @@ class TicketEventPayload(BaseModel):
 
     external_id: str = Field(..., min_length=1, max_length=100)
     event_type: str = Field(..., max_length=100)
-    payload: dict | None = None
+    payload: dict[str, Any] | None = None
     occurred_at: datetime | None = None
 
 

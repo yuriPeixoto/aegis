@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import BaseModel, computed_field
 
@@ -13,7 +14,7 @@ _TERMINAL_STATUSES = {"resolved", "closed", "cancelled"}
 class TicketEventResponse(BaseModel):
     id: int
     event_type: str
-    payload: dict | None
+    payload: dict[str, Any] | None
     occurred_at: datetime
 
     model_config = {"from_attributes": True}
@@ -37,7 +38,7 @@ class TicketResponse(BaseModel):
     status: str
     subject: str
     description: str | None
-    source_metadata: dict | None
+    source_metadata: dict[str, Any] | None
     source_created_at: datetime | None
     source_updated_at: datetime | None
     first_ingested_at: datetime
@@ -112,7 +113,7 @@ class InternalTicketCreate(BaseModel):
     description: str
     type: str  # Bug / Melhoria / Sugestão
     priority: str
-    meta: dict | None = None
+    meta: dict[str, Any] | None = None
 
 
 class BulkUpdateTicketsRequest(BaseModel):

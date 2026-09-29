@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +22,7 @@ class DashboardService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def get_stats(self) -> dict:
+    async def get_stats(self) -> dict[str, Any]:
         now = datetime.now(UTC)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         thirty_days_ago = now - timedelta(days=30)
@@ -284,7 +285,7 @@ class DashboardService:
             "unassigned_tickets": unassigned_tickets,
         }
 
-    async def get_agent_monitor(self) -> dict:
+    async def get_agent_monitor(self) -> dict[str, Any]:
         now = datetime.now(UTC)
 
         _active_src = Ticket.source_id.in_(select(Source.id).where(Source.is_active.is_(True)))
@@ -319,8 +320,8 @@ class DashboardService:
         )
         rows = r.all()
 
-        agents_map: dict[int, dict] = {}
-        tickets_by_agent: dict[int, list] = defaultdict(list)
+        agents_map: dict[int, dict[str, Any]] = {}
+        tickets_by_agent: dict[int, list[Any]] = defaultdict(list)
 
         for ticket, msg_direction, msg_at in rows:
             agent = ticket.assignee
