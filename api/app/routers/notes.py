@@ -68,6 +68,6 @@ async def create_note(
         id=message.id,
         ticket_id=message.ticket_id,
         body=message.body,
-        author=NoteAuthorResponse(id=message.author_user_id, name=message.author_name),
+        author=NoteAuthorResponse(id=current_user.id, name=message.author_name),
         created_at=message.created_at,
     )
