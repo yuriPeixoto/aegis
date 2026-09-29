@@ -3,11 +3,12 @@
 ## Ambiente de produção
 
 - **Subdomínio:** `aegis.unitopconsultoria.com.br`
-- **Servidor:** Debian, Apache, Python 3.11
+- **Servidor:** Debian 12, Apache, Python 3.14.7 (`/usr/local/bin/python3.14`, compilado da fonte com `make altinstall` — o `/usr/bin/python3` do sistema não é usado pelo Aegis)
+- **Servidor compartilhado:** além do Aegis (gunicorn na `8000`), roda o pdf-service do ChecklistSuite da Carvalima (`8001`) e o BI Carretas da Carvalima (`8002`) — não reutilizar essas portas em testes
 - **Deploy:** SFTP (upload manual de arquivos)
 - **Arquivos do backend:** `/opt/aegis/api/`
 - **PostgreSQL de produção:** `10.10.1.3`
-- **Redis:** instalado no servidor de produção
+- **Redis:** não é usado pelo Aegis
 - **Acesso:** root (sem necessidade de sudo)
 
 ---
@@ -45,6 +46,38 @@ systemctl status aegis
 
 ---
 
+## Recriar o venv (troca de versão do Python)
+
+Usado na migração 3.11 → 3.14 (#1440, 28/09/2026). Mantém o venv antigo como rollback instantâneo.
+
+```bash
+cd /opt/aegis/api
+mv venv venv_backup
+/usr/local/bin/python3.14 -m venv venv
+venv/bin/pip install -r requirements.txt
+venv/bin/pip install gunicorn==25.3.0   # não está no requirements.txt (ver #774)
+venv/bin/python -m compileall app -q    # sanity check de sintaxe
+```
+
+Antes de reiniciar o serviço, teste o venv novo numa porta livre (não use `8001`/`8002`, ocupadas):
+
+```bash
+venv/bin/gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:18001
+curl -s http://127.0.0.1:18001/health   # {"status":"healthy"}
+```
+
+Depois `systemctl restart aegis` e acompanhe `/var/log/aegis_api_err.log`.
+
+**Rollback:**
+
+```bash
+cd /opt/aegis/api && rm -rf venv && mv venv_backup venv && systemctl restart aegis
+```
+
+> **Descompasso de versão:** o `target-version` do ruff e o `python_version` do mypy em `api/pyproject.toml` precisam bater com o Python de produção. Um `ruff format` em versão maior que a do servidor já derrubou o serviço com `SyntaxError` (PEP 758, `except A, B:` sem parênteses).
+
+---
+
 ## Verificando logs
 
 ### Erros do backend (tracebacks Python — principal fonte de diagnóstico)
@@ -60,6 +93,8 @@ tail -f /var/log/aegis_api_err.log
 ```bash
 tail -n 50 /var/log/aegis_api.log
 ```
+
+> **Ruído conhecido:** `[ERROR] Control server error: Permission denied: '/var/www/.gunicorn'` aparece no log de erro desde antes da migração para 3.14 (gunicorn 25.x tentando abrir o control socket num `HOME` não gravável pelo `www-data`). É cosmético e não impede a API de servir (#775).
 
 ### Eventos do systemd (start/stop/restart)
 
