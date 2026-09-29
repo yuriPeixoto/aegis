@@ -11,7 +11,7 @@ incident creation from infrastructure monitoring.
 
 | Layer | Technology |
 |-------|-----------|
-| API | Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic |
+| API | Python 3.14, FastAPI, SQLAlchemy 2.0, Alembic |
 | Database | PostgreSQL |
 | Frontend | React 18, TypeScript, Vite, TailwindCSS, TanStack Query |
 | Auth | JWT (dashboard) + API Keys (ingestion) |
