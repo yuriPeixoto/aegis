@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.core.auth import AdminUser
 from app.core.dependencies import DbSession
+from app.models.escalation_rule import EscalationRule
 from app.schemas.escalation import (
     VALID_ACTION_TYPES,
     VALID_TRIGGER_TYPES,
@@ -17,7 +18,7 @@ from app.services.escalation_service import EscalationService
 router = APIRouter(prefix="/v1/escalation", tags=["escalation"])
 
 
-def _rule_response(rule) -> EscalationRuleResponse:
+def _rule_response(rule: EscalationRule) -> EscalationRuleResponse:
     return EscalationRuleResponse(
         id=rule.id,
         name=rule.name,

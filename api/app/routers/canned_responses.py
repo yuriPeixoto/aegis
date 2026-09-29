@@ -67,7 +67,7 @@ async def update_canned_response(
 
 
 @router.delete("/{response_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_canned_response(response_id: int, db: DbSession, _user: AdminUser):
+async def delete_canned_response(response_id: int, db: DbSession, _user: AdminUser) -> None:
     success = await CannedResponseService(db).delete_response(response_id)
     if not success:
         raise HTTPException(

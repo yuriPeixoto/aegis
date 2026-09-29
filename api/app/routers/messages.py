@@ -4,6 +4,7 @@ import base64
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile, status
 from fastapi import File as FastAPIFile
@@ -113,7 +114,7 @@ async def send_message(
     )
 
     # Handle optional attachment
-    webhook_attachments: list[dict] = []
+    webhook_attachments: list[dict[str, Any]] = []
     if file and file.filename:
         try:
             att_service = AttachmentService(db)
@@ -153,7 +154,7 @@ async def send_message(
 
     # Internal notes are never pushed to source systems
     if not is_internal and ticket.source and ticket.source.webhook_url:
-        webhook_payload: dict = {
+        webhook_payload: dict[str, Any] = {
             "external_id": ticket.external_id,
             "body": body,
             "agent_name": current_user.name,

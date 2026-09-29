@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ class CalendarReminderService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def run(self) -> dict:
+    async def run(self) -> dict[str, Any]:
         """
         Cria notificações de lembrete para eventos do dia seguinte.
         Chamado pelo cron do OS ou pelo endpoint POST /v1/calendar/reminders/run.

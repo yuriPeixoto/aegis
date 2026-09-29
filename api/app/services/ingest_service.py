@@ -4,6 +4,7 @@ import base64
 import copy
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,7 +58,7 @@ _AMBIGUOUS_GF_STATUSES = {"aguardando_cliente", "aguardando_validacao_cliente"}
 logger = logging.getLogger(__name__)
 
 
-def _cleanse_attachments_for_event(payload: dict | None) -> dict | None:
+def _cleanse_attachments_for_event(payload: dict[str, Any] | None) -> dict[str, Any] | None:
     """Strip base64 blobs from attachment payloads before storing in ticket_events —
     keeps a size hint but drops the `data` field, which otherwise buries the
     Histórico de Eventos sidebar under a wall of base64."""

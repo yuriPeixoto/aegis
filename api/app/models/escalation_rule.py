@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class EscalationRule(Base):
@@ -21,8 +25,8 @@ class EscalationRule(Base):
     trigger_hours: Mapped[float] = mapped_column(Float, nullable=False)
 
     # Conditions (empty list = match all)
-    condition_priority: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
-    condition_status: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    condition_priority: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
+    condition_status: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
 
     # Action
     action_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -38,7 +42,7 @@ class EscalationRule(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    action_user: Mapped[object] = relationship(
+    action_user: Mapped[User | None] = relationship(
         "User", foreign_keys=[action_user_id], lazy="selectin"
     )
 
