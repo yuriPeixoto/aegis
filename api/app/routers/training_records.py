@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 
 from app.core.auth import CurrentUser
 from app.core.dependencies import DbSession
+from app.schemas.calendar_event import AgentSlim, SourceSlim
 from app.schemas.training_record import (
     ParticipantCreate,
     ParticipantResponse,
@@ -52,8 +53,8 @@ async def list_training_records(
                 training_date=r.training_date,
                 modality=r.modality,
                 status=r.status,
-                source=r.source,
-                instructor=r.instructor,
+                source=SourceSlim.model_validate(r.source) if r.source else None,
+                instructor=AgentSlim.model_validate(r.instructor),
                 participant_count=total,
                 signed_count=signed,
             )

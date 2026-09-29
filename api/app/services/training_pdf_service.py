@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
+from weasyprint import HTML  # type: ignore[import-untyped,unused-ignore]
 
 from app.models.training_record import TrainingRecord
 from app.services.training_record_service import TrainingRecordService
