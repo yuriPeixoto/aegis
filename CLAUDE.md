@@ -13,7 +13,7 @@ It does NOT know the internals of source systems — it only receives structured
 
 ## Stack
 
-- **Backend**: Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, PostgreSQL, Redis
+- **Backend**: Python 3.14 (produção), FastAPI, SQLAlchemy 2.0, Alembic, PostgreSQL
 - **Frontend**: React 18, TypeScript, Vite, TailwindCSS, TanStack Query
 - **Auth**: JWT (dashboard users) + API Keys (ingest sources)
 - **Testing**: pytest + httpx (async)

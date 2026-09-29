@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Paperclip, Download, FileText, FileSpreadsheet, File, ImageIcon, Loader2 } from 'lucide-react'
+import { Paperclip, Download, FileText, FileSpreadsheet, File, ImageIcon, Loader2, Lock } from 'lucide-react'
 import { useAttachments, useUploadAttachment } from '../../hooks/useTickets'
 import type { TicketAttachment } from '../../types/ticket'
 
@@ -44,11 +44,12 @@ export function AttachmentsPanel({ ticketId }: AttachmentsPanelProps) {
   const { data: attachments = [], isLoading } = useAttachments(ticketId)
   const { mutate: upload, isPending } = useUploadAttachment(ticketId)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [markInternal, setMarkInternal] = useState(false)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    upload(file)
+    upload({ file, isInternal: markInternal })
     e.target.value = ''
   }
 
@@ -58,19 +59,35 @@ export function AttachmentsPanel({ ticketId }: AttachmentsPanelProps) {
         <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
           {t('inbox.detail.attachments')}
         </h3>
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={isPending}
-          className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          title={t('inbox.detail.uploadAttachment')}
-        >
-          {isPending ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Paperclip className="w-3.5 h-3.5" />
-          )}
-          {t('inbox.detail.attachFile')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMarkInternal((v) => !v)}
+            aria-pressed={markInternal}
+            className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+              markInternal
+                ? 'bg-amber-950/60 border-amber-700/50 text-amber-400'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+            title={t('inbox.detail.internalAttachmentToggleHint')}
+          >
+            <Lock className="w-2.5 h-2.5" />
+            {t('inbox.detail.internalAttachmentToggle')}
+          </button>
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={isPending}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title={t('inbox.detail.uploadAttachment')}
+          >
+            {isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Paperclip className="w-3.5 h-3.5" />
+            )}
+            {t('inbox.detail.attachFile')}
+          </button>
+        </div>
         <input
           ref={inputRef}
           type="file"
@@ -89,8 +106,14 @@ export function AttachmentsPanel({ ticketId }: AttachmentsPanelProps) {
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2"
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${
+                attachment.is_internal
+                  ? 'bg-amber-950/40 border-amber-700/40'
+                  : 'bg-white/5 border-white/10'
+              }`}
+              title={attachment.is_internal ? t('inbox.detail.internalAttachment') : undefined}
             >
+              {attachment.is_internal && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
               <FileIcon contentType={attachment.content_type} />
               <span
                 className="flex-1 text-xs text-slate-300 truncate"

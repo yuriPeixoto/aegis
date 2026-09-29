@@ -1,0 +1,547 @@
+<title>Cliente e Módulo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#0F172A; --surface:#1E293B; --surface-2:#243149; --border:#334155;
+    --purple:#8B5CF6; --purple-dim:#7C3AED; --accent:#818CF8;
+    --text:#F1F5F9; --text-dim:#94A3B8; --text-faint:#64748B;
+    --success:#34D399; --success-dim:rgba(52,211,153,.12);
+    --danger:#FB7185; --danger-dim:rgba(251,113,133,.12);
+    --neon:#39FF14;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--text); margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  /* ---- shell ---- */
+  .shell{display:flex; min-height:100vh}
+  .rail{
+    width:220px; flex-shrink:0; border-right:1px solid var(--border);
+    padding:20px 14px; display:flex; flex-direction:column; gap:2px;
+  }
+  .brand{display:flex; align-items:baseline; gap:2px; padding:0 8px 4px; margin-bottom:14px}
+  .brand b{font-size:17px; letter-spacing:-.02em}
+  .brand .ae{color:var(--accent)}
+  .brand .gis{color:var(--purple)}
+  .brand-sub{display:block; font-size:9px; letter-spacing:.12em; color:var(--text-faint); padding:0 8px 16px; text-transform:uppercase}
+  .nav-item{
+    display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px;
+    color:var(--text-dim); font-size:13.5px; text-decoration:none; cursor:default;
+  }
+  .nav-item svg{width:15px;height:15px; flex-shrink:0; opacity:.8}
+  .nav-item.active{background:rgba(139,92,246,.14); color:var(--text)}
+  .nav-item.active svg{color:var(--purple); opacity:1}
+  .nav-sub{
+    margin:2px 0 2px 34px; padding:5px 10px; border-radius:7px; font-size:12.5px;
+    color:var(--text-faint); cursor:pointer; transition:.12s;
+  }
+  .nav-sub.current{color:var(--text); background:var(--surface-2); font-weight:600}
+  .nav-sub:hover:not(.current){color:var(--text-dim)}
+  .rail-note{
+    margin-top:auto; padding:10px 10px; border-radius:8px; background:var(--surface);
+    border:1px solid var(--border); font-size:11px; color:var(--text-faint); line-height:1.5;
+  }
+  .rail-note b{color:var(--accent); display:block; font-size:10px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:3px}
+
+  .main{flex:1; min-width:0; display:flex; flex-direction:column}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 26px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .crumbs{font-size:13px; color:var(--text-faint); display:flex; align-items:center; gap:6px}
+  .crumbs b{color:var(--text); font-weight:600}
+  .screen-tabs{display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:3px}
+  .screen-tab{
+    padding:6px 13px; border-radius:6px; font-size:12.5px; color:var(--text-dim);
+    cursor:pointer; border:none; background:transparent; font-family:inherit; transition:.12s;
+  }
+  .screen-tab.on{background:var(--purple); color:#fff; font-weight:600}
+  .screen-tab:hover:not(.on){color:var(--text)}
+
+  .canvas{flex:1; padding:26px; overflow:auto}
+  .screen{display:none}
+  .screen.on{display:block; animation:fade .18s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+  /* ---- generic bits ---- */
+  h1{font-size:19px; margin:0 0 3px; letter-spacing:-.01em}
+  .lede{color:var(--text-dim); font-size:13px; margin:0}
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:12px}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px;
+    font-size:13px; font-weight:600; border:1px solid transparent; cursor:pointer; font-family:inherit;
+  }
+  .btn-primary{background:var(--purple); color:#fff}
+  .btn-primary:hover{background:var(--purple-dim)}
+  .btn-ghost{background:transparent; border-color:var(--border); color:var(--text-dim)}
+  .btn-ghost:hover{color:var(--text); border-color:var(--text-faint)}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:99px;
+    font-size:11px; font-weight:600; letter-spacing:.01em;
+  }
+  .pill-ok{background:var(--success-dim); color:var(--success)}
+  .pill-off{background:rgba(148,163,184,.1); color:var(--text-faint)}
+  .pill-new{background:rgba(129,140,248,.14); color:var(--accent); text-transform:uppercase; font-size:9.5px; letter-spacing:.08em; padding:2px 7px}
+  .badge{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim);
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+    padding:2px 7px; border-radius:6px;
+  }
+  .dot{width:6px;height:6px;border-radius:99px;flex-shrink:0}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-faint); font-weight:600; padding:0 14px 10px; border-bottom:1px solid var(--border);
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid rgba(51,65,85,.5); vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.clickable{cursor:pointer; transition:.1s}
+  tbody tr.clickable:hover{background:rgba(255,255,255,.02)}
+  .cell-name{display:flex; align-items:center; gap:9px; font-weight:500}
+  .avatar-dot{
+    width:26px;height:26px;border-radius:99px; display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .mods-inline{display:flex; gap:4px; flex-wrap:wrap}
+  .mod-chip{
+    font-size:10.5px; padding:2px 7px; border-radius:5px; background:var(--surface-2);
+    color:var(--text-dim); border:1px solid var(--border);
+  }
+
+  /* toggle switch */
+  .toggle{position:relative; width:34px; height:19px; border-radius:99px; background:var(--border); border:none; cursor:pointer; flex-shrink:0; transition:.15s}
+  .toggle.on{background:var(--purple)}
+  .toggle span{position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:99px; background:#fff; transition:.15s}
+  .toggle.on span{transform:translateX(15px)}
+
+  /* ---- drawer ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(4,8,20,.55); backdrop-filter:blur(2px);
+    display:none; align-items:stretch; justify-content:flex-end; z-index:40;
+  }
+  .overlay.on{display:flex; animation:fadeBg .15s ease}
+  @keyframes fadeBg{from{opacity:0}to{opacity:1}}
+  .drawer{
+    width:420px; max-width:92vw; background:var(--surface); border-left:1px solid var(--border);
+    height:100%; overflow-y:auto; padding:22px 22px 28px; animation:slideIn .2s ease;
+  }
+  @keyframes slideIn{from{transform:translateX(24px); opacity:0}to{transform:none; opacity:1}}
+  .drawer-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px}
+  .drawer-close{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:18px;line-height:1;padding:4px}
+  .drawer-close:hover{color:var(--text)}
+  .field{margin-bottom:16px}
+  .field label{display:block; font-size:11.5px; font-weight:600; color:var(--text-dim); margin-bottom:6px}
+  .field .hint{font-size:11px; color:var(--text-faint); margin-top:5px; line-height:1.5}
+  .input, .select{
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; color:var(--text); font-size:13.5px; font-family:inherit;
+  }
+  .input:focus, .select:focus{outline:none; border-color:var(--accent)}
+  .divider{height:1px; background:var(--border); margin:20px 0}
+  .mod-row{
+    display:flex; align-items:center; justify-content:space-between; padding:10px 12px;
+    border:1px solid var(--border); border-radius:9px; margin-bottom:7px; background:rgba(255,255,255,.015);
+  }
+  .mod-row .mname{font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px}
+  .mod-row .mmeta{font-size:10.5px; color:var(--text-faint); font-family:'JetBrains Mono',monospace}
+
+  /* ---- annotation callouts ---- */
+  .note{
+    display:flex; gap:10px; padding:12px 14px; border-radius:10px; background:rgba(129,140,248,.07);
+    border:1px solid rgba(129,140,248,.25); font-size:12.5px; color:#C7D2FE; line-height:1.55; margin-bottom:18px;
+  }
+  .note b{color:var(--accent)}
+  .note .icon{flex-shrink:0; margin-top:1px}
+
+  /* ---- ticket header replica ---- */
+  .tk-header{display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap}
+  .tk-back{display:flex; align-items:center; gap:5px; color:var(--text-dim); font-size:13px}
+  .vline{width:1px; height:16px; background:var(--border)}
+  .src-chip{display:flex; align-items:center; gap:7px; font-family:'JetBrains Mono',monospace; font-size:12px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); padding:4px 9px; border-radius:7px}
+  .type-badge, .prio-badge, .status-badge{font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px}
+
+  footer.credit{padding:16px 26px; font-size:11px; color:var(--text-faint); border-top:1px solid var(--border)}
+</style>
+
+<div class="shell">
+  <!-- ============ SIDEBAR ============ -->
+  <nav class="rail">
+    <div>
+      <div class="brand"><b><span class="ae">Ae</span><span class="gis">gis</span></b></div>
+      <span class="brand-sub">Central de Suporte</span>
+    </div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Caixa de Entrada</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notificações</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>Treinamentos</a>
+    <a class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852 1.001 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configurações</a>
+    <div class="nav-sub" data-goto="clientes" id="sub-clientes">Clientes</div>
+    <div class="nav-sub" data-goto="modulos" id="sub-modulos">Módulos <span class="pill pill-new" style="margin-left:5px">novo</span></div>
+
+    <div class="rail-note">
+      <b>Protótipo · #1307</b>
+      Mockup clicável do fluxo Cliente/Módulo antes de codar. Dados de exemplo — nada aqui é salvo. Ver ADR-012.
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumbs" id="crumbs"><b>Configurações</b> <span style="opacity:.5">/</span> Clientes</div>
+      <div class="screen-tabs">
+        <button class="screen-tab on" data-screen="clientes">1 · Clientes</button>
+        <button class="screen-tab" data-screen="modulos">2 · Módulos</button>
+        <button class="screen-tab" data-screen="chamado">3 · Chamado</button>
+        <button class="screen-tab" data-screen="inbox">4 · Filtro na Inbox</button>
+      </div>
+    </div>
+
+    <div class="canvas">
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 1 — CLIENTES -->
+      <!-- ======================================================= -->
+      <section class="screen on" id="screen-clientes">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px">
+          <div>
+            <h1>Clientes</h1>
+            <p class="lede">Índice local de clientes da Unitop — não substitui os cadastros de GF/Telemetria/ChecklistSuite (ADR-012).</p>
+          </div>
+          <button class="btn btn-primary" onclick="openDrawer('novo')">+ Novo cliente</button>
+        </div>
+
+        <div class="note">
+          <span class="icon">💡</span>
+          <div><b>Por que essa tela existe:</b> hoje só dá pra identificar cliente pela Source (canal de integração), e nem todo cliente tem uma. Esse cadastro é intencionalmente enxuto — nome, status, Source opcional — não vira CRM.</div>
+        </div>
+
+        <div class="panel" style="padding:6px 0">
+          <table>
+            <thead><tr>
+              <th style="padding-left:14px">Nome</th>
+              <th>Status</th>
+              <th>Source vinculada</th>
+              <th>Módulos ativos</th>
+              <th style="text-align:right; padding-right:14px">Cadastrado em</th>
+            </tr></thead>
+            <tbody id="clientes-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 2 — MÓDULOS -->
+      <!-- ======================================================= -->
+      <section class="screen" id="screen-modulos">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px">
+          <div>
+            <h1>Módulos</h1>
+            <p class="lede">Catálogo de produtos/serviços da Unitop — cadastro livre, não é uma lista fixa no código.</p>
+          </div>
+          <button class="btn btn-primary" onclick="addModulo()">+ Novo módulo</button>
+        </div>
+
+        <div class="note">
+          <span class="icon">💡</span>
+          <div><b>Por que CRUD e não uma lista fixa:</b> a lista original do ticket tinha 6 itens — Aegis, Maestro e Cronwatch já não estavam nela. Uma lista fixa no código significa deploy toda vez que a Unitop lança um produto novo.</div>
+        </div>
+
+        <div class="panel" style="padding:6px 0">
+          <table>
+            <thead><tr>
+              <th style="padding-left:14px">Módulo</th>
+              <th>Status</th>
+              <th>Clientes usando</th>
+              <th style="text-align:right; padding-right:14px"></th>
+            </tr></thead>
+            <tbody id="modulos-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 3 — CHAMADO -->
+      <!-- ======================================================= -->
+      <section class="screen" id="screen-chamado">
+        <h1 style="margin-bottom:3px">Chamado — cabeçalho</h1>
+        <p class="lede" style="margin-bottom:16px">Como o vínculo Cliente/Módulo aparece dentro de um chamado existente, ao lado da Source técnica.</p>
+
+        <div class="note">
+          <span class="icon">💡</span>
+          <div><b>Fora do MVP desta rodada:</b> por enquanto isso é só a leitura visual — <span class="badge">cliente_id</span> e <span class="badge">modulo_id</span> nullable em <span class="badge">Ticket</span> ficam pra depois do índice de Cliente estar validado. O webhook de ingestão continua gravando só <span class="badge">source_id</span>, como hoje.</div>
+        </div>
+
+        <div class="panel">
+          <div class="tk-header">
+            <span class="tk-back">← Caixa de Entrada</span>
+            <div class="vline"></div>
+            <span class="src-chip"><span class="dot" style="background:#F97316"></span>gestao_frota_carvalima</span>
+            <span class="pill pill-new">novo</span>
+            <span class="src-chip" style="background:rgba(139,92,246,.1); border-color:rgba(139,92,246,.3)">
+              <span class="dot" style="background:var(--purple)"></span>Carvalima
+            </span>
+            <span class="pill pill-new">novo</span>
+            <span class="src-chip" style="background:rgba(129,140,248,.1); border-color:rgba(129,140,248,.3)">
+              <span class="dot" style="background:var(--accent)"></span>Checklist Suite
+            </span>
+            <span class="badge" style="margin-left:auto">#SUP-2026-0447</span>
+          </div>
+          <div style="padding:16px 18px">
+            <div style="display:flex; gap:6px; margin-bottom:12px">
+              <span class="type-badge" style="background:rgba(251,113,133,.12); color:var(--danger)">BUG</span>
+              <span class="prio-badge" style="background:rgba(251,113,133,.12); color:var(--danger)">URGENTE</span>
+              <span class="status-badge" style="background:rgba(129,140,248,.12); color:var(--accent)">EM ANDAMENTO</span>
+            </div>
+            <div style="font-size:14.5px; font-weight:500; margin-bottom:6px">Pré-OS não gerada no workflow Frota→Motorista→Tráfego→Portaria</div>
+            <p style="color:var(--text-faint); font-size:12.5px; margin:0">
+              Antes: o único jeito de saber "isso é da Carvalima, módulo Checklist Suite" era ler o nome da Source
+              (<span class="badge">gestao_frota_carvalima</span>) e adivinhar. Agora Cliente e Módulo são campos
+              próprios, legíveis, filtráveis — mesmo em chamados internos do Aegis sem nenhuma Source.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- SCREEN 4 — INBOX -->
+      <!-- ======================================================= -->
+      <section class="screen" id="screen-inbox">
+        <h1 style="margin-bottom:3px">Caixa de Entrada — filtros</h1>
+        <p class="lede" style="margin-bottom:16px">Cliente e Módulo entram como filtros próprios, ao lado do filtro de Source que já existe.</p>
+
+        <div class="note">
+          <span class="icon">💡</span>
+          <div><b>Diferença chave:</b> o filtro de <i>Source</i> continua existindo (é canal técnico). <i>Cliente</i> é quem pode ter várias Sources, ou nenhuma. <i>Módulo</i> filtra por produto, cruzando clientes diferentes — algo impossível hoje.</div>
+        </div>
+
+        <div class="panel" style="padding:14px 16px">
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+            <div class="filter-fake">🔍 Buscar por assunto ou ID…</div>
+            <div class="filter-fake">Todas as fontes ▾</div>
+            <div class="filter-fake" style="border-color:rgba(139,92,246,.5); background:rgba(139,92,246,.08)">
+              👤 Cliente: Carvalima ▾ <span class="pill pill-new" style="margin-left:2px">novo</span>
+            </div>
+            <div class="filter-fake" style="border-color:rgba(129,140,248,.5); background:rgba(129,140,248,.08)">
+              🧩 Módulo: Checklist Suite ▾ <span class="pill pill-new" style="margin-left:2px">novo</span>
+            </div>
+            <div class="filter-fake">Em aberto ▾</div>
+            <div class="filter-fake">Todas as prioridades ▾</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:14px; padding:6px 0">
+          <table>
+            <thead><tr><th style="padding-left:14px">Chamado</th><th>Cliente</th><th>Módulo</th><th style="text-align:right; padding-right:14px">Status</th></tr></thead>
+            <tbody id="inbox-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="credit">Protótipo estático pro ticket Aegis #1307 · dados de exemplo, sem persistência · ver <span class="mono">docs/adr/012-cliente-vs-source.md</span></footer>
+  </div>
+</div>
+
+<!-- ============ DRAWER: editar/criar cliente ============ -->
+<div class="overlay" id="overlay">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div style="font-size:15px; font-weight:600" id="drawer-title">Editar cliente</div>
+        <div style="font-size:11px; color:var(--text-faint)" id="drawer-sub">cadastrado em 04/09/2026</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="field">
+      <label>Nome do cliente</label>
+      <input class="input" id="f-nome" value="Carvalima">
+    </div>
+
+    <div class="field" style="display:flex; align-items:center; justify-content:space-between">
+      <label style="margin:0">Cliente ativo</label>
+      <button class="toggle on" id="f-ativo" onclick="this.classList.toggle('on')"><span></span></button>
+    </div>
+
+    <div class="field">
+      <label>Source vinculada <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0">(opcional)</span></label>
+      <select class="select" id="f-source">
+        <option>Nenhuma — cliente sem integração</option>
+        <option selected>gestao_frota_carvalima</option>
+        <option>telemetria_carvalima</option>
+      </select>
+      <div class="hint">Um cliente pode não ter Source (atendido só por WhatsApp/ligação), ou ter mais de uma — a Source aqui é só a principal, pra referência rápida.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label style="display:flex; align-items:center; justify-content:space-between">
+        <span>Módulos</span>
+        <span style="font-weight:400; color:var(--text-faint); text-transform:none; letter-spacing:0" id="mod-count">4 de 6 ativos</span>
+      </label>
+      <div id="mod-list"></div>
+      <div class="hint">Ativar/desativar aqui não apaga chamados antigos do módulo — só deixa de contar nas métricas atuais desse módulo pro cliente.</div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeDrawer()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeDrawer()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENT_COLORS = ['#8B5CF6','#F97316','#34D399','#818CF8','#FB7185','#FBBF24','#22D3EE','#A78BFA'];
+function initials(n){return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')}
+function colorFor(n){let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))|0;return CLIENT_COLORS[Math.abs(h)%CLIENT_COLORS.length]}
+
+const MODULOS = ['Gestão de Frotas','Checklist Suite','Telemetria','Jornada','Painel de Abastecimentos','Painel de Manutenções'];
+
+const CLIENTES = [
+  {nome:'Carvalima', ativo:true, source:'gestao_frota_carvalima', mods:['Gestão de Frotas','Checklist Suite','Telemetria','Jornada'], criado:'12/07/2026'},
+  {nome:'Pasini', ativo:true, source:'telemetria_pasini', mods:['Telemetria'], criado:'03/03/2026'},
+  {nome:'Rigatrans', ativo:true, source:'gestao_frota_rigatrans', mods:['Gestão de Frotas','Checklist Suite'], criado:'21/04/2026'},
+  {nome:'Wafran', ativo:true, source:null, mods:['Telemetria'], criado:'18/05/2026'},
+  {nome:'5S', ativo:true, source:'gestao_frota_5s', mods:['Gestão de Frotas'], criado:'02/07/2026'},
+  {nome:'Sorpan', ativo:false, source:'gestao_frota_sorpan', mods:[], criado:'14/01/2026'},
+];
+
+const MOD_ROWS = [
+  {nome:'Gestão de Frotas', ativo:true},
+  {nome:'Checklist Suite', ativo:true},
+  {nome:'Telemetria', ativo:true},
+  {nome:'Jornada', ativo:true},
+  {nome:'Painel de Abastecimentos', ativo:true},
+  {nome:'Painel de Manutenções', ativo:true},
+];
+
+function countClientesUsando(mod){return CLIENTES.filter(c=>c.mods.includes(mod)).length}
+
+function renderClientes(){
+  const tb = document.getElementById('clientes-tbody');
+  tb.innerHTML = CLIENTES.map(c => `
+    <tr class="clickable" onclick="openDrawer('${c.nome}')">
+      <td>
+        <div class="cell-name">
+          <span class="avatar-dot" style="background:${colorFor(c.nome)}">${initials(c.nome)}</span>
+          ${c.nome}
+        </div>
+      </td>
+      <td>${c.ativo ? '<span class="pill pill-ok">● ativo</span>' : '<span class="pill pill-off">○ inativo</span>'}</td>
+      <td>${c.source ? `<span class="badge">${c.source}</span>` : '<span style="color:var(--text-faint); font-size:12.5px">— sem Source</span>'}</td>
+      <td><div class="mods-inline">${c.mods.length ? c.mods.map(m=>`<span class="mod-chip">${m}</span>`).join('') : '<span style="color:var(--text-faint); font-size:12px">nenhum</span>'}</div></td>
+      <td style="text-align:right; padding-right:14px; color:var(--text-faint); font-size:12.5px">${c.criado}</td>
+    </tr>
+  `).join('');
+}
+
+function renderModulos(){
+  const tb = document.getElementById('modulos-tbody');
+  tb.innerHTML = MOD_ROWS.map((m,i) => `
+    <tr>
+      <td style="padding-left:14px; font-weight:500">${m.nome}</td>
+      <td>${m.ativo ? '<span class="pill pill-ok">● ativo</span>' : '<span class="pill pill-off">○ inativo</span>'}</td>
+      <td><span class="badge">${countClientesUsando(m.nome)} cliente${countClientesUsando(m.nome)===1?'':'s'}</span></td>
+      <td style="text-align:right; padding-right:14px">
+        <button class="toggle ${m.ativo?'on':''}" onclick="toggleModulo(${i})"><span></span></button>
+      </td>
+    </tr>
+  `).join('');
+}
+function toggleModulo(i){ MOD_ROWS[i].ativo = !MOD_ROWS[i].ativo; renderModulos(); }
+function addModulo(){
+  const nome = prompt('Nome do novo módulo (ex: Maestro, Cronwatch):');
+  if(!nome) return;
+  MOD_ROWS.push({nome, ativo:true});
+  renderModulos();
+}
+
+function renderInbox(){
+  const rows = [
+    {id:'#SUP-2026-0447', assunto:'Pré-OS não gerada no workflow', cliente:'Carvalima', modulo:'Checklist Suite', status:'Em andamento', color:'var(--accent)'},
+    {id:'#SUP-2026-0448', assunto:'Veículo não aparece na Ficha', cliente:'Carvalima', modulo:'Gestão de Frotas', status:'Aberto', color:'#FBBF24'},
+    {id:'#TU-2026-0119', assunto:'Divergência no ranking de infrações', cliente:'Pasini', modulo:'Telemetria', status:'Aberto', color:'#FBBF24'},
+    {id:'#SUP-2026-0450', assunto:'Checklist duplicado no mobile', cliente:'Rigatrans', modulo:'Checklist Suite', status:'Resolvido', color:'var(--success)'},
+  ];
+  document.getElementById('inbox-tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td style="padding-left:14px">
+        <div style="font-weight:500; font-size:13px">${r.assunto}</div>
+        <div class="badge" style="margin-top:4px">${r.id}</div>
+      </td>
+      <td><span class="mod-chip" style="background:rgba(139,92,246,.1); border-color:rgba(139,92,246,.3); color:#C4B5FD">${r.cliente}</span></td>
+      <td><span class="mod-chip">${r.modulo}</span></td>
+      <td style="text-align:right; padding-right:14px"><span style="color:${r.color}; font-size:12px; font-weight:600">${r.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+function openDrawer(nome){
+  const c = CLIENTES.find(x=>x.nome===nome);
+  document.getElementById('drawer-title').textContent = c ? `Editar cliente` : 'Novo cliente';
+  document.getElementById('drawer-sub').textContent = c ? `cadastrado em ${c.criado}` : 'preencha os dados abaixo';
+  document.getElementById('f-nome').value = c ? c.nome : '';
+  document.getElementById('f-ativo').classList.toggle('on', c ? c.ativo : true);
+  const modList = document.getElementById('mod-list');
+  const activeMods = c ? c.mods : [];
+  modList.innerHTML = MODULOS.map(m => {
+    const on = activeMods.includes(m);
+    return `<div class="mod-row">
+      <span class="mname">${m}${on ? `<span class="mmeta">ativado 04/09/2026</span>` : ''}</span>
+      <button class="toggle ${on?'on':''}" onclick="this.classList.toggle('on'); updateModCount()"><span></span></button>
+    </div>`;
+  }).join('');
+  updateModCount();
+  document.getElementById('overlay').classList.add('on');
+}
+function updateModCount(){
+  const total = document.querySelectorAll('#mod-list .toggle').length;
+  const on = document.querySelectorAll('#mod-list .toggle.on').length;
+  document.getElementById('mod-count').textContent = `${on} de ${total} ativos`;
+}
+function closeDrawer(){ document.getElementById('overlay').classList.remove('on'); }
+document.getElementById('overlay').addEventListener('click', e => { if(e.target.id==='overlay') closeDrawer(); });
+
+const CRUMB = {clientes:'Clientes', modulos:'Módulos', chamado:'Chamado #SUP-2026-0447', inbox:'Caixa de Entrada'};
+document.querySelectorAll('.screen-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.screen-tab').forEach(t=>t.classList.remove('on'));
+    tab.classList.add('on');
+    const target = tab.dataset.screen;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById('screen-'+target).classList.add('on');
+    document.getElementById('crumbs').innerHTML = target==='chamado'
+      ? `<b>Caixa de Entrada</b> <span style="opacity:.5">/</span> ${CRUMB[target]}`
+      : `<b>Configurações</b> <span style="opacity:.5">/</span> ${CRUMB[target]}`;
+    document.getElementById('sub-clientes').classList.toggle('current', target==='clientes');
+    document.getElementById('sub-modulos').classList.toggle('current', target==='modulos');
+  });
+});
+document.querySelectorAll('.nav-sub').forEach(el => {
+  el.addEventListener('click', () => document.querySelector(`.screen-tab[data-screen="${el.dataset.goto}"]`).click());
+});
+
+document.querySelectorAll('.filter-fake').forEach(()=>{});
+const style = document.createElement('style');
+style.textContent = `.filter-fake{display:inline-flex; align-items:center; gap:6px; padding:8px 13px; border-radius:9px; border:1px solid var(--border); background:var(--surface); font-size:12.5px; color:var(--text-dim); white-space:nowrap}`;
+document.head.appendChild(style);
+
+renderClientes();
+renderModulos();
+renderInbox();
+document.getElementById('sub-clientes').classList.add('current');
+</script>

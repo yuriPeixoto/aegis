@@ -197,6 +197,9 @@
       "attachFile": "Attach",
       "uploadAttachment": "Upload file",
       "noAttachments": "No attachments.",
+      "internalAttachment": "Internal attachment",
+      "internalAttachmentToggle": "Internal",
+      "internalAttachmentToggleHint": "Mark the next attachment as internal (visible only to the team)",
       "download": "Download",
       "tags": {
         "add": "Add Tag",
