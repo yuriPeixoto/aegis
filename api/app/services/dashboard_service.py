@@ -318,7 +318,7 @@ class DashboardService:
             .options(selectinload(Ticket.assignee), selectinload(Ticket.checklist_items))
             .order_by(Ticket.sla_due_at.asc().nulls_last())
         )
-        rows = r.all()
+        rows = r.tuples().all()
 
         agents_map: dict[int, dict[str, Any]] = {}
         tickets_by_agent: dict[int, list[Any]] = defaultdict(list)

@@ -435,7 +435,7 @@ class AnalyticsService:
                     func.coalesce(Ticket.resolved_at, Ticket.last_synced_at).between(start, end),
                 )
             )
-            mttr_raw = r.scalar_one()
+            mttr_raw: float | None = r.scalar_one()
 
             by_agent.append(
                 {
