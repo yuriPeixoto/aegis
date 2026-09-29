@@ -125,6 +125,18 @@ Abre um ticket interno no Aegis (equivalente a usar "Reportar Problema" no porta
 
 ---
 
+### `list_attachments`
+
+Lista os anexos de um ticket (`#id  nome  (tipo, tamanho)`), com `[interno]` nos que são só da equipe. `get_ticket` também mostra esses anexos.
+
+### `download_attachment`
+
+Baixa um anexo (`attachment_id`) para o disco local e devolve o caminho — em seguida dá pra abrir com Read (imagens, PDFs e texto). Salva por padrão em `<tmp>/aegis-attachments/`; `save_dir` sobrescreve. Em ambiente sem `mod_xsendfile` (dev local) o corpo vem vazio e a ferramenta avisa.
+
+### `upload_attachment`
+
+Anexa um arquivo local (`file_path`) a um ticket. **Interno por padrão** (`is_internal=true`); passe `false` só para anexo não sensível. Mesmos tipos e limite (10 MB) do upload pela UI.
+
 ## Checklist de progresso
 
 Quebra um chamado grande (desenho de módulo, onboarding de cliente) em subtarefas marcáveis — o mesmo painel que aparece na lateral do ticket no dashboard. O percentual é sempre derivado (`concluídos/total`), nunca setado à mão. Ver [ADR-010](adr/010-ticket-checklist-progress.md).

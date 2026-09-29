@@ -17,6 +17,16 @@ Arquivos enviados pelos agentes (ou ingeridos via webhook do sistema de origem) 
     └── {uuid}{.ext}        ← nome original descartado; UUID previne colisões
 ```
 
+### Anexo interno
+
+`ticket_attachments.is_internal` (default `false`) tem o mesmo significado de `ticket_messages.is_internal`: visível só para a equipe. Quem define:
+
+- Anexo enviado numa **nota interna** herda `true` automaticamente.
+- Upload avulso do painel aceita o campo de form `is_internal`.
+- O webhook de saída só carrega o arquivo da mensagem pública enviada; anexos internos e uploads avulsos nunca vão para a origem.
+
+Não há filtro por role em listagem/download: hoje todo usuário do Aegis é da equipe e o portal do cliente foi descartado (integração é só via webhook). Se isso mudar, o filtro entra em `AttachmentService.list_attachments` e no endpoint de download.
+
 ### Tipos permitidos
 
 | Categoria | MIME types |

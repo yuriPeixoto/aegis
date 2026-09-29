@@ -103,6 +103,7 @@ export interface TicketMessage {
     content_type: string
     size_bytes: number
     download_url: string
+    is_internal: boolean
   }[]
 }
 
@@ -112,6 +113,7 @@ export interface TicketAttachment {
   original_filename: string
   content_type: string
   size_bytes: number
+  is_internal: boolean
   created_at: string
   download_url: string
 }

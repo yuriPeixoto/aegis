@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+import mimetypes
 import os
+import tempfile
 import textwrap
+from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 import httpx
 from mcp.server import Server
@@ -48,6 +52,20 @@ async def _post(path: str, body: dict) -> Any:
 async def _patch(path: str, body: dict) -> Any:
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.patch(f"{BASE_URL}/v1{path}", headers=_headers(), json=body)
+        r.raise_for_status()
+        return r.json()
+
+
+async def _post_file(path: str, file_path: Path, data: dict) -> Any:
+    """Multipart upload — sem Content-Type manual, o httpx gera o boundary."""
+    content_type = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+    async with httpx.AsyncClient(timeout=120) as client:
+        r = await client.post(
+            f"{BASE_URL}/v1{path}",
+            headers=_auth_header(),
+            data=data,
+            files={"file": (file_path.name, file_path.read_bytes(), content_type)},
+        )
         r.raise_for_status()
         return r.json()
 
@@ -128,7 +146,23 @@ def _fmt_ticket(t: dict) -> str:
 def _fmt_message(m: dict) -> str:
     direction = "↑ Equipe" if m["direction"] == "outbound" else "↓ Cliente"
     internal = " [nota interna]" if m.get("is_internal") else ""
-    return f"[{m['created_at'][:19]}] {direction} — {m['author_name']}{internal}\n{m['body']}"
+    anexos = "".join(f"\n  📎 {_fmt_attachment(a)}" for a in m.get("attachments") or [])
+    return f"[{m['created_at'][:19]}] {direction} — {m['author_name']}{internal}\n{m['body']}{anexos}"
+
+
+def _fmt_size(size_bytes: int) -> str:
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    if size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
+def _fmt_attachment(a: dict) -> str:
+    # GET /tickets/{id}/attachments devolve original_filename; o embed em mensagens devolve filename
+    nome = a.get("original_filename") or a.get("filename")
+    interno = " [interno]" if a.get("is_internal") else ""
+    return f"#{a['id']}  {nome}  ({a['content_type']}, {_fmt_size(a['size_bytes'])}){interno}"
 
 
 def _fmt_checklist(items: list[dict]) -> str:
@@ -289,6 +323,69 @@ async def _list_tools() -> list[types.Tool]:
                     "body": {"type": "string", "description": "Conteúdo da nota"},
                 },
                 "required": ["ticket_id", "body"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="list_attachments",
+            description=(
+                "Lista os anexos de um ticket (id, nome, tipo, tamanho), marcando os "
+                "internos (visíveis só para a equipe) com [interno]."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                },
+                "required": ["ticket_id"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="download_attachment",
+            description=(
+                "Baixa um anexo para o disco local e devolve o caminho do arquivo — depois "
+                "é possível abrir com Read (imagens, PDFs e texto são legíveis). Use "
+                "list_attachments para descobrir o attachment_id."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "attachment_id": {"type": "integer", "description": "ID do anexo"},
+                    "save_dir": {
+                        "type": "string",
+                        "description": (
+                            "Diretório de destino (default: pasta temporária do sistema, "
+                            "subpasta aegis-attachments)"
+                        ),
+                    },
+                },
+                "required": ["attachment_id"],
+                "additionalProperties": False,
+            },
+        ),
+        types.Tool(
+            name="upload_attachment",
+            description=(
+                "Anexa um arquivo local a um ticket. Por padrão o anexo é INTERNO (visível "
+                "só para a equipe); passe is_internal=false só se o anexo não for sensível. "
+                "Tipos aceitos: imagens, PDF, txt/csv, Word/Excel, vídeo e HTML, até 10 MB."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "integer", "description": "ID do ticket"},
+                    "file_path": {
+                        "type": "string",
+                        "description": "Caminho absoluto do arquivo local a enviar",
+                    },
+                    "is_internal": {
+                        "type": "boolean",
+                        "description": "Se true (default), o anexo é visível só para a equipe",
+                        "default": True,
+                    },
+                },
+                "required": ["ticket_id", "file_path"],
                 "additionalProperties": False,
             },
         ),
@@ -553,9 +650,10 @@ async def _dispatch(name: str, args: dict) -> str:
         ticket_id = int(args["ticket_id"])
         msg_limit = int(args.get("messages_limit", 10))
 
-        ticket, all_messages = await asyncio.gather(
+        ticket, all_messages, attachments = await asyncio.gather(
             _get(f"/tickets/{ticket_id}"),
             _get(f"/tickets/{ticket_id}/messages"),
+            _get(f"/tickets/{ticket_id}/attachments"),
         )
 
         public_msgs = [m for m in all_messages if not m.get("is_internal")]
@@ -569,6 +667,11 @@ async def _dispatch(name: str, args: dict) -> str:
         checklist = sorted(ticket.get("checklist_items", []), key=lambda i: i["position"])
         if checklist:
             lines += ["=== CHECKLIST ===", _fmt_checklist(checklist), ""]
+
+        if attachments:
+            lines.append("=== ANEXOS ===")
+            lines += [_fmt_attachment(a) for a in attachments]
+            lines.append("")
 
         recent_public = public_msgs[-msg_limit:] if len(public_msgs) > msg_limit else public_msgs
         if recent_public:
@@ -589,6 +692,50 @@ async def _dispatch(name: str, args: dict) -> str:
         ticket_id = int(args["ticket_id"])
         note = await _post(f"/tickets/{ticket_id}/notes", {"body": args["body"]})
         return f"Nota adicionada ao ticket #{ticket_id} (ID da nota: {note['id']})."
+
+    if name == "list_attachments":
+        ticket_id = int(args["ticket_id"])
+        attachments = await _get(f"/tickets/{ticket_id}/attachments")
+        if not attachments:
+            return f"Ticket #{ticket_id} não tem anexos."
+        lista = "\n".join(_fmt_attachment(a) for a in attachments)
+        return f"Anexos do ticket #{ticket_id}:\n{lista}"
+
+    if name == "download_attachment":
+        attachment_id = int(args["attachment_id"])
+        async with httpx.AsyncClient(timeout=120) as client:
+            r = await client.get(
+                f"{BASE_URL}/v1/attachments/{attachment_id}/download", headers=_auth_header()
+            )
+            r.raise_for_status()
+        if not r.content:
+            return (
+                f"Download do anexo #{attachment_id} veio vazio — em ambiente sem "
+                "mod_xsendfile (dev local) o corpo não é servido."
+            )
+        # O nome original só viaja no Content-Disposition (filename*=UTF-8''<url-encoded>)
+        disposition = r.headers.get("content-disposition", "")
+        _, _, encoded_name = disposition.partition("filename*=UTF-8''")
+        filename = Path(unquote(encoded_name)).name or f"attachment-{attachment_id}"
+        default_dir = Path(tempfile.gettempdir()) / "aegis-attachments"
+        target_dir = Path(args.get("save_dir") or default_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / f"{attachment_id}-{filename}"
+        target.write_bytes(r.content)
+        return f"Anexo #{attachment_id} salvo em: {target}  ({_fmt_size(len(r.content))})"
+
+    if name == "upload_attachment":
+        ticket_id = int(args["ticket_id"])
+        file_path = Path(args["file_path"]).expanduser()
+        if not file_path.is_file():
+            return f"Arquivo não encontrado: {file_path}"
+        is_internal = bool(args.get("is_internal", True))
+        att = await _post_file(
+            f"/tickets/{ticket_id}/attachments",
+            file_path,
+            {"is_internal": str(is_internal).lower()},
+        )
+        return f"Anexo enviado ao ticket #{ticket_id}: {_fmt_attachment(att)}"
 
     if name == "update_status":
         ticket_id = int(args["ticket_id"])

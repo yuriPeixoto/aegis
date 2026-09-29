@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] — 2026-09-29
+
+### Added
+- **Anexo interno** — `ticket_attachments.is_internal` (migration 044). Anexos enviados junto de uma nota interna herdam a flag; o upload avulso do painel (`POST /v1/tickets/{id}/attachments`) aceita `is_internal` (form). Na UI, anexos internos têm a mesma borda âmbar da nota interna e há um toggle "Interno" no painel de anexos. Backfill: só anexos ligados a notas internas foram marcados; uploads avulsos e anexos ingeridos da origem permanecem públicos. Ticket Aegis #1474.
+- **MCP: anexos** — ferramentas `list_attachments`, `download_attachment` (salva em disco local para leitura) e `upload_attachment` (interno por padrão); `get_ticket` passa a listar anexos.
+
+### Fixed
+- `POST /v1/tickets/{id}/messages` devolvia `attachments: []` mesmo com arquivo enviado (identity map com `expire_on_commit=False`).
+
 ## [1.8.0] — 2026-09-14
 
 ### Added

@@ -15,6 +15,18 @@ from __future__ import annotations
 
 APP_CHANGELOG: list[dict] = [
     {
+        "version": "1.9.0",
+        "date": "2026-09-29",
+        "highlights": [
+            "Novo: anexo interno — visível só para a equipe, com borda âmbar igual à da nota "
+            "interna. Anexos enviados numa nota interna já entram como internos; no painel de "
+            "anexos há um botão para marcar o upload como interno",
+            "MCP: novas ferramentas list_attachments, download_attachment e upload_attachment; "
+            "get_ticket agora mostra os anexos",
+            "Corrigido: a resposta de POST /messages devolvia a lista de anexos vazia",
+        ],
+    },
+    {
         "version": "1.8.0",
         "date": "2026-09-14",
         "highlights": [
