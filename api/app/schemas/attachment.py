@@ -11,6 +11,7 @@ class AttachmentResponse(BaseModel):
     original_filename: str
     content_type: str
     size_bytes: int
+    is_internal: bool
     created_at: datetime
 
     @computed_field  # type: ignore[prop-decorator]

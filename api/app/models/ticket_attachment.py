@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from app.models.ticket_message import TicketMessage
     from app.models.user import User
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -34,6 +34,10 @@ class TicketAttachment(Base):
     stored_path: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(200), nullable=False)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Internal attachments are visible only to team members — same meaning as
+    # TicketMessage.is_internal, and inherited from it when sent with a note
+    is_internal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

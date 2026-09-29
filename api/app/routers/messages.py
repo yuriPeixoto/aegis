@@ -27,6 +27,7 @@ class AttachmentInfo(BaseModel):
     content_type: str
     size_bytes: int
     download_url: str
+    is_internal: bool
 
 
 class MessageAuthor(BaseModel):
@@ -65,6 +66,7 @@ def _to_response(m: TicketMessage) -> MessageResponse:
                 content_type=a.content_type,
                 size_bytes=a.size_bytes,
                 download_url=f"/v1/attachments/{a.id}/download",
+                is_internal=a.is_internal,
             )
             for a in (m.attachments or [])
         ],
@@ -115,7 +117,9 @@ async def send_message(
     if file and file.filename:
         try:
             att_service = AttachmentService(db)
-            attachment = await att_service.upload(ticket_id, file, current_user.id)
+            attachment = await att_service.upload(
+                ticket_id, file, current_user.id, is_internal=is_internal
+            )
 
             # Link to message
             attachment.message_id = message.id

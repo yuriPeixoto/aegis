@@ -197,6 +197,9 @@
       "attachFile": "Anexar",
       "uploadAttachment": "Enviar arquivo",
       "noAttachments": "Nenhum anexo.",
+      "internalAttachment": "Anexo interno",
+      "internalAttachmentToggle": "Interno",
+      "internalAttachmentToggleHint": "Marcar o próximo anexo como interno (visível só para o time)",
       "download": "Baixar",
       "tags": {
         "add": "Adicionar Tag",

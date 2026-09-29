@@ -23,6 +23,7 @@ frontend/dist/
 
 # Uploaded files (ticket attachments, training signatures) — never committed
 api/uploads/
+uploads/
 
 # IDE
 .idea/
