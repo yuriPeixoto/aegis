@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/axios'
 
+export type SourceKind = 'system' | 'alert'
+
 export interface Source {
   id: number
   name: string
@@ -10,6 +12,10 @@ export interface Source {
   webhook_url: string | null
   csat_enabled: boolean
   csat_sampling_pct: number
+  kind: SourceKind
+  alert_tag_id: number | null
+  alert_recipient_user_id: number | null
+  rate_limit_per_minute: number | null
   created_at: string
 }
 
@@ -26,6 +32,7 @@ export interface SourceKeyRegenerated {
 interface SourceCreatePayload {
   name: string
   slug: string
+  kind: SourceKind
 }
 
 interface SourceUpdatePayload {
@@ -34,6 +41,10 @@ interface SourceUpdatePayload {
   webhook_url?: string
   csat_enabled?: boolean
   csat_sampling_pct?: number
+  kind?: SourceKind
+  alert_tag_id?: number | null
+  alert_recipient_user_id?: number | null
+  rate_limit_per_minute?: number | null
 }
 
 export function useSources() {

@@ -508,6 +508,22 @@ export function TicketDetailPage() {
             ) : null
           })()}
           <SlaBadge status={ticket.sla_status} dueAt={ticket.sla_due_at} />
+          {ticket.occurrence_count > 1 && (
+            <span
+              className="text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded"
+              title={ticket.last_occurrence_at ? new Date(ticket.last_occurrence_at).toLocaleString() : undefined}
+            >
+              {t('inbox.detail.occurrences', { count: ticket.occurrence_count })}
+            </span>
+          )}
+          {ticket.previous_ticket_id && (
+            <button
+              onClick={() => navigate(`/tickets/${ticket.previous_ticket_id}`)}
+              className="text-[11px] text-slate-400 hover:text-slate-200 underline transition-colors"
+            >
+              {t('inbox.detail.previousTicket', { id: ticket.previous_ticket_id })}
+            </button>
+          )}
         </div>
         <div className="ml-4 border-l border-white/10 pl-4 h-6 flex items-center">
           <TagSelector ticketId={ticket.id} currentTags={ticket.tags || []} />

@@ -71,6 +71,9 @@ export interface Ticket {
   tags: Tag[]
   merged_into_ticket_id: number | null
   merged_at: string | null
+  occurrence_count: number
+  last_occurrence_at: string | null
+  previous_ticket_id?: number | null
   deployment_scheduled_at: string | null
   pr_number: string | null
   checklist_progress: ChecklistProgress | null
