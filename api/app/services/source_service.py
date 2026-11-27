@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import generate_api_key, hash_api_key, verify_api_key
 from app.models.source import Source
+from app.models.tag import Tag
+from app.models.user import User
 from app.schemas.source import SourceCreate, SourceUpdate
+
+
+class InvalidSourceSettingError(ValueError):
+    """A source setting points to something that does not exist."""
 
 
 class SourceService:
@@ -23,6 +29,7 @@ class SourceService:
             slug=data.slug,
             api_key_hash=hash_api_key(plain_key),
             webhook_secret=webhook_secret,
+            kind=data.kind.value,
         )
         self._db.add(source)
         await self._db.commit()
@@ -45,9 +52,28 @@ class SourceService:
             source.webhook_url = data.webhook_url or None  # empty string → NULL
         if data.webhook_url_internal is not None:
             source.webhook_url_internal = data.webhook_url_internal or None  # empty string → NULL
+        if data.kind is not None:
+            source.kind = data.kind.value
+        await self._apply_alert_settings(source, data)
         await self._db.commit()
         await self._db.refresh(source)
         return source
+
+    async def _apply_alert_settings(self, source: Source, data: SourceUpdate) -> None:
+        """alert_tag_id, alert_recipient_user_id and rate_limit_per_minute are
+        nullable settings: a field sent as null clears it, a missing field keeps it."""
+        sent = data.model_fields_set
+        if "alert_tag_id" in sent:
+            if data.alert_tag_id is not None and await self._db.get(Tag, data.alert_tag_id) is None:
+                raise InvalidSourceSettingError("alert_tag_id: tag not found")
+            source.alert_tag_id = data.alert_tag_id
+        if "alert_recipient_user_id" in sent:
+            recipient_id = data.alert_recipient_user_id
+            if recipient_id is not None and await self._db.get(User, recipient_id) is None:
+                raise InvalidSourceSettingError("alert_recipient_user_id: user not found")
+            source.alert_recipient_user_id = recipient_id
+        if "rate_limit_per_minute" in sent:
+            source.rate_limit_per_minute = data.rate_limit_per_minute
 
     async def update_logo(self, source_id: int, logo_filename: str) -> Source | None:
         source = await self.get_by_id(source_id)

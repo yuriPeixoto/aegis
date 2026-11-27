@@ -49,6 +49,15 @@ class SlaService:
                 ticket.sla_paused_since = None
             self._finalize(ticket, changed_at)
 
+    async def start_clock(self, ticket: Ticket, now: datetime) -> None:
+        """Start the SLA clock now, regardless of status — alert sources start it at
+        creation (an urgent alert must not sit in "open" without a deadline).
+        A no-op when the clock already started; a later move to in_progress then
+        leaves it alone too (see on_status_changed)."""
+        if ticket.sla_started_at is not None:
+            return
+        await self._start(ticket, now)
+
     async def override_due_at(
         self,
         ticket: Ticket,

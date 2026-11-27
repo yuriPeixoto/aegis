@@ -15,11 +15,13 @@ if TYPE_CHECKING:
 from sqlalchemy import (  # noqa: F401
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -104,6 +106,20 @@ class Ticket(Base):
     )
     merged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Alert contract (docs/alert-ingest.md): the problem this ticket tracks, how many
+    # times the source reported it while open, and the closed ticket of the same
+    # problem it recurred from.
+    alert_fingerprint: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    occurrence_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    last_occurrence_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    previous_ticket_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True
+    )
+
     # Aegis-managed timestamps
     first_ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -131,6 +147,18 @@ class Ticket(Base):
     __table_args__ = (
         # Unique ticket per source — prevents duplicate ingestion
         UniqueConstraint("source_id", "external_id", name="uq_ticket_source_external"),
+        # At most one open ticket per alert problem — closes the race between two
+        # concurrent first occurrences (see AlertIngestService).
+        Index(
+            "uq_ticket_open_alert_fingerprint",
+            "source_id",
+            "alert_fingerprint",
+            unique=True,
+            postgresql_where=text(
+                "alert_fingerprint IS NOT NULL "
+                "AND status NOT IN ('resolved', 'closed', 'cancelled', 'merged')"
+            ),
+        ),
     )
 
     # Transient, never persisted. Deliberately NOT a PEP 526 (`name: Type`)

@@ -4,6 +4,9 @@ import uuid
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.tag import Tag
 
 
 def unique_slug() -> str:
@@ -116,24 +119,26 @@ async def test_ingest_critical_source_tags_and_notifies_once(
     admin_client: AsyncClient,
     agent_client: AsyncClient,
     agent_user: dict,
-    monkeypatch: pytest.MonkeyPatch,
+    db_session: AsyncSession,
 ) -> None:
-    """A ticket created by a source registered in _CRITICAL_SOURCE_ALERTS (e.g. Log
-    Watcher, #1271) gets the tag auto-applied and a blocking 'critical_source'
-    notification sent to the mapped recipient — only on creation, not on upsert."""
-    from app.services import ingest_service
-
-    monkeypatch.setitem(
-        ingest_service._CRITICAL_SOURCE_ALERTS,
-        "log-watcher-test",
-        ("Log Watcher", agent_user["email"]),
-    )
+    """A ticket created by an alert source (e.g. Log Watcher, #1271) gets the source's
+    tag auto-applied and a blocking 'critical_source' notification sent to the
+    source's recipient — only on creation, not on upsert. The payload is the
+    ticket-mirroring one, unchanged (ADR-013)."""
+    tag = Tag(name="Log Watcher")
+    db_session.add(tag)
+    await db_session.commit()
 
     source_resp = await admin_client.post(
-        "/v1/sources", json={"name": "Log Watcher", "slug": "log-watcher-test"}
+        "/v1/sources", json={"name": "Log Watcher", "slug": "log-watcher-test", "kind": "alert"}
     )
     assert source_resp.status_code == 201
     source = source_resp.json()
+    patch_resp = await admin_client.patch(
+        f"/v1/sources/{source['id']}",
+        json={"alert_tag_id": tag.id, "alert_recipient_user_id": agent_user["id"]},
+    )
+    assert patch_resp.status_code == 200
 
     external_id = unique_external_id()
     ingest_resp = await client.post(
