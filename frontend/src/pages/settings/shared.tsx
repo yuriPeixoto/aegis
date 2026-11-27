@@ -5,7 +5,6 @@ export const inputCls =
 
 export function Modal({
   title,
-  onClose: _onClose,
   children,
 }: {
   title: string

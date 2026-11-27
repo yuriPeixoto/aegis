@@ -1,10 +1,41 @@
+[project]
+name = "aegis-api"
+# Placeholder required by uv; the released version lives in app/core/config.py (app_version).
+version = "0.0.0"
+description = "Aegis API: centralized ticket and incident management"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.141",
+    "uvicorn[standard]>=0.54",
+    # Production process manager (systemd unit). Pinned to the server's version: 26+ are majors.
+    "gunicorn==25.3.0",
+    "sqlalchemy[asyncio]>=2.1.1,<2.2",
+    "alembic>=1.20,<2",
+    "asyncpg>=0.31",
+    "pydantic[email]>=2.13,<3",
+    "pydantic-settings>=2.13,<3",
+    "pyjwt>=2.15,<3",
+    "python-multipart>=0.0.22",
+    "httpx>=0.28,<1",
+    "tzdata>=2025.3",
+    "weasyprint>=70,<71",
+    "jinja2>=3.1.6,<4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3,<10",
+    "pytest-asyncio>=1.5,<2",
+    "ruff==0.17.6",
+    "mypy>=1.19,<2",
+]
+
+[tool.uv]
+package = false
+
 [tool.ruff]
-# Servidor de produção roda Python 3.11 (Debian, /opt/aegis/api/venv/bin/python3.11) —
-# só CI/dev usam 3.14. target-version errado (py314) já quebrou produção uma vez:
-# ruff format() removeu parênteses em `except (A, B):` por serem opcionais no 3.14
-# (PEP 758), gerando SyntaxError no 3.11 do servidor. NUNCA subir isso pra além de
-# py311 sem migrar produção primeiro.
-target-version = "py311"
+# Must match the production interpreter (3.14 since the #1440 cutover).
+target-version = "py314"
 line-length = 100
 src = ["app", "tests"]
 
@@ -16,7 +47,7 @@ ignore = ["B008"]
 known-first-party = ["app"]
 
 [tool.mypy]
-python_version = "3.11"  # ver comentário em [tool.ruff] — precisa bater com produção
+python_version = "3.14"  # same as [tool.ruff] target-version
 strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]

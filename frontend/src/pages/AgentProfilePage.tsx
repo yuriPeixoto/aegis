@@ -19,6 +19,7 @@ import { StatusBadge } from '../components/inbox/StatusBadge'
 import { FilterSelect } from '../components/inbox/FilterSelect'
 import type { Granularity } from '../hooks/useAnalytics'
 import { useCalendarEvents } from '../hooks/useCalendar'
+import type { ChartTooltipProps } from '../lib/chartTooltip'
 
 // ── Colour palettes ───────────────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ const TYPE_COLORS: Record<string, string> = {
 const PRIORITY_KEYS = ['urgent', 'high', 'medium', 'low']
 const TYPE_KEYS = ['bug', 'improvement', 'question', 'support']
 
-function ChartTooltip({ active, payload, label }: any) {
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   const { t, i18n } = useTranslation()
   if (!active || !payload?.length) return null
 
@@ -58,7 +59,7 @@ function ChartTooltip({ active, payload, label }: any) {
   return (
     <div className="bg-brand-dark border border-brand-border rounded-lg px-3 py-2 text-xs shadow-lg">
       {label && <p className="text-slate-400 mb-1">{translateLabel(String(label))}</p>}
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.fill || p.stroke || '#a78bfa' }}>
           {p.value}
         </p>
@@ -329,17 +330,17 @@ export function AgentProfilePage() {
 
   const userId = Number(id)
 
-  // Non-admins can only see their own profile
-  if (me && me.role !== 'admin' && me.id !== userId) {
-    navigate(`/dashboard/agent/${me.id}`, { replace: true })
-    return null
-  }
-
   const { data: analytics, isLoading } = useAgentAnalytics(userId, {
     from,
     to,
     granularity: granularity as Granularity,
   })
+
+  // Non-admins can only see their own profile
+  if (me && me.role !== 'admin' && me.id !== userId) {
+    navigate(`/dashboard/agent/${me.id}`, { replace: true })
+    return null
+  }
 
   const agents = (allUsers ?? []).filter((u) => u.is_active && (u.role === 'admin' || u.role === 'agent'))
 

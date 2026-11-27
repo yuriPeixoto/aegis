@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
+import jwt
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.security import create_access_token, decode_access_token
 from app.services.user_service import UserService
 
 
@@ -104,4 +108,58 @@ async def test_mark_changelog_seen(client: AsyncClient, test_user: dict) -> None
 @pytest.mark.asyncio
 async def test_mark_changelog_seen_unauthenticated(client: AsyncClient) -> None:
     response = await client.post("/v1/auth/me/changelog-seen", json={"version": "9.9.9"})
+    assert response.status_code == 401
+
+
+# ── JWT ───────────────────────────────────────────────────────────────────────
+
+
+def _token(claims: dict, key: str | None = None) -> str:
+    return jwt.encode(claims, key or settings.secret_key, algorithm=settings.algorithm)
+
+
+def test_access_token_round_trip() -> None:
+    assert decode_access_token(create_access_token(42)) == 42
+
+
+def test_access_token_keeps_the_claims_issued_before_pyjwt() -> None:
+    """Tokens issued by python-jose (HS256, string sub, numeric exp) stay valid."""
+    payload = jwt.decode(
+        create_access_token(7), settings.secret_key, algorithms=[settings.algorithm]
+    )
+    assert payload["sub"] == "7"
+    assert isinstance(payload["exp"], int)
+
+
+def test_expired_token_is_rejected() -> None:
+    expired = datetime.now(UTC) - timedelta(seconds=1)
+    assert decode_access_token(_token({"sub": "42", "exp": expired})) is None
+
+
+def test_token_signed_with_another_key_is_rejected() -> None:
+    expire = datetime.now(UTC) + timedelta(minutes=5)
+    forged = _token({"sub": "42", "exp": expire}, key="x" * 32 + "another-signing-key")
+    assert decode_access_token(forged) is None
+
+
+def test_token_with_another_algorithm_is_rejected() -> None:
+    expire = datetime.now(UTC) + timedelta(minutes=5)
+    token = jwt.encode({"sub": "42", "exp": expire}, settings.secret_key, algorithm="HS512")
+    assert decode_access_token(token) is None
+
+
+def test_malformed_token_is_rejected() -> None:
+    assert decode_access_token("not-a-jwt") is None
+
+
+def test_token_with_non_numeric_sub_is_rejected() -> None:
+    expire = datetime.now(UTC) + timedelta(minutes=5)
+    assert decode_access_token(_token({"sub": "abc", "exp": expire})) is None
+
+
+@pytest.mark.asyncio
+async def test_expired_token_gets_401(client: AsyncClient, test_user: dict) -> None:
+    expired = datetime.now(UTC) - timedelta(seconds=1)
+    token = _token({"sub": str(test_user["id"]), "exp": expired})
+    response = await client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401

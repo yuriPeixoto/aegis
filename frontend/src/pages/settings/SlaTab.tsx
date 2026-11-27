@@ -7,6 +7,7 @@ import {
   useCreateHoliday,
   useDeleteHoliday,
 } from '../../hooks/useSlaSettings'
+import type { Holiday } from '../../hooks/useSlaSettings'
 import { inputCls, Modal, Field, FormError, ModalActions } from './shared'
 
 const DAYS = [
@@ -19,7 +20,7 @@ const DAYS = [
   { iso: 7, label: 'Dom' },
 ]
 
-function HolidaysSection({ holidays }: { holidays: any[] }) {
+function HolidaysSection({ holidays }: { holidays: Holiday[] }) {
   const { t } = useTranslation()
   const deleteHoliday = useDeleteHoliday()
   const [showModal, setShowModal] = useState(false)

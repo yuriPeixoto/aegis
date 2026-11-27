@@ -13,11 +13,12 @@ It does NOT know the internals of source systems — it only receives structured
 
 ## Stack
 
-- **Backend**: Python 3.14 (produção), FastAPI, SQLAlchemy 2.0, Alembic, PostgreSQL
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS, TanStack Query
+- **Backend**: Python 3.14 (produção), FastAPI, SQLAlchemy 2.1, Alembic, PostgreSQL, PyJWT
+- **Dependencies**: `api/pyproject.toml` + `api/uv.lock` (uv); `api/requirements.txt` is exported from the lock for servers without uv
+- **Frontend**: React 18, TypeScript 5, Vite 6, Tailwind CSS 3, TanStack Query 5, i18next
 - **Auth**: JWT (dashboard users) + API Keys (ingest sources)
 - **Testing**: pytest + httpx (async)
-- **Tooling**: Ruff (lint + format), mypy, GitHub Actions CI
+- **Tooling**: Ruff (lint + format) and mypy targeting py314, GitHub Actions CI (API and frontend jobs)
 
 ## Architecture
 
@@ -32,7 +33,9 @@ api/
 │   └── main.py       # App factory + lifespan
 ├── alembic/          # Database migrations
 ├── tests/
-├── requirements.txt
+├── pyproject.toml    # dependencies (uv), ruff, mypy, pytest
+├── uv.lock
+├── requirements.txt  # generated: uv export --no-dev --format requirements-txt --frozen -o requirements.txt
 └── .env.example
 frontend/             # React + TypeScript + Vite
 docs/
@@ -71,16 +74,23 @@ Payload shape mirrors the gestão frota SupportTicket model:
 git checkout main && git pull origin main
 git checkout -b feature/<slug>
 
+# Set up / refresh the API venv from the lock
+cd api && uv sync
+
 # Run API locally
-cd api && uvicorn app.main:app --reload
+cd api && uv run uvicorn app.main:app --reload
 
 # Run migrations
-cd api && alembic upgrade head
+cd api && uv run alembic upgrade head
 
-# Before committing
-ruff check api/ && ruff format --check api/
-mypy api/app/
-pytest api/tests/
+# Before committing (same as CI)
+cd api && uv run ruff check app tests && uv run ruff format --check app tests
+cd api && MYPYPATH=. uv run mypy --config-file pyproject.toml app
+cd api && uv run pytest tests/
+cd frontend && npm run type-check && npm run lint && npm run build   # PowerShell, not Git Bash
+
+# After changing dependencies
+cd api && uv lock && uv export --no-dev --format requirements-txt --frozen -o requirements.txt
 ```
 
 ## Versionamento

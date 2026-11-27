@@ -31,6 +31,9 @@ npm run build
 
 Sobe `api/app/` via SFTP para `/opt/aegis/api/app/` (substitui os arquivos alterados).
 
+Se a release mudou dependências (`api/uv.lock` e `api/requirements.txt` no diff), não instale por cima do venv
+em uso: suba os dois arquivos e recrie o venv como em [Recriar o venv](#recriar-o-venv-dependências-ou-versão-do-python).
+
 ### 3. Migrations (rodar sempre — inofensivo se não houver nada novo)
 
 ```bash
@@ -49,16 +52,32 @@ systemctl status aegis
 
 ---
 
-## Recriar o venv (troca de versão do Python)
+## Dependências: `uv.lock` e `requirements.txt`
 
-Usado na migração 3.11 → 3.14 (#1440, 28/09/2026). Mantém o venv antigo como rollback instantâneo.
+As dependências ficam em `api/pyproject.toml` (produção em `[project]`, ferramentas em `[dependency-groups] dev`)
+e as versões exatas em `api/uv.lock`, que resolve para todas as plataformas (Linux incluído). O servidor não
+precisa de uv: instala pelo `api/requirements.txt`, exportado do lock com versões e hashes. O CI falha se os dois
+divergirem.
+
+```bash
+# Na máquina de desenvolvimento, dentro de api/
+uv sync                                # venv local com o grupo dev
+uv lock --upgrade-package fastapi      # sobe um pacote (ou `uv lock --upgrade` para todos)
+uv export --no-dev --format requirements-txt --frozen -o requirements.txt
+```
+
+O `gunicorn` é dependência declarada (travado na versão do servidor) e entra no `requirements.txt` como os demais.
+
+## Recriar o venv (dependências ou versão do Python)
+
+Usado na migração 3.11 → 3.14 (#1440, 28/09/2026) e sempre que o `uv.lock` mudar. Mantém o venv antigo como
+rollback instantâneo.
 
 ```bash
 cd /opt/aegis/api
 mv venv venv_backup
 /usr/local/bin/python3.14 -m venv venv
-venv/bin/pip install -r requirements.txt
-venv/bin/pip install gunicorn==25.3.0   # não está no requirements.txt (ver #774)
+venv/bin/pip install --require-hashes -r requirements.txt
 venv/bin/python -m compileall app -q    # sanity check de sintaxe
 ```
 
@@ -77,7 +96,7 @@ Depois `systemctl restart aegis` e acompanhe `/var/log/aegis_api_err.log`.
 cd /opt/aegis/api && rm -rf venv && mv venv_backup venv && systemctl restart aegis
 ```
 
-> **Descompasso de versão:** o `target-version` do ruff e o `python_version` do mypy em `api/pyproject.toml` precisam bater com o Python de produção. Um `ruff format` em versão maior que a do servidor já derrubou o serviço com `SyntaxError` (PEP 758, `except A, B:` sem parênteses).
+> **Descompasso de versão:** o `target-version` do ruff e o `python_version` do mypy em `api/pyproject.toml` (hoje `py314`) e o `requires-python` precisam bater com o Python de produção. Um `ruff format` em versão maior que a do servidor já derrubou o serviço com `SyntaxError` (PEP 758, `except A, B:` sem parênteses, válido só a partir do 3.14).
 
 ---
 
@@ -97,7 +116,7 @@ tail -f /var/log/aegis_api_err.log
 tail -n 50 /var/log/aegis_api.log
 ```
 
-> **Ruído conhecido:** `[ERROR] Control server error: Permission denied: '/var/www/.gunicorn'` aparece no log de erro desde antes da migração para 3.14 (gunicorn 25.x tentando abrir o control socket num `HOME` não gravável pelo `www-data`). É cosmético e não impede a API de servir (#775).
+> **`Control server error: Permission denied: '/var/www/.gunicorn'`:** o gunicorn 25 abre um control socket (usado pelo `gunicornc`) no `HOME` do usuário, que para o `www-data` não é gravável. O Aegis não usa o `gunicornc`, então o service file passa `--no-control-socket` (#775). Se a mensagem aparecer, a unit em uso ainda não tem a opção.
 
 ### Eventos do systemd (start/stop/restart)
 
@@ -125,6 +144,7 @@ ExecStart=/opt/aegis/api/venv/bin/gunicorn app.main:app \
     --workers 2 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 127.0.0.1:8000 \
+    --no-control-socket \
     --access-logfile /var/log/aegis_api.log \
     --error-logfile /var/log/aegis_api_err.log
 Restart=always
