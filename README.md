@@ -11,11 +11,11 @@ incident creation from infrastructure monitoring.
 
 | Layer | Technology |
 |-------|-----------|
-| API | Python 3.14, FastAPI, SQLAlchemy 2.0, Alembic |
+| API | Python 3.14, FastAPI, SQLAlchemy 2.1, Alembic, PyJWT; dependencies locked with uv |
 | Database | PostgreSQL |
-| Frontend | React 18, TypeScript, Vite, TailwindCSS, TanStack Query |
+| Frontend | React 18, TypeScript 5, Vite 6, Tailwind CSS 3, TanStack Query 5, i18next |
 | Auth | JWT (dashboard) + API Keys (ingestion) |
-| Testing | pytest, httpx |
+| Testing | pytest, httpx; ruff and mypy; CI on every PR (API and frontend) |
 
 ## Features
 
@@ -80,10 +80,9 @@ support operations.
 # API
 cd api
 cp .env.example .env   # fill in your credentials
-pip install -r requirements.txt
-alembic upgrade head
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
+uv sync                # creates .venv from uv.lock, dev tools included
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
 
 # Frontend
 cd frontend
