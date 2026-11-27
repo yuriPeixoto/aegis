@@ -24,10 +24,10 @@ não versionada neste ADR.
 ### Achado crítico do council
 
 O Aegis está prestes a criar a **quarta** tabela de "quem é cliente" no universo de sistemas
-da Unitop — `gestao_frota` já tem tenants/clientes reais, `telemetriaunitop` tem
+da casa — `gestao_frota` já tem tenants/clientes reais, `telemetria` tem
 `docs/CLIENTES.md` com os clientes ativos, `checklist-suite` tem seu próprio cadastro. Isso
 não é modelagem de dados, é risco de cadastro duplicado — com precedente já documentado
-(drift de coluna `users` entre TelemetriaUnitop/ChecklistSuite, vazamento de guard RBAC entre
+(drift de coluna `users` entre Telemetria/ChecklistSuite, vazamento de guard RBAC entre
 produtos no `gestao_frota`, ticket #1222).
 
 ## Decision
@@ -50,9 +50,9 @@ produtos no `gestao_frota`, ticket #1222).
 Dado o achado crítico acima, `Cliente` no Aegis nasce **deliberadamente mínimo**: nome, status
 ativo, `source_id` opcional. Resistimos à tentação de virar CRM interno com contrato/endereço/
 contato — isso não foi pedido pelo ticket e é o tipo de escopo que aparece sozinho depois.
-Nenhum mecanismo de sincronização com os cadastros de GF/TelemetriaUnitop/ChecklistSuite é
+Nenhum mecanismo de sincronização com os cadastros de GF/Telemetria/ChecklistSuite é
 construído nesta rodada — decisão consciente de não resolver "quem é dono do cadastro mestre
-de cliente na Unitop" dentro do escopo de #1307. Isso é um projeto à parte, maior que este
+de cliente da casa" dentro do escopo de #1307. Isso é um projeto à parte, maior que este
 ticket, e fica registrado aqui como dívida reconhecida, não esquecida.
 
 ### Autorização
@@ -91,7 +91,7 @@ só dado ausente).
 - **Positivo:** migração de dados existentes é trivial (poucas dezenas de Sources), porque
   nada em `Source` muda — só ganha um novo consumidor opcional (`Cliente.source_id`).
 - **Negativo (aceito conscientemente):** o Aegis passa a ter seu próprio índice de clientes,
-  potencialmente divergente dos cadastros de GF/TelemetriaUnitop/ChecklistSuite. Sem
+  potencialmente divergente dos cadastros de GF/Telemetria/ChecklistSuite. Sem
   sincronização automática nesta rodada — mitigado por escopo deliberadamente mínimo (nome +
   status, nada que convide a virar fonte de verdade paralela).
 - **Pendente, fora deste ADR:** decidir se/quando o Aegis deveria consumir um cadastro mestre

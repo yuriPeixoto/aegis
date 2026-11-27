@@ -445,7 +445,7 @@
     },
     "clientes": {
       "title": "Clients",
-      "subtitle": "Unitop's client index — name, status and an optional link to an integration.",
+      "subtitle": "Client index — name, status and an optional link to an integration.",
       "new": "Add client",
       "empty": "No clients registered yet.",
       "colName": "Name",
@@ -475,7 +475,7 @@
     },
     "modulos": {
       "title": "Modules",
-      "subtitle": "Catalog of Unitop products and services, activatable per client.",
+      "subtitle": "Catalog of products and services, activatable per client.",
       "new": "New module",
       "empty": "No modules registered yet.",
       "colName": "Module",

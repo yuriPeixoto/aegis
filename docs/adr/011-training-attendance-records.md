@@ -18,8 +18,8 @@ O ticket já deixava registrados os pontos em aberto: acesso público vs. autent
 (participantes não têm conta no Aegis), persistência real (o protótipo só gera `.json`
 local), robustez da assinatura, e geração do PDF (browser print vs. server-side).
 
-**Contexto de negócio que resolveu boa parte das perguntas em aberto:** treinamentos na
-Unitop acontecem de dois jeitos — **presencial** (gestor/QA na mesma sala que os
+**Contexto de negócio que resolveu boa parte das perguntas em aberto:** treinamentos da
+equipe acontecem de dois jeitos — **presencial** (gestor/QA na mesma sala que os
 participantes) e **remoto/web** (call). Isso muda o problema de raiz: presencial não
 precisa de acesso público nenhum (dá pra passar o dispositivo de mão em mão dentro da
 sessão autenticada de quem está aplicando o treinamento); remoto precisa de um link que
@@ -86,7 +86,7 @@ canvas — armazenados em disco (mesmo diretório de uploads, path próprio
 
 ### 4. PDF gerado no processo da API do Aegis, não um `pdf-service` separado
 
-TelemetriaUnitop e ChecklistSuite usam um microserviço Python dedicado (FastAPI +
+Telemetria e ChecklistSuite usam um microserviço Python dedicado (FastAPI +
 WeasyPrint) pra gerar PDF. Aegis não tem esse padrão hoje, e o volume aqui é baixo e sob
 demanda (um documento por treinamento aplicado, não um job em lote) — não justifica subir
 um segundo processo. WeasyPrint entra como dependência direta do `requirements.txt` da
@@ -111,4 +111,4 @@ nenhuma (o vínculo é opcional, não obrigatório).
 | Assinatura eletrônica com validade jurídica (ICP-Brasil, DocuSign real) | Overkill pro caso de uso — comprovante interno de treinamento, não contrato. O canvas + trilha de auditoria (IP, timestamp, token único) dá evidência razoável sem o custo/complexidade de certificado digital. |
 | `training_modules` como tabela própria (FK pra `training_records`) | Sem ciclo de vida independente — sempre editado/lido junto com o pai. JSONB evita join desnecessário sem perder a flexibilidade de linhas dinâmicas. |
 | Dois fluxos de UI separados (presencial in-session vs. link remoto) | Mesma necessidade final (canvas + confirmação), a única diferença real é *como* o link chega até o participante — token único cobre os dois sem duplicar código. |
-| PDF via `window.print()` do browser (como no protótipo) | Aegis já tem outros produtos Unitop usando WeasyPrint com bons resultados (o próprio gestor pediu explicitamente); gerar server-side dá um documento consistente entre navegadores, sem depender de CSS de impressão frágil. |
+| PDF via `window.print()` do browser (como no protótipo) | Aegis já tem outros produtos da casa usando WeasyPrint com bons resultados (o próprio gestor pediu explicitamente); gerar server-side dá um documento consistente entre navegadores, sem depender de CSS de impressão frágil. |

@@ -9,7 +9,7 @@ from app.core.database import Base
 
 
 class Modulo(Base):
-    """Catálogo de módulos/serviços da Unitop (Telemetria, Checklist Suite, etc.).
+    """Catálogo de módulos/serviços oferecidos aos clientes (Telemetria, Checklist Suite, etc.).
     CRUD admin, não enum — ver ADR-012: a lista cresce (Aegis, Maestro, Cronwatch
     já não estavam na lista original)."""
 

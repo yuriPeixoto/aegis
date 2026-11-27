@@ -445,7 +445,7 @@
     },
     "clientes": {
       "title": "Clientes",
-      "subtitle": "Índice de clientes da Unitop — nome, status e vínculo opcional com uma integração.",
+      "subtitle": "Índice de clientes — nome, status e vínculo opcional com uma integração.",
       "new": "Adicionar cliente",
       "empty": "Nenhum cliente cadastrado.",
       "colName": "Nome",
@@ -475,7 +475,7 @@
     },
     "modulos": {
       "title": "Módulos",
-      "subtitle": "Catálogo de produtos e serviços da Unitop, ativáveis por cliente.",
+      "subtitle": "Catálogo de produtos e serviços, ativáveis por cliente.",
       "new": "Novo módulo",
       "empty": "Nenhum módulo cadastrado.",
       "colName": "Módulo",

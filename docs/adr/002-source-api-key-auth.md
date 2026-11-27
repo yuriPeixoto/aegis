@@ -8,7 +8,7 @@
 Dois tipos de cliente precisam autenticar no Aegis:
 
 1. **Sistemas externos** (gestão frota, futuros) — enviam webhooks via ingest
-2. **Usuários humanos** (Equipe Unitop) — acessam o inbox via frontend
+2. **Usuários humanos** (equipe de operação) — acessam o inbox via frontend
 
 ## Decision
 
@@ -21,7 +21,7 @@ Sources são sistemas server-to-server sem usuário humano na ponta. OAuth2 Clie
 
 ## Consequences
 
-- **Positivo:** Separação clara de contextos de auth; sources isoladas por instância (Carvalima tem sua key, Frigonorte terá a sua)
+- **Positivo:** Separação clara de contextos de auth; sources isoladas por instância (o cliente A tem sua key, o cliente B terá a sua)
 - **Negativo:** Rotação de API Key requer criar nova source e atualizar `.env` do sistema externo
 - **Lição aprendida:** A plain key deve ser exibida **uma única vez** na resposta de criação da source — documentar isso claramente para o operador que cadastra
 

@@ -55,7 +55,7 @@ All notable changes to this project will be documented in this file.
 - **Ticket mesclado contava como atrasado pra sempre** — `merge_ticket()` nunca limpava `sla_due_at`/`sla_started_at` do ticket de origem, e a query de KPIs/atrasados (`dashboard_service._INACTIVE`) não incluía o status `merged`. Um ticket mesclado com SLA já vencido seguia contando pra sempre no dashboard. Corrigido nos dois pontos: `merge_ticket()` zera o SLA do ticket de origem no momento da mesclagem, e `_INACTIVE` passou a incluir `"merged"` (também protege tickets mesclados antes deste fix, que ainda têm `sla_due_at` velho no banco).
 - **Mensagens novas do cliente pós-mesclagem se perdiam no ticket de origem** — `IngestService.record_event()`/`upsert_ticket()` resolviam o ticket só por `(source_id, external_id)`, sem checar `merged_into_ticket_id`. Uma resposta do cliente chegando depois da mesclagem caía no ticket já mesclado, invisível pra quem trabalha no ticket alvo. Agora redireciona (evento, mensagem e notificação) pro ticket ainda ativo, seguindo a cadeia inteira se o alvo tiver sido mesclado de novo depois (A→B→C). A resposta da API de ingest continua ecoando o `external_id` da requisição, não o do ticket onde a atualização efetivamente caiu.
 
-Ticket Aegis #1287, achado durante a investigação do #1229/#1244 (Checklist Suite, Carvalima, 03/09/2026).
+Ticket Aegis #1287, achado durante a investigação do #1229/#1244 (Checklist Suite, 03/09/2026).
 
 ## [1.5.0] — 2026-09-03
 
@@ -119,7 +119,7 @@ Ticket Aegis #901 (`AEGIS-1784032873`).
 
 ### Fixed
 - **Histórico de Eventos com base64 gigante** — chamados que já nascem com anexos (via `POST /v1/ingest/tickets`) gravavam o payload de criação/sincronização com o base64 completo dos anexos no evento; a limpeza que já existia para eventos avulsos (`record_event`) não cobria esses dois caminhos. Extraída pra um helper compartilhado (`_cleanse_attachments_for_event`), agora aplicada nos três pontos — o evento passa a exibir só `filename`/`size_bytes`/`content_type`.
-- **Status "em_atendimento" do cliente sobrescrevia o status do Aegis** — evento `status_changed` vindo do GF aplicava `em_atendimento → in_progress` automaticamente no ticket do Aegis, mesmo quando a mudança partiu do próprio cliente no portal do GF (issue conhecida, ver `docs/gf-ticket-client-refactor.md` §3.4 — correção definitiva é do lado do GF, ainda pendente). Removido esse mapeamento de `_GF_TO_AEGIS`: o evento continua registrado na timeline pra visibilidade, mas iniciar o atendimento (`in_progress`) volta a ser decisão exclusiva do agente via dashboard.
+- **Status "em_atendimento" do cliente sobrescrevia o status do Aegis** — evento `status_changed` vindo do GF aplicava `em_atendimento → in_progress` automaticamente no ticket do Aegis, mesmo quando a mudança partiu do próprio cliente no portal do GF (issue conhecida — correção definitiva é do lado do GF, ainda pendente). Removido esse mapeamento de `_GF_TO_AEGIS`: o evento continua registrado na timeline pra visibilidade, mas iniciar o atendimento (`in_progress`) volta a ser decisão exclusiva do agente via dashboard.
 - **Logout automático no meio do expediente** — token JWT expirava em 8h a partir do login; um login às 08:30 expirava às 16:30, no meio do bloco de trabalho da tarde (13:00–17:30). `access_token_expire_minutes` ajustado de 480 pra 720 (12h).
 
 ## [1.2.0] — 2026-07-06

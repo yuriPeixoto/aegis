@@ -2,12 +2,15 @@
 
 ## Ambiente de produção
 
-- **Subdomínio:** `aegis.unitopconsultoria.com.br`
-- **Servidor:** Debian 12, Apache, Python 3.14.7 (`/usr/local/bin/python3.14`, compilado da fonte com `make altinstall` — o `/usr/bin/python3` do sistema não é usado pelo Aegis)
-- **Servidor compartilhado:** além do Aegis (gunicorn na `8000`), roda o pdf-service do ChecklistSuite da Carvalima (`8001`) e o BI Carretas da Carvalima (`8002`) — não reutilizar essas portas em testes
+> Reference setup. The real values of an installation (host names, database server, ports used by other
+> services on the same machine) belong in that installation's private notes, not in this repository.
+
+- **Domínio:** `aegis.example.com`
+- **Servidor:** Debian, Apache, Python 3.14 (`/usr/local/bin/python3.14`, compilado da fonte com `make altinstall` — o `/usr/bin/python3` do sistema não é usado pelo Aegis)
+- **Backend:** gunicorn em `127.0.0.1:8000`. Se o servidor for compartilhado, confira as portas ocupadas (`ss -ltnp`) antes de testar em outra porta
 - **Deploy:** SFTP (upload manual de arquivos)
 - **Arquivos do backend:** `/opt/aegis/api/`
-- **PostgreSQL de produção:** `10.10.1.3`
+- **PostgreSQL de produção:** `db.internal` (`AEGIS_DATABASE_URL` no `.env`)
 - **Redis:** não é usado pelo Aegis
 - **Acesso:** root (sem necessidade de sudo)
 
@@ -59,7 +62,7 @@ venv/bin/pip install gunicorn==25.3.0   # não está no requirements.txt (ver #7
 venv/bin/python -m compileall app -q    # sanity check de sintaxe
 ```
 
-Antes de reiniciar o serviço, teste o venv novo numa porta livre (não use `8001`/`8002`, ocupadas):
+Antes de reiniciar o serviço, teste o venv novo numa porta livre (confira com `ss -ltnp`):
 
 ```bash
 venv/bin/gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:18001
@@ -159,7 +162,7 @@ Crie (ou identifique) uma conta admin no Aegis dedicada exclusivamente a jobs au
 
 ```
 Nome:  Aegis Scheduler
-Email: scheduler@aegis.interno   (não precisa ser e-mail real)
+Email: scheduler@aegis.example.com   (não precisa ser e-mail real)
 Role:  admin
 ```
 
@@ -175,7 +178,7 @@ Crie o arquivo `/opt/aegis/run_job.sh` no servidor:
 set -euo pipefail
 
 AEGIS_URL="http://127.0.0.1:8000"
-AEGIS_EMAIL="scheduler@aegis.interno"
+AEGIS_EMAIL="scheduler@aegis.example.com"
 AEGIS_PASSWORD="<senha-do-scheduler>"   # mude para a senha real
 ENDPOINT="${1:?endpoint obrigatório}"
 

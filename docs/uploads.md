@@ -106,14 +106,14 @@ Se `mod_xsendfile` não estiver instalado ou ativo, o Apache **não retorna erro
 
 ```bash
 # 1. Obter um token válido
-TOKEN=$(curl -sf -X POST https://aegis.unitopconsultoria.com.br/v1/auth/login \
+TOKEN=$(curl -sf -X POST https://aegis.example.com/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"seu@email.com","password":"senha"}' \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 
 # 2. Baixar um anexo e inspecionar headers (não deve aparecer X-Sendfile na resposta)
 curl -I -H "Authorization: Bearer $TOKEN" \
-  https://aegis.unitopconsultoria.com.br/v1/attachments/1/download
+  https://aegis.example.com/v1/attachments/1/download
 
 # Saída esperada: Content-Disposition com filename original, Content-Type correto, sem X-Sendfile
 # Se X-Sendfile aparecer nos headers de resposta, o módulo não está funcionando
