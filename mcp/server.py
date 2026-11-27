@@ -17,6 +17,11 @@ from mcp import types
 
 BASE_URL = os.environ.get("AEGIS_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY: str | None = os.environ.get("AEGIS_API_KEY")  # preferido: chave pessoal, não expira
+# Allowed values for create_ticket's "project" (tag names already registered in Aegis),
+# comma-separated. Unset: any tag name is accepted.
+PROJECT_TAGS: list[str] = [
+    tag.strip() for tag in os.environ.get("AEGIS_MCP_PROJECT_TAGS", "").split(",") if tag.strip()
+]
 TOKEN: str | None = None  # fallback (AEGIS_TOKEN ou login), preenchido no startup
 _MY_USER_ID: int | None = None  # cache de GET /auth/me, resolvido sob demanda (mine=true)
 
@@ -433,16 +438,7 @@ async def _list_tools() -> list[types.Tool]:
                     },
                     "project": {
                         "type": "string",
-                        "enum": [
-                            "Gestão de Frotas",
-                            "Checklist Suite",
-                            "Jornada Cliente",
-                            "Jornada Acme",
-                            "Telemetria",
-                            "Aegis",
-                            "Painel de Motoristas",
-                            "Manutenção",
-                        ],
+                        **({"enum": PROJECT_TAGS} if PROJECT_TAGS else {}),
                         "description": (
                             "Projeto ao qual a tarefa pertence — anexa a tag correspondente "
                             "(já cadastrada no Aegis com a mesma cor usada no Google Calendar). "
