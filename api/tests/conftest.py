@@ -19,6 +19,9 @@ from app.services.user_service import UserService
 
 class _TestSettings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/aegis_test"
+    # Comma-separated hosts the tests must never connect to (e.g. the production
+    # database server). Set AEGIS_TEST_BLOCKED_DB_HOSTS in api/.env.test.
+    test_blocked_db_hosts: str = ""
 
     model_config = {
         "env_prefix": "AEGIS_",
@@ -27,10 +30,13 @@ class _TestSettings(BaseSettings):
     }
 
 
-_TEST_DB_URL = _TestSettings().database_url
+_TEST_SETTINGS = _TestSettings()
+_TEST_DB_URL = _TEST_SETTINGS.database_url
 
 # Safety guard: never run against production
-_BLOCKED_HOSTS = {"db.internal"}
+_BLOCKED_HOSTS = {
+    host.strip() for host in _TEST_SETTINGS.test_blocked_db_hosts.split(",") if host.strip()
+}
 for _host in _BLOCKED_HOSTS:
     if _host in _TEST_DB_URL:
         raise RuntimeError(

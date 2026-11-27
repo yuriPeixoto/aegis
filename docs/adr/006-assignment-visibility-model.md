@@ -5,7 +5,7 @@
 
 ## Context
 
-A Acme opera como prestadora de serviços para múltiplos clientes (Client A, Client B, Client C, etc.). Os atendentes não devem ver todos os tickets de todas as instâncias indiscriminadamente — a visibilidade deve refletir o fluxo de trabalho real.
+A equipe de operação atende múltiplos clientes (cliente A, cliente B, cliente C, etc.). Os atendentes não devem ver todos os tickets de todas as instâncias indiscriminadamente — a visibilidade deve refletir o fluxo de trabalho real.
 
 ## Decision
 

@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     # refresh logic in this hotfix.
     access_token_expire_minutes: int = 720  # 12 hours
 
+    # Recipient of the blocking notification for tickets from critical sources
+    # (see ingest_service._CRITICAL_SOURCE_ALERTS). Empty disables the alert.
+    critical_alert_email: str = ""
+
     model_config = {
         "env_prefix": "AEGIS_",
         "env_file": str(_ENV_FILE),

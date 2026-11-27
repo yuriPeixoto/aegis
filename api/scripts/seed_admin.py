@@ -1,5 +1,8 @@
 """
-Update the first user in the database to the admin account.
+Update the first user in the database to the admin account (or create it).
+The account comes from environment variables, set in the shell for this run only
+(not in api/.env, which the app settings reject unknown AEGIS_* keys from):
+    AEGIS_SEED_ADMIN_EMAIL, AEGIS_SEED_ADMIN_NAME, AEGIS_SEED_ADMIN_PASSWORD
 Run from the api/ directory:
     py -3.14 scripts/seed_admin.py
 """
@@ -12,6 +15,7 @@ from pathlib import Path
 # Make sure `app` is importable when running this script directly
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from pydantic_settings import BaseSettings
 from sqlalchemy import select, update
 
 from app.core.database import AsyncSessionLocal
@@ -26,7 +30,18 @@ import app.models.ticket_message  # noqa: F401
 from app.models.user import User
 
 
+class _SeedAdminSettings(BaseSettings):
+    email: str
+    name: str
+    password: str
+
+    model_config = {
+        "env_prefix": "AEGIS_SEED_ADMIN_",
+    }
+
+
 async def main() -> None:
+    admin = _SeedAdminSettings()  # type: ignore[call-arg]  # values come from the environment
     async with AsyncSessionLocal() as db:
         # Find the user with the lowest id
         result = await db.execute(select(User).order_by(User.id).limit(1))
@@ -35,9 +50,9 @@ async def main() -> None:
         if user is None:
             print("No users found. Creating admin user...")
             user = User(
-                email="admin@example.com",
-                password_hash=hash_password("change-me"),
-                name="Aegis Admin",
+                email=admin.email,
+                password_hash=hash_password(admin.password),
+                name=admin.name,
                 role="admin",
                 is_active=True,
             )
@@ -45,21 +60,21 @@ async def main() -> None:
             await db.commit()
             await db.refresh(user)
         else:
-            print(f"Updating user id={user.id} ({user.email}) -> admin@example.com")
+            print(f"Updating user id={user.id} ({user.email}) -> {admin.email}")
             await db.execute(
                 update(User)
                 .where(User.id == user.id)
                 .values(
-                    email="admin@example.com",
-                    password_hash=hash_password("change-me"),
-                    name="Aegis Admin",
+                    email=admin.email,
+                    password_hash=hash_password(admin.password),
+                    name=admin.name,
                     role="admin",
                     is_active=True,
                 )
             )
             await db.commit()
 
-        print(f"Done. User id={user.id} | email=admin@example.com | name=Aegis Admin")
+        print(f"Done. User id={user.id} | email={admin.email} | name={admin.name}")
 
 
 if __name__ == "__main__":
