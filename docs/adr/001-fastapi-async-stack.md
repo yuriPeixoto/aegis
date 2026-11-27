@@ -5,7 +5,7 @@
 
 ## Context
 
-Aegis precisa processar webhooks de múltiplas instâncias do gestão frota simultaneamente, servir um inbox em tempo real e, no futuro, calcular SLA e enviar notificações. A equipe Acme é pequena — a stack deve ser produtiva sem cerimônia.
+Aegis precisa processar webhooks de múltiplas instâncias do gestão frota simultaneamente, servir um inbox em tempo real e, no futuro, calcular SLA e enviar notificações. A equipe de operação é pequena — a stack deve ser produtiva sem cerimônia.
 
 ## Decision
 

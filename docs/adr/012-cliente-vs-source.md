@@ -24,7 +24,7 @@ não versionada neste ADR.
 ### Achado crítico do council
 
 O Aegis está prestes a criar a **quarta** tabela de "quem é cliente" no universo de sistemas
-da Acme — `gestao_frota` já tem tenants/clientes reais, `telemetria` tem
+da casa — `gestao_frota` já tem tenants/clientes reais, `telemetria` tem
 `docs/CLIENTES.md` com os clientes ativos, `checklist-suite` tem seu próprio cadastro. Isso
 não é modelagem de dados, é risco de cadastro duplicado — com precedente já documentado
 (drift de coluna `users` entre Telemetria/ChecklistSuite, vazamento de guard RBAC entre
@@ -52,7 +52,7 @@ ativo, `source_id` opcional. Resistimos à tentação de virar CRM interno com c
 contato — isso não foi pedido pelo ticket e é o tipo de escopo que aparece sozinho depois.
 Nenhum mecanismo de sincronização com os cadastros de GF/Telemetria/ChecklistSuite é
 construído nesta rodada — decisão consciente de não resolver "quem é dono do cadastro mestre
-de cliente na Acme" dentro do escopo de #1307. Isso é um projeto à parte, maior que este
+de cliente da casa" dentro do escopo de #1307. Isso é um projeto à parte, maior que este
 ticket, e fica registrado aqui como dívida reconhecida, não esquecida.
 
 ### Autorização
