@@ -9,7 +9,7 @@ import {
   useDeleteCannedResponse,
 } from '../../hooks/useCannedResponses'
 import { useAllUsers } from '../../hooks/useUsers'
-import type { CannedResponse } from '../../hooks/useCannedResponses'
+import type { CannedResponse, CannedResponseCreate } from '../../hooks/useCannedResponses'
 
 export function CannedResponsesTab() {
   const { t } = useTranslation()
@@ -36,7 +36,7 @@ export function CannedResponsesTab() {
         onError: () => toast.error('Erro ao atualizar resposta pronta.'),
       })
     } else {
-      createResponse.mutate(form as any, {
+      createResponse.mutate(form as CannedResponseCreate, {
         onSuccess: () => { setModalOpen(false); toast.success('Resposta pronta criada com sucesso!') },
         onError: () => toast.error('Erro ao criar resposta pronta.'),
       })

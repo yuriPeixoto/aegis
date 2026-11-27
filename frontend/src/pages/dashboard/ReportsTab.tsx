@@ -11,6 +11,7 @@ import { useOverviewAnalytics, type OverviewSourceRow } from '../../hooks/useAna
 import { useDateRange } from '../../hooks/useDateRange'
 import { DateRangePicker } from '../../components/common/DateRangePicker'
 import { Avatar } from '../../components/common/Avatar'
+import type { ChartTooltipProps } from '../../lib/chartTooltip'
 
 // ── Colour palettes ──────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ const TYPE_COLORS: Record<string, string> = {
 const PRIORITY_KEYS = ['urgent', 'high', 'medium', 'low']
 const TYPE_KEYS     = ['bug', 'improvement', 'question', 'support']
 
-function ChartTooltip({ active, payload, label }: any) {
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   const { t, i18n } = useTranslation()
   if (!active || !payload?.length) return null
 
@@ -50,7 +51,7 @@ function ChartTooltip({ active, payload, label }: any) {
   return (
     <div className="bg-brand-dark border border-brand-border rounded-lg px-3 py-2 text-xs shadow-lg">
       {label && <p className="text-slate-400 mb-1">{translateLabel(String(label))}</p>}
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.fill || p.stroke || '#a78bfa' }}>
           {p.name}: {p.value ?? '—'}
         </p>
