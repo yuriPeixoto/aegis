@@ -27,6 +27,9 @@
 | `pending_closure → in_progress` | Clock retomado; `sla_due_at` recomputado: horas úteis restantes quando pausou, projetadas a partir de agora |
 | `→ resolved / closed / cancelled` | Clock finalizado |
 
+**Fontes de alerta** (`sources.kind = "alert"`, ver [alert-ingest.md](alert-ingest.md)): o clock inicia na
+**criação** do ticket, pela política da prioridade, e a passagem para `in_progress` não o reinicia.
+
 **Regra de cálculo:** o prazo é calculado em horas úteis reais, ignorando fins de semana, período fora do expediente e intervalo de almoço. Um ticket urgente aberto às 16h30 de uma sexta recebe prazo para segunda às ~10h40.
 
 ### Campos novos em `tickets`
