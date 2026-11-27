@@ -5,7 +5,7 @@ import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from jose import jwt
+import jwt
 
 from app.core.config import settings
 
@@ -60,5 +60,5 @@ def decode_access_token(token: str) -> int | None:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         sub = payload.get("sub")
         return int(sub) if sub else None
-    except Exception:
+    except jwt.InvalidTokenError, ValueError:
         return None
