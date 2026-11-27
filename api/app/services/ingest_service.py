@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.source import Source
 from app.models.tag import Tag
 from app.models.ticket import Ticket
@@ -23,18 +24,19 @@ from app.services.sla_service import SlaService
 
 # Source.slug -> (tag name, recipient email). A ticket created by one of these
 # sources gets the tag auto-applied and a blocking notification (see #1086) sent
-# to the recipient, once, at creation. Extend here for Cronwatch when it's ready
-# (#1271) — same mechanism, new slug/tag/recipient entry.
-_CRITICAL_SOURCE_ALERTS: dict[str, tuple[str, str]] = {
-    "log-watcher": ("Log Watcher", "admin@example.com"),
-}
+# to the recipient, once, at creation. The recipient comes from
+# AEGIS_CRITICAL_ALERT_EMAIL; when it is unset, no source raises the alert.
+_CRITICAL_SOURCE_ALERTS: dict[str, tuple[str, str]] = (
+    {"log-watcher": ("Log Watcher", settings.critical_alert_email)}
+    if settings.critical_alert_email
+    else {}
+)
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 #
-# NOTE: "em_atendimento" is deliberately NOT mapped here. Per
-# docs/gf-ticket-client-refactor.md §3.4, the GF client portal still lets the
-# client themselves flip a ticket to "em_atendimento" (known issue, pending a
-# GF-side fix that removes that control from the client). Until that lands,
+# NOTE: "em_atendimento" is deliberately NOT mapped here. The GF client portal
+# still lets the client themselves flip a ticket to "em_atendimento" (known
+# issue, pending a GF-side fix that removes that control from the client). Until that lands,
 # Aegis must not treat an inbound "em_atendimento" event as authoritative for
 # starting work — the transition into in_progress is an Aegis-agent decision,
 # made explicitly via the dashboard (PATCH /{ticket_id}/status), not something
