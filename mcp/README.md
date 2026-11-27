@@ -72,6 +72,9 @@ Edite `~/.claude.json` e adicione em `mcpServers`:
 }
 ```
 
+Optional: `AEGIS_MCP_PROJECT_TAGS` (comma-separated tag names, e.g. `"Aegis,Telemetria"`) restricts the
+`project` field of `create_ticket` to that list. Unset, any tag name is accepted.
+
 Após salvar, reinicie o Claude Code. O servidor aparecerá como ferramenta disponível.
 
 ## Ferramentas disponíveis
