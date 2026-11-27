@@ -53,6 +53,10 @@ class TicketResponse(BaseModel):
     tags: list[TagResponse] = []
     merged_into_ticket_id: int | None = None
     merged_at: datetime | None = None
+    alert_fingerprint: str | None = None
+    occurrence_count: int = 1
+    last_occurrence_at: datetime | None = None
+    previous_ticket_id: int | None = None
     csat_rating: int | None = None
     csat_comment: str | None = None
     csat_submitted_at: datetime | None = None

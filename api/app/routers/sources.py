@@ -16,7 +16,7 @@ from app.schemas.source import (
     SourceResponse,
     SourceUpdate,
 )
-from app.services.source_service import SourceService
+from app.services.source_service import InvalidSourceSettingError, SourceService
 
 _LOGO_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/svg+xml"}
 _LOGO_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
@@ -39,6 +39,7 @@ async def create_source(data: SourceCreate, db: DbSession, _: AdminUser) -> Sour
         name=source.name,
         slug=source.slug,
         is_active=source.is_active,
+        kind=source.kind,
         created_at=source.created_at,
         api_key=plain_key,
         webhook_secret=webhook_secret,
@@ -55,7 +56,12 @@ async def list_sources(db: DbSession, _: CurrentUser) -> list[SourceResponse]:
 async def update_source(
     source_id: int, data: SourceUpdate, db: DbSession, _: AdminUser
 ) -> SourceResponse:
-    source = await SourceService(db).update(source_id, data)
+    try:
+        source = await SourceService(db).update(source_id, data)
+    except InvalidSourceSettingError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+        ) from exc
     if source is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found")
     return SourceResponse.model_validate(source)

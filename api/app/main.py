@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from app.core.config import settings
+from app.core.dependencies import DbSession
 from app.routers import (
     about,
     analytics,
@@ -98,6 +102,20 @@ app.include_router(training_records.router)
 app.include_router(training_records.public_router)
 
 
+_HEALTH_DB_TIMEOUT_SECONDS = 2.0
+
+
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "healthy"}
+async def health(db: DbSession) -> JSONResponse:
+    """Liveness for monitors (the Maestro watchdog): no login, 503 when the database
+    does not answer. Deliberately says nothing beyond up/down."""
+    try:
+        async with asyncio.timeout(_HEALTH_DB_TIMEOUT_SECONDS):
+            await db.execute(text("SELECT 1"))
+    except Exception:
+        logger.exception("health: database check failed")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "dependencies": {"database": "down"}},
+        )
+    return JSONResponse(content={"status": "healthy", "dependencies": {"database": "ok"}})

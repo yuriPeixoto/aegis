@@ -9,6 +9,7 @@ from app.core.dependencies import DbSession
 from app.core.security import decode_access_token
 from app.models.source import Source
 from app.models.user import User
+from app.services.rate_limit_service import RateLimitService
 from app.services.source_service import SourceService
 from app.services.user_service import UserService
 
@@ -36,6 +37,21 @@ async def get_current_source(
 
 
 CurrentSource = Annotated[Source, Depends(get_current_source)]
+
+
+async def get_rate_limited_source(db: DbSession, source: CurrentSource) -> Source:
+    """The authenticated source, once its request fits the per-source rate limit."""
+    decision = await RateLimitService(db).hit(source)
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded: {decision.limit} requests per minute",
+            headers={"Retry-After": str(decision.retry_after_seconds)},
+        )
+    return source
+
+
+RateLimitedSource = Annotated[Source, Depends(get_rate_limited_source)]
 
 # ── Dashboard (user) auth ─────────────────────────────────────────────────────
 

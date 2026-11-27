@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, Response, status
 
-from app.core.auth import CurrentSource
+from app.core.auth import RateLimitedSource
 from app.core.dependencies import DbSession
 from app.schemas.ingest import (
+    AlertIngestPayload,
+    AlertIngestResponse,
+    AlertResult,
     IngestResponse,
     TicketEventPayload,
     TicketIngestPayload,
     TicketStatusSnapshot,
 )
+from app.services.alert_ingest_service import AlertConflictError, AlertIngestService
 from app.services.ingest_service import IngestService
 from app.services.status_mapping import status_for_source
 
@@ -24,7 +28,7 @@ router = APIRouter(prefix="/v1/ingest", tags=["ingest"])
 )
 async def ingest_ticket(
     data: TicketIngestPayload,
-    source: CurrentSource,
+    source: RateLimitedSource,
     db: DbSession,
 ) -> IngestResponse:
     """
@@ -50,7 +54,7 @@ async def ingest_ticket(
 )
 async def ingest_ticket_event(
     data: TicketEventPayload,
-    source: CurrentSource,
+    source: RateLimitedSource,
     db: DbSession,
 ) -> dict[str, int]:
     event = await IngestService(db).record_event(source, data)
@@ -63,7 +67,7 @@ async def ingest_ticket_event(
     summary="Snapshot of this source's tickets' current status, for drift reconciliation",
 )
 async def ticket_status_snapshot(
-    source: CurrentSource,
+    source: RateLimitedSource,
     db: DbSession,
 ) -> list[TicketStatusSnapshot]:
     """A source system calls this periodically to compare against its own local
@@ -80,3 +84,42 @@ async def ticket_status_snapshot(
         )
         for t in tickets
     ]
+
+
+@router.post(
+    "/alerts",
+    response_model=AlertIngestResponse,
+    responses={201: {"model": AlertIngestResponse}},
+    summary="Ingest an alert event (alert contract v1, docs/alert-ingest.md)",
+)
+async def ingest_alert(
+    data: AlertIngestPayload,
+    source: RateLimitedSource,
+    db: DbSession,
+    response: Response,
+) -> AlertIngestResponse:
+    """One ticket per problem (`fingerprint`) while it is open; the same `event_id`
+    is applied once. 201 when the event opened a ticket, 200 otherwise."""
+    if not source.is_alert:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This endpoint is for alert sources only (source kind 'alert')",
+        )
+    try:
+        outcome = await AlertIngestService(db).ingest(source, data)
+    except AlertConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The event conflicts with an existing ticket of this source",
+        ) from exc
+
+    if outcome.result is AlertResult.CREATED:
+        response.status_code = status.HTTP_201_CREATED
+    ticket = outcome.ticket
+    return AlertIngestResponse(
+        result=outcome.result,
+        ticket_id=ticket.id if ticket is not None else None,
+        external_id=ticket.external_id if ticket is not None else None,
+        occurrence_count=ticket.occurrence_count if ticket is not None else None,
+        previous_ticket_id=outcome.previous_ticket_id,
+    )

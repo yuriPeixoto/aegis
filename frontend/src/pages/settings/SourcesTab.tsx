@@ -8,7 +8,10 @@ import {
   useRegenerateSourceKey,
   type SourceCreated,
   type Source,
+  type SourceKind,
 } from '../../hooks/useSources'
+import { useTags } from '../../hooks/useTags'
+import { useAllUsers } from '../../hooks/useUsers'
 import { Avatar } from '../../components/common/Avatar'
 import { inputCls, Modal, Field, FormError, ModalActions } from './shared'
 
@@ -35,7 +38,14 @@ function SourceRow({ source, onEdit }: SourceRowProps) {
           </span>
         )}
       </td>
-      <td className="py-2.5 text-slate-400 font-mono text-xs">{source.slug}</td>
+      <td className="py-2.5 text-slate-400 font-mono text-xs">
+        {source.slug}
+        {source.kind === 'alert' && (
+          <span className="ml-2 font-sans text-[10px] text-amber-400 border border-amber-500/40 rounded px-1 py-0.5">
+            {t('settings.sources.kindAlert')}
+          </span>
+        )}
+      </td>
       <td className="py-2.5">
         {source.is_active ? (
           <span className="text-xs text-emerald-400">{t('settings.sources.active')}</span>
@@ -64,6 +74,59 @@ function SourceRow({ source, onEdit }: SourceRowProps) {
   )
 }
 
+function KindField({ kind, onChange }: { kind: SourceKind; onChange: (kind: SourceKind) => void }) {
+  const { t } = useTranslation()
+  return (
+    <Field label={t('settings.sources.fieldKind')}>
+      <select value={kind} onChange={(e) => onChange(e.target.value as SourceKind)} className={inputCls}>
+        <option value="system">{t('settings.sources.kindSystem')}</option>
+        <option value="alert">{t('settings.sources.kindAlert')}</option>
+      </select>
+      <p className="text-xs text-slate-600 mt-1">{t('settings.sources.kindHint')}</p>
+    </Field>
+  )
+}
+
+function AlertSettings({
+  tagId,
+  recipientId,
+  onTagChange,
+  onRecipientChange,
+}: {
+  tagId: number | null
+  recipientId: number | null
+  onTagChange: (id: number | null) => void
+  onRecipientChange: (id: number | null) => void
+}) {
+  const { t } = useTranslation()
+  const { tags } = useTags()
+  const { data: users = [] } = useAllUsers()
+  const toId = (value: string) => (value ? Number(value) : null)
+
+  return (
+    <div className="border border-amber-500/20 rounded-lg p-4 space-y-3">
+      <p className="text-xs font-semibold text-amber-400">{t('settings.sources.alertTitle')}</p>
+      <Field label={t('settings.sources.fieldAlertTag')}>
+        <select value={tagId ?? ''} onChange={(e) => onTagChange(toId(e.target.value))} className={inputCls}>
+          <option value="">{t('settings.sources.none')}</option>
+          {tags.map((tag) => (
+            <option key={tag.id} value={tag.id}>{tag.name}</option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t('settings.sources.fieldAlertRecipient')}>
+        <select value={recipientId ?? ''} onChange={(e) => onRecipientChange(toId(e.target.value))} className={inputCls}>
+          <option value="">{t('settings.sources.none')}</option>
+          {users.filter((user) => user.is_active).map((user) => (
+            <option key={user.id} value={user.id}>{user.name}</option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-600 mt-1">{t('settings.sources.alertRecipientHint')}</p>
+      </Field>
+    </div>
+  )
+}
+
 function CreateSourceModal({
   onClose,
   onCreated,
@@ -75,6 +138,7 @@ function CreateSourceModal({
   const { mutate, isPending, error } = useCreateSource()
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
+  const [kind, setKind] = useState<SourceKind>('system')
 
   const handleNameChange = (value: string) => {
     setName(value)
@@ -84,7 +148,7 @@ function CreateSourceModal({
   return (
     <Modal title={t('settings.sources.modalTitle')} onClose={onClose}>
       <form
-        onSubmit={(e) => { e.preventDefault(); mutate({ name, slug }, { onSuccess: onCreated }) }}
+        onSubmit={(e) => { e.preventDefault(); mutate({ name, slug, kind }, { onSuccess: onCreated }) }}
         className="space-y-4"
       >
         <Field label={t('settings.sources.fieldName')}>
@@ -94,6 +158,7 @@ function CreateSourceModal({
           <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required minLength={2} pattern="^[a-z0-9-]+$" className={`${inputCls} font-mono`} />
           <p className="text-xs text-slate-600 mt-1">{t('settings.sources.slugHint')}</p>
         </Field>
+        <KindField kind={kind} onChange={setKind} />
         <FormError error={error} fallback={t('settings.sources.errorGeneric')} />
         <ModalActions onClose={onClose} isPending={isPending} submitLabel={t('settings.sources.create')} pendingLabel={t('settings.sources.creating')} />
       </form>
@@ -119,12 +184,25 @@ function EditSourceModal({
   const [webhookUrl, setWebhookUrl] = useState(source.webhook_url ?? '')
   const [csatEnabled, setCsatEnabled] = useState(source.csat_enabled)
   const [csatSamplingPct, setCsatSamplingPct] = useState(source.csat_sampling_pct)
+  const [kind, setKind] = useState<SourceKind>(source.kind)
+  const [alertTagId, setAlertTagId] = useState<number | null>(source.alert_tag_id)
+  const [alertRecipientId, setAlertRecipientId] = useState<number | null>(source.alert_recipient_user_id)
+  const [rateLimit, setRateLimit] = useState(source.rate_limit_per_minute?.toString() ?? '')
   const [confirmRegen, setConfirmRegen] = useState(false)
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     updateSource.mutate(
-      { name, webhook_url: webhookUrl, csat_enabled: csatEnabled, csat_sampling_pct: csatSamplingPct },
+      {
+        name,
+        webhook_url: webhookUrl,
+        csat_enabled: csatEnabled,
+        csat_sampling_pct: csatSamplingPct,
+        kind,
+        alert_tag_id: kind === 'alert' ? alertTagId : null,
+        alert_recipient_user_id: kind === 'alert' ? alertRecipientId : null,
+        rate_limit_per_minute: rateLimit ? Number(rateLimit) : null,
+      },
       { onSuccess: onClose },
     )
   }
@@ -175,6 +253,27 @@ function EditSourceModal({
         <Field label={t('settings.sources.fieldWebhookUrl')}>
           <input type="url" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} className={inputCls} placeholder="https://..." />
           <p className="text-xs text-slate-600 mt-1">{t('settings.sources.webhookUrlHint')}</p>
+        </Field>
+
+        <KindField kind={kind} onChange={setKind} />
+        {kind === 'alert' && (
+          <AlertSettings
+            tagId={alertTagId}
+            recipientId={alertRecipientId}
+            onTagChange={setAlertTagId}
+            onRecipientChange={setAlertRecipientId}
+          />
+        )}
+        <Field label={t('settings.sources.fieldRateLimit')}>
+          <input
+            type="number"
+            min={1}
+            value={rateLimit}
+            onChange={(e) => setRateLimit(e.target.value)}
+            className={`${inputCls} w-32`}
+            placeholder={t('settings.sources.rateLimitDefault')}
+          />
+          <p className="text-xs text-slate-600 mt-1">{t('settings.sources.rateLimitHint')}</p>
         </Field>
 
         <div className="border border-slate-700 rounded-lg p-4 space-y-3">

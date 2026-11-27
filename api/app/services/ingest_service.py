@@ -9,28 +9,16 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.models.source import Source
-from app.models.tag import Tag
 from app.models.ticket import Ticket
 from app.models.ticket_event import TicketEvent
 from app.models.ticket_message import TicketMessage
-from app.models.user import User
 from app.schemas.ingest import TicketEventPayload, TicketIngestPayload
+from app.services.alert_source_policy import apply_alert_source_policy, start_alert_sla
 from app.services.attachment_service import AttachmentService
 from app.services.checklist_service import ChecklistService
 from app.services.notification_service import NotificationService
 from app.services.sla_service import SlaService
-
-# Source.slug -> (tag name, recipient email). A ticket created by one of these
-# sources gets the tag auto-applied and a blocking notification (see #1086) sent
-# to the recipient, once, at creation. The recipient comes from
-# AEGIS_CRITICAL_ALERT_EMAIL; when it is unset, no source raises the alert.
-_CRITICAL_SOURCE_ALERTS: dict[str, tuple[str, str]] = (
-    {"log-watcher": ("Log Watcher", settings.critical_alert_email)}
-    if settings.critical_alert_email
-    else {}
-)
 
 # GF native status → Aegis status (reverse of AegisWebhookController map)
 #
@@ -109,6 +97,7 @@ class IngestService:
                 sla_due_at=sla_due_at,
                 assigned_to_user_id=data.assigned_to_user_id,
             )
+            await start_alert_sla(self._db, source, ticket)
             self._db.add(ticket)
             await self._db.flush()  # get the id without committing
 
@@ -159,19 +148,14 @@ class IngestService:
 
             await NotificationService(self._db).create_new_ticket_notifications(ticket, source.name)
 
-            alert = _CRITICAL_SOURCE_ALERTS.get(source.slug)
-            if alert:
-                tag_name, recipient_email = alert
-                await self._apply_critical_source_alert(
-                    ticket, tag_name, recipient_email, source.name
-                )
+            await apply_alert_source_policy(self._db, source, ticket)
 
             return ticket, True
 
         # #1287: a ticket that was merged into another has no business receiving new
         # state from the source anymore — redirect to wherever it actually lives now.
         if ticket.merged_into_ticket_id is not None:
-            ticket = await self._resolve_active_ticket(ticket)
+            ticket = await self.resolve_active_ticket(ticket)
 
         # Update existing ticket
         old_status = ticket.status
@@ -208,40 +192,7 @@ class IngestService:
         result = await self._db.execute(select(Ticket).where(Ticket.source_id == source.id))
         return list(result.scalars().all())
 
-    async def _apply_critical_source_alert(
-        self, ticket: Ticket, tag_name: str, recipient_email: str, source_name: str
-    ) -> None:
-        """Auto-tag the ticket and notify the recipient — see _CRITICAL_SOURCE_ALERTS."""
-        tag_result = await self._db.execute(select(Tag).where(Tag.name == tag_name))
-        tag = tag_result.scalar_one_or_none()
-        if tag is None:
-            tag = Tag(name=tag_name)
-            self._db.add(tag)
-            await self._db.flush()
-
-        await self._db.refresh(ticket, ["tags"])
-        if tag not in ticket.tags:
-            ticket.tags.append(tag)
-
-        user_result = await self._db.execute(select(User).where(User.email == recipient_email))
-        recipient = user_result.scalar_one_or_none()
-        if recipient is None:
-            logger.warning(
-                "ingest: critical source alert recipient '%s' not found — "
-                "skipping notification for ticket %s (tag '%s' still applied)",
-                recipient_email,
-                ticket.external_id,
-                tag_name,
-            )
-            await self._db.commit()
-            return
-
-        await self._db.commit()
-        await NotificationService(self._db).create_critical_source_notification(
-            ticket, recipient.id, source_name
-        )
-
-    async def _resolve_active_ticket(self, ticket: Ticket) -> Ticket:
+    async def resolve_active_ticket(self, ticket: Ticket) -> Ticket:
         """Follow merged_into_ticket_id to the ticket that's still active (#1287: a
         merge target can itself be merged into a later ticket, so this walks the
         whole chain, not just one hop). Everything inbound for a merged ticket —
@@ -293,7 +244,7 @@ class IngestService:
             self._db.add(ticket)
             await self._db.flush()
         elif ticket.merged_into_ticket_id is not None:
-            ticket = await self._resolve_active_ticket(ticket)
+            ticket = await self.resolve_active_ticket(ticket)
 
         # Cleanse payload for storage in events table (remove huge base64 strings)
         cleansed_payload = _cleanse_attachments_for_event(data.payload)

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from enum import StrEnum
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -53,3 +54,55 @@ class TicketStatusSnapshot(BaseModel):
     external_id: str
     status: str
     last_synced_at: datetime
+
+
+# ── Alert contract v1 (docs/alert-ingest.md) ─────────────────────────────────
+
+ALERT_CONTRACT_VERSION = 1
+
+
+class AlertStatus(StrEnum):
+    FIRING = "firing"
+    RESOLVED = "resolved"
+
+
+class AlertPriority(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class AlertResult(StrEnum):
+    CREATED = "created"
+    OCCURRENCE = "occurrence"
+    DUPLICATE = "duplicate"
+    RESOLVED_NOTED = "resolved_noted"
+    IGNORED = "ignored"
+
+
+class AlertIngestPayload(BaseModel):
+    """One alert event from a monitoring source (sources.kind = "alert")."""
+
+    contract_version: Literal[1] = 1
+    # Unique per event and per source: a retry of the same event is applied once.
+    # Also the external_id of the ticket this event opens.
+    event_id: str = Field(..., min_length=1, max_length=100)
+    # Identifies the problem: same fingerprint while a ticket is open = occurrence.
+    fingerprint: str = Field(..., min_length=1, max_length=200)
+    status: AlertStatus = AlertStatus.FIRING
+    priority: AlertPriority = AlertPriority.MEDIUM
+    type: str = Field("bug", max_length=50)
+    subject: str = Field(..., min_length=1, max_length=500)
+    description: str | None = None
+    occurred_at: datetime | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class AlertIngestResponse(BaseModel):
+    contract_version: int = ALERT_CONTRACT_VERSION
+    result: AlertResult
+    ticket_id: int | None
+    external_id: str | None
+    occurrence_count: int | None
+    previous_ticket_id: int | None = None
